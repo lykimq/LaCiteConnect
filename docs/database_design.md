@@ -163,8 +163,7 @@ Handle event creation, registration, images, and social media sharing.
 | updated_at     | `TIMESTAMP`         | Auto-generated                   | Timestamp when the event was last updated. |
 | notification_enabled | `BOOLEAN`      | Default: false                   | Flag indicating if notifications are enabled for the event. |
 | pagination_limit | `INTEGER`          | Default: 10                      | The number of events to display per page. |
-| total_participants|	`INTEGER`	|
-Calculated field (via trigger)	|Total number of registered participants (calculated from event_registrations). |
+| total_participants|	`INTEGER`	| Calculated field (via trigger)	|Total number of registered participants (calculated from event_registrations). |
 
 #### Date and Time
 - Allow flexibility in queries for event sorting and filtering.
