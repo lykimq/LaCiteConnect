@@ -124,28 +124,6 @@ Handle event creation, registration, images, and social media sharing.
 - Relationships: `events` is linked with `users` via `created_by`, and `event_registrations` connects users to events.
 
 
-
-| Column Name        | Type                | Properties & Constraints         | Description |
-|--------------------|---------------------|----------------------------------|-------------|
-| **id**             | `UUID`              | Primary key, Auto-generated      | Unique identifier for each event. |
-| **title**          | `VARCHAR(255)`      | Required                         | The title of the event. |
-| **description**    | `TEXT`              | Optional                         | Detailed description of the event. |
-| **date**           | `DATE`              | Required                         | The date when the event will take place. |
-| **time**           | `TIME`              | Required                         | The time when the event will take place. |
-| **location**       | `VARCHAR(255)`      | Optional                         | The location where the event will be held. |
-| **picture_url**    | `TEXT`              | Optional                         | URL for the event’s picture. |
-| **video_url**      | `TEXT`              | Optional                         | URL for the event’s video. |
-| **created_by**     | `UUID`              | Foreign key → `users(id)`        | ID of the user who created the event. |
-| **created_at**     | `TIMESTAMP`         | Auto-generated                   | Timestamp when the event was created. |
-| **updated_at**     | `TIMESTAMP`         | Auto-generated                   | Timestamp when the event was last updated. |
-| **notification_enabled** | `BOOLEAN`      | Default: false                   | Flag indicating if notifications are enabled for the event. |
-| **pagination_limit** | `INTEGER`          | Default: 10                      | The number of events to display per page. |
-
----
-
-## **Events and Event Registrations Table Design**
-
-### Events Table
 `events`
 
 | Column Name        | Type                | Properties & Constraints         | Description |
