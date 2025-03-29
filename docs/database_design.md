@@ -196,8 +196,7 @@ Calculated field (via trigger)	|Total number of registered participants (calcula
 | **user_id**        | `UUID`              | Foreign key → `users(id)`        | ID of the user who registered for the event. |
 | **event_id**       | `UUID`              | Foreign key → `events(id)`       | ID of the event the user is registering for. |
 | **status**         | `ENUM('pending', 'registered', 'canceled')` | Default: 'pending' | The current status of the registration (pending, registered, canceled). |
-| **created_at**     | `TIMESTAMP`         | Auto-generated                   |
-Timestamp when the registration was created. |
+| **created_at**     | `TIMESTAMP`         | Auto-generated                   | Timestamp when the registration was created. |
 
 #### Event Registeration Status
 - `event_registrations` table tracks the status of each registration (i.e., whether the user is pending, registered, or has canceled their registration).
