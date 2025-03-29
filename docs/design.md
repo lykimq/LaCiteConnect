@@ -12,7 +12,7 @@ The goal is develop a church application that supports **both mobile** (Android 
 - **User Roles**: Admin, signed-in user, guest (anonymous).
 
 ## 3. Architecture Overview
-### 3.1 Frontend (Mobile + Web)
+
 - Mobile (Android and iOS): React Native with Expo.
 - Web: React.js (with TypeScript).
 - Authentication: Firebase Auth (Google, Email/Password, Anonymous).
