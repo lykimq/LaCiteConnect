@@ -10,6 +10,13 @@ This is the authentication microservice for LaCiteConnect, handling user authent
 - Email verification
 - Password reset functionality
 - User profile management
+- Role-based access control (RBAC)
+  - Admin role
+  - Signed-in user role
+  - Guest role
+- Social login integration
+- Secure password hashing with bcrypt
+- PostgreSQL database for user storage
 
 ## Prerequisites
 
@@ -19,8 +26,6 @@ This is the authentication microservice for LaCiteConnect, handling user authent
 - Docker (optional)
 
 ## Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
 
 ```env
 # Database Configuration
@@ -87,6 +92,24 @@ http://localhost:3000/api
 - `POST /auth/reset-password` - Reset password with token
 - `GET /auth/profile` - Get user profile (protected)
 
+### User Management
+
+- `GET /users` - Get all users (Admin only)
+- `GET /users/:id` - Get user by ID (Admin or self)
+- `PUT /users/:id` - Update user (Admin or self)
+- `DELETE /users/:id` - Delete user (Admin only)
+
+## Security Features
+
+- JWT-based authentication with configurable expiration
+- Firebase token verification
+- Password hashing using bcrypt
+- Email verification system
+- Role-based access control
+- CORS enabled
+- Input validation using class-validator
+- Swagger API documentation with authentication
+
 ## Testing
 
 Run the test suite:
@@ -99,14 +122,13 @@ Run tests in watch mode:
 npm run test:watch
 ```
 
-## Contributing
+## Architecture
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
+The service follows a modular architecture with the following components:
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- **Auth Module**: Handles authentication and authorization
+- **Users Module**: Manages user data and operations
+- **Firebase Module**: Integrates with Firebase Authentication
+- **Database**: PostgreSQL with TypeORM for data persistence
+- **Security**: JWT and Firebase token-based authentication
+- **API Documentation**: Swagger/OpenAPI for API documentation
