@@ -3,6 +3,12 @@
 -- Ensure the uuid-ossp extension is available for UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Define the ENUM type for roles
+CREATE TYPE role_type AS ENUM ('guest', 'user', 'admin');
+
+-- Define the ENUM type for session types
+CREATE TYPE session_type_enum AS ENUM ('session', 'persistent');
+
 -- Create users table
 CREATE TABLE users (
     -- Unique identifier for each user, uses UUID to prevent enumeration attacks
@@ -39,13 +45,13 @@ CREATE TABLE users (
     phone_region VARCHAR(10),
 
     -- User roles, default is 'guest'
-    role ENUM('guest', 'user', 'admin') DEFAULT 'guest' NOT NULL,
+    role role_type DEFAULT 'guest' NOT NULL,
 
     -- User privacy settings stored as JSONB
     privacy_settings JSONB DEFAULT '{}'::jsonb,
 
     -- Session type to determine login persistence (session or persistent)
-    session_type ENUM('session', 'persistent') DEFAULT 'session' NOT NULL,
+    session_type session_type_enum DEFAULT 'session' NOT NULL,
 
     -- Flag for biometric authentication (fingerprint/face ID)
     biometric_enabled BOOLEAN DEFAULT false,
