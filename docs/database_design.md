@@ -5,6 +5,40 @@ This document outlines the database schema, relationship, and deployment strateg
 
 Each microservice has its own isolated database to ensure modularity and scalability. Services communicate via **API calls** or an **event-driven system** (e.g., Kafka, RabbitMQ, or AWS SNS/SQS).
 
+
+### Main Page Information
+
+**Table: `main_page_sections`**
+
+| Column Name  | Type             | Constraints                        | Description |
+|--------------|------------------|-------------------------------------|-------------|
+| `id`         | `UUID`           | Primary key, Auto-generated         | Unique identifier for each section. |
+| `title`      | `VARCHAR(255)`    | Required, Indexed for search       | Title of the section (e.g., "About Us", "Service Times"). |
+| `content`    | `TEXT`           | Required                           | Content of the section in text format (e.g., address, service times). |
+| `media_url`  | `TEXT`           | Optional                           | URL for images or videos related to the section. |
+| `order`      | `INTEGER`        | Required, Default: `0`             | Defines the display order of sections on the main page. |
+| `created_at` | `TIMESTAMP`      | Auto-generated                     | Timestamp when the section was created. |
+| `updated_at` | `TIMESTAMP`      | Auto-generated                     | Timestamp when the section was last updated. |
+
+- Index on `title` to allow fast searching of sections.
+- Index on `order` for proper display sequencing.
+
+
+**Table: `church_contacts`**
+
+| Column Name  | Type             | Constraints                        | Description |
+|--------------|------------------|-------------------------------------|-------------|
+| `id`         | `UUID`           | Primary key, Auto-generated         | Unique identifier for each contact entry. |
+| `type`       | `ENUM('phone', 'email', 'social')` | Required           | The type of contact (e.g., phone number, email, social media link). |
+| `value`      | `VARCHAR(255)`    | Required, Unique                   | The contact information (e.g., phone number, email address). |
+| `display_name` | `VARCHAR(255)`  | Optional                           | Display name for social media (e.g., "Church Facebook"). |
+| `created_at` | `TIMESTAMP`      | Auto-generated                     | Timestamp when the contact was added. |
+| `updated_at` | `TIMESTAMP`      | Auto-generated                     | Timestamp when the contact was last updated. |
+
+- Index on `type` to filter by contact method.
+- Index on `value` to quickly look up a specific contact.
+
+
 ### User Management Service
 
 Manages users, authentication, roles, and account settings.
@@ -188,21 +222,129 @@ Handle event creation, registration, images, and social media sharing.
 Handles church service schedules, volunteer registration, and service details.
 - Relationships: `services` are linked to `users`, and `service_registrations` connect users wsith services.
 
+| Column Name        | Type                | Properties & Constraints         | Description |
+|--------------------|---------------------|----------------------------------|-------------|
+| **id**            | `UUID`               | Primary key, Auto-generated      | Unique identifier for each service. |
+| **title**         | `VARCHAR(255)`       | Required                         | The title of the service. |
+| **description**   | `TEXT`               | Optional                         | Detailed description of the service. |
+| **date**          | `DATE`               | Required                         | The date when the service will take place. |
+| **time**          | `TIME`               | Required                         | The time when the service will take place. |
+| **location**      | `VARCHAR(255)`       | Optional                         | The location where the service will be held. |
+| **created_by**    | `UUID`               | Foreign key → `users(id)`, Required | ID of the user who created the service. |
+| **created_at**    | `TIMESTAMP`          | Auto-generated                   | Timestamp when the service was created. |
+| **updated_at**    | `TIMESTAMP`          | Auto-generated                   | Timestamp when the service was last updated. |
+| **notification_enabled** | `BOOLEAN`     | Default: `false`                 | Flag indicating if notifications are enabled for the service. |
+| **pagination_limit** | `INTEGER`         | Default: `10`                     | The number of services to display per page. |
+| **total_participants** | `INTEGER`      | Calculated field (via trigger)   | Total number of registered participants (calculated from `service_registrations`). |
+
+#### **Searchable Fields**
+These columns should have indexes to improve search performance:
+- `title`
+- `date`
+- `time`
+- `location`
+
+#### **Filters and Sorting Support**
+- `date`, `time`, `location`, `created_at`
+
+#### Service registered
+| Column Name  | Type            | Properties & Constraints                         | Description |
+|-------------|----------------|--------------------------------------------------|-------------|
+| **id**      | `UUID`          | Primary key, Auto-generated                      | Unique identifier for each registration. |
+| **user_id** | `UUID`          | Foreign key → `users(id)`, Required              | The user who registered for the service. |
+| **service_id** | `UUID`       | Foreign key → `services(id)`, Required           | The service being registered for. |
+| **status**  | `ENUM('pending', 'registered', 'canceled')` | Default: `pending`, Required | Tracks the registration state. |
+| **created_at** | `TIMESTAMP`  | Auto-generated                                  | Timestamp when the user registered. |
+
+
+#### Indexes and Search
+
+- **Searchable fields:** `title`, `date`, `time`, `location`
+- **Filterable fields:** `status`
+- **Sortable fields:** `date`, `time`, `location`
+- **Pagination support:** Limit & offset can be used in queries.
+
+#### **Additional Features**
+- Admins can **view total participants** for each service.
+- Users can enable **reminders/notifications** for registered services.
+- Users can **cancel or modify registrations** based on status.
+
 ### Home Group
 Handles small-group gatherings.
 
 - Relationships: `home_groups` are linked to `users` via `leader_id`, and `home_group_members` track members.
+
+| Column Name         | Type           | Constraints                   | Description |
+|---------------------|---------------|------------------------------|-------------|
+| `id`               | `UUID`         | Primary key, Auto-generated  | Unique identifier for each home group. |
+| `title`            | `VARCHAR(255)` | Required, Indexed for search | Name of the home group. |
+| `description`      | `TEXT`         | Optional                     | A detailed description of the home group. |
+| `leader_id`        | `UUID`         | Foreign key → `users(id)`, Required | ID of the user leading the group. |
+| `picture_url`      | `TEXT`         | Optional                     | URL for the group's image. |
+| `video_url`        | `TEXT`         | Optional                     | URL for a video introduction about the group. |
+| `notification_enabled` | `BOOLEAN`    | Default: `false`             | If `true`, members receive reminders about meetings. |
+| `created_at`       | `TIMESTAMP`    | Auto-generated               | Timestamp when the home group was created. |
+| `updated_at`       | `TIMESTAMP`    | Auto-generated               | Timestamp when the home group was last updated. |
+| `pagination_limit` | `INTEGER`      | Default: `10`                | The number of home groups to display per page. |
+| `total_members`    | `INTEGER`      | Calculated field (via trigger) | Total number of members in this group. |
+
+#### Indexes
+- `title`, `leader_id`
+
+#### Filtering/Sorting
+- `created_at` for sorting by latest groups.
+- `total_members` for sorting by group size.
+
+#### Pagination
+- `LIMIT` and `OFFSET` queries based on `pagination_limit`.
+- Default page size: `10` groups per request.
+
+#### Home group members
+This table stores user registrations for home groups.
+
+| Column Name   | Type           | Constraints                         | Description |
+|--------------|---------------|------------------------------------|-------------|
+| `id`         | `UUID`         | Primary key, Auto-generated        | Unique identifier for each membership. |
+| `user_id`    | `UUID`         | Foreign key → `users(id)`, Required | ID of the user joining the home group. |
+| `home_group_id` | `UUID`      | Foreign key → `home_groups(id)`, Required | ID of the home group the user is joining. |
+| `status`     | `ENUM('pending', 'registered', 'canceled')` | Default: `'pending'` | Status of the user’s registration. |
+| `joined_at`  | `TIMESTAMP`    | Auto-generated                     | Timestamp when the user joined the group. |
+
+- `home_group_id` to quick count members.
+- `user_id` for filtering by user
+- Filtering and Sorting by status
 
 ### Donations
 Handles financial and crypto donations.
 
 - Relationships: Donations are linked to `users(id)`.
 
+| Column Name       | Type             | Constraints                           | Description |
+|------------------|-----------------|--------------------------------------|-------------|
+| `id`            | `UUID`           | Primary key, Auto-generated         | Unique identifier for each donation. |
+| `user_id`       | `UUID`           | Foreign key → `users(id)`, Required | The ID of the user who made the donation. |
+| `amount`        | `DECIMAL(10,2)`  | Required                             | The amount donated. |
+| `currency`      | `ENUM('USD', 'EUR', 'XTZ')` | Required                      | The currency in which the donation was made. |
+| `transaction_id` | `VARCHAR(255)`   | Unique, Required                     | The unique transaction identifier for tracking. |
+| `created_at`    | `TIMESTAMP`      | Auto-generated                       | Timestamp when the donation was made. |
+
+
 ### Notifications
 
 Manages push, email, and SMS notifications.
 
 - Relationships: Notifications are linked to `users(id)`.
+
+
+| Column Name   | Type           | Constraints                           | Description |
+|--------------|---------------|--------------------------------------|-------------|
+| `id`         | `UUID`         | Primary key, Auto-generated         | Unique identifier for each notification. |
+| `user_id`    | `UUID`         | Foreign key → `users(id)`, Required | The recipient user's ID. |
+| `message`    | `TEXT`         | Required                             | The content of the notification. |
+| `type`       | `ENUM('email', 'sms', 'push')` | Required              | The type of notification being sent. |
+| `status`     | `ENUM('pending', 'sent', 'failed')` | Default: `'pending'` | The current status of the notification. |
+| `created_at` | `TIMESTAMP`    | Auto-generated                       | Timestamp when the notification was created. |
+
 
 ## Inter-Service Communication
 Microservices interact using REST APIs, GraphQL, or event-driven messaging.
