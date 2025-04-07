@@ -27,7 +27,7 @@ dev:
 .PHONY: start
 start: build
 	@echo "Starting production server..."
-	NODE_ENV=production $(NPM) run start:prod
+	NODE_ENV=production node dist/main.js
 
 # Build targets
 .PHONY: build
@@ -36,6 +36,10 @@ build:
 	rm -rf dist
 	npx prisma generate
 	$(NEST) build
+	@if [ -d "dist/src" ]; then \
+		cp -r dist/src/* dist/ && \
+		rm -rf dist/src; \
+	fi
 
 # Test targets
 .PHONY: test
@@ -59,7 +63,7 @@ clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf dist
 	rm -rf node_modules
-	rm -rf coverage
+	rm -rf .next
 
 # Linting and formatting
 .PHONY: lint

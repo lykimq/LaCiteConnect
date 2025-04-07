@@ -23,7 +23,7 @@ import { PrismaModule } from '../prisma/prisma.module';
         PassportModule, // Import the Passport module
         JwtModule.register({
             secret: process.env.JWT_SECRET, // Secret key for the JWT
-            signOptions: { expiresIn: '1h' }, // Options for the JWT
+            signOptions: { expiresIn: '7d' }, // Options for the JWT
         }),
     ],
 
