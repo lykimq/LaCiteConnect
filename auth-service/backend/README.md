@@ -179,6 +179,7 @@ This architecture ensures:
 ### Authentication
 - `POST /auth/register` - Register new user
 - `POST /auth/login` - User login
+- `GET /auth/validate` - Validate authentication token
 - `POST /auth/logout` - User logout (planned)
 - `POST /auth/refresh` - Refresh token (planned)
 - `POST /auth/reset-password` - Password reset (planned)
@@ -265,23 +266,4 @@ npm run start:prod
 docker build -t laciteconnect-auth .
 docker run -p 3000:3000 laciteconnect-auth
 ```
-
-## Authentication Endpoints
-
-### Register User
-- **POST** `/auth/register`
-- Register a new user with email and password
-- Returns user information on success
-
-### Login
-- **POST** `/auth/login`
-- Authenticate user with email and password
-- Returns JWT token and user information on success
-
-### Validate Token
-- **GET** `/auth/validate`
-- Validate the current authentication token
-- Protected by JWT authentication
-- Returns user information if token is valid
-- Returns 401 Unauthorized if token is invalid or expired
 
