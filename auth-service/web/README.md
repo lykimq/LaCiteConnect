@@ -6,7 +6,7 @@ This is the admin web interface for LaCiteConnect, built with React, TypeScript,
 ## Project Structure
 ```
 src/
-├── components/     # Reusable UI components
+├── pages/     # Reusable UI components
 │   ├── Login.tsx  # Login page with authentication form
 │   └── DashBoard.tsx  # Main dashboard after authentication
 ├── services/      # API services
