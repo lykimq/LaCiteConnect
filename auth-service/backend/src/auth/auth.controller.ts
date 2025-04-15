@@ -1,15 +1,16 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 /**
  * Authentication Controller
  * This controller handles HTTP requests for authentication:
- * - User registration
- * - User login
- * - Token management
+ * - User registration: POST /auth/register
+ * - User login: POST /auth/login
+ * - Token validation: GET /auth/validate
  */
 @ApiTags('Authentication')
 @Controller('auth')
@@ -43,5 +44,19 @@ export class AuthController {
     @ApiResponse({ status: 401, description: 'Invalid credentials' })
     async login(@Body() loginDto: LoginDto) {
         return this.authService.login(loginDto);
+    }
+
+    /**
+     * Validate authentication token: GET /auth/validate
+     * @returns User information if token is valid
+     */
+    @Get('validate')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Validate authentication token' })
+    @ApiResponse({ status: 200, description: 'Token is valid' })
+    @ApiResponse({ status: 401, description: 'Invalid or expired token' })
+    async validateToken() {
+        return this.authService.validateToken();
     }
 }

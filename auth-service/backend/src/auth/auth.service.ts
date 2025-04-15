@@ -151,4 +151,29 @@ export class AuthService {
         }
         return null;
     }
+
+    /**
+     * Validate the current authentication token
+     * @returns User information if token is valid
+     */
+    async validateToken() {
+        // The JWT strategy will automatically validate the token
+        // and attach the user to the request
+        const user = await this.prisma.user.findUnique({
+            where: { id: this.jwtService.decode(this.jwtService.sign({}))['sub'] },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+            },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException('Invalid token');
+        }
+
+        return user;
+    }
 }

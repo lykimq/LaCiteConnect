@@ -50,6 +50,91 @@ backend/
 └── tsconfig.json              # TypeScript configuration
 ```
 
+## Code Flow and Implementation Order
+
+The implementation follows a bottom-up approach:
+1. First, the database layer is set up with Prisma
+2. Then, the data validation layer (DTOs) is implemented
+3. Next, the authentication strategies and guards are configured
+4. After that, the core business logic is implemented in the service layer
+5. Finally, the API endpoints are exposed through the controller
+
+The authentication service follows a specific implementation order to ensure proper dependency management and functionality. Here's the sequence of how the code is structured and executed:
+
+1. **Database Layer (Prisma)**
+   - `prisma/schema.prisma`: Defines the database schema and models
+   - `src/prisma/prisma.service.ts`: Implements the Prisma client service
+   - `src/prisma/prisma.module.ts`: Configures the global Prisma module
+
+2. **Data Transfer Objects (DTOs)**
+   - `auth/dto/register-user.dto.ts`: Defines user registration validation
+   - `auth/dto/login.dto.ts`: Defines login request validation
+
+3. **Authentication Strategies**
+   - `auth/strategies/jwt.strategy.ts`: Implements JWT token validation
+   - `auth/guards/roles.guard.ts`: Implements role-based access control
+
+4. **Core Authentication Logic**
+   - `auth/auth.service.ts`: Implements business logic for:
+     - User registration
+     - User authentication
+     - Token generation
+     - Firebase integration
+     - Password hashing
+
+5. **API Layer**
+   - `auth/auth.controller.ts`: Exposes REST endpoints for:
+     - User registration
+     - User login
+     - Token management
+
+6. **Module Configuration**
+   - `auth/auth.module.ts`: Configures the authentication module with:
+     - JWT configuration
+     - Passport strategies
+     - Service providers
+     - Guards
+
+7. **Application Setup**
+   - `app.module.ts`: Root module that:
+     - Imports all necessary modules
+     - Configures global settings
+     - Sets up environment variables
+
+8. **Application Entry Point**
+   - `main.ts`: Bootstraps the application with:
+     - CORS configuration
+     - Global validation pipe
+     - Swagger documentation
+     - Server startup
+
+### Flow of Execution
+
+1. When the application starts, `main.ts` is executed first
+2. The `AppModule` is initialized, which imports:
+   - `PrismaModule` for database access
+   - `AuthModule` for authentication
+   - `ConfigModule` for environment variables
+3. The `AuthModule` initializes:
+   - JWT configuration
+   - Passport strategies
+   - Authentication services
+   - Authorization guards
+4. When a request comes in:
+   - The appropriate controller endpoint is called
+   - The request is validated against DTOs
+   - The service layer processes the business logic
+   - Database operations are performed through Prisma
+   - Authentication strategies validate tokens
+   - Role guards check permissions
+   - Response is sent back to the client
+
+This architecture ensures:
+- Clear separation of concerns
+- Proper dependency injection
+- Secure authentication flow
+- Scalable and maintainable codebase
+
 ## Features
 
 ### Implemented
@@ -180,4 +265,23 @@ npm run start:prod
 docker build -t laciteconnect-auth .
 docker run -p 3000:3000 laciteconnect-auth
 ```
+
+## Authentication Endpoints
+
+### Register User
+- **POST** `/auth/register`
+- Register a new user with email and password
+- Returns user information on success
+
+### Login
+- **POST** `/auth/login`
+- Authenticate user with email and password
+- Returns JWT token and user information on success
+
+### Validate Token
+- **GET** `/auth/validate`
+- Validate the current authentication token
+- Protected by JWT authentication
+- Returns user information if token is valid
+- Returns 401 Unauthorized if token is invalid or expired
 
