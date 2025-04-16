@@ -26,6 +26,15 @@ CREATE TABLE users (
     -- Token for password recovery
     password_reset_token VARCHAR(255),
 
+    -- Expiry time for password reset token
+    password_reset_expiry TIMESTAMP,
+
+    -- Admin secret hash for admin authentication
+    admin_secret_hash TEXT,
+
+    -- Admin secret salt for admin authentication
+    admin_secret_salt TEXT,
+
     -- User's first and last name, used for efficient search
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
@@ -96,3 +105,5 @@ CREATE INDEX idx_users_first_name ON users (first_name);
 CREATE INDEX idx_users_last_name ON users (last_name);
 CREATE INDEX idx_users_full_name ON users (full_name);
 CREATE INDEX idx_users_phone_number ON users (phone_number);
+CREATE INDEX idx_users_password_reset_token ON users (password_reset_token);
+CREATE INDEX idx_users_password_reset_expiry ON users (password_reset_expiry);

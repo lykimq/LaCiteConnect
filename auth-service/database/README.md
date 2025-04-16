@@ -1,156 +1,214 @@
-# User Authentication and Management System
+# LaCiteConnect Database Documentation
 
-## Features
-- **Email/Password Authentication:** Secure login using email and password.
-- **Firebase Authentication:** Supports Google, Email/Password, and Anonymous authentication.
-- **JWT-based Authorization:** Secure token-based authentication for user sessions.
-- **Email Verification:** Users receive email verification upon registration.
-- **Password Reset Functionality:** Users can reset their passwords via a token-based mechanism.
-- **User Profile Management:** Users can manage their profile, including first name, last name, and profile picture.
-- **Privacy Controls:** Users can control the visibility of their personal information (email, phone number, profile picture, etc.).
-- **Biometric Authentication:** Optional biometric login (e.g., fingerprint/face ID) for mobile applications.
-- **Roles and Permissions:** User roles defined as `guest`, `user`, or `admin` to control access to different features.
+## Overview
+This directory contains the database setup and schema for LaCiteConnect's authentication service. The database is built using PostgreSQL and includes tables for user management, authentication, and session handling.
 
-## Database Schema: `users` Table
+## Prerequisites
+- PostgreSQL 12 or higher
+- Node.js 16 or higher
+- npm or yarn
+- psql command-line tool
+- Bash shell
 
+## Setup Instructions
+
+### 1. Install Dependencies
+```bash
+cd auth-service/backend
+npm install
+# or
+yarn install
+```
+
+### 2. Configure Database Access
+Update these variables in `users_db.sh`:
+```bash
+DB_NAME="auth_service"
+DB_USER="quyen"
+DB_PASSWORD="Praise_God"
+DB_HOST="localhost"
+DB_PORT="5432"
+```
+
+### 3. Create and Setup Database
+```bash
+cd auth-service/database
+chmod +x users_db.sh
+./users_db.sh
+```
+
+### 4. Set Up Admin Credentials
+```bash
+cd auth-service/backend
+# Copy the template to create .env_admin
+cp .env_admin.template .env_admin
+
+# Edit .env_admin with your credentials
+# Make sure to set proper values for:
+# ADMIN_EMAIL_DEV
+# ADMIN_PASSWORD_DEV
+# ADMIN_FIRST_NAME_DEV
+# ADMIN_LAST_NAME_DEV
+# ADMIN_SECRET_DEV
+```
+
+### 5. Run Prisma Migrations
+```bash
+cd auth-service/backend
+npx prisma migrate dev --name init
+```
+
+### 6. Seed the Database
+```bash
+# First time setup
+./scripts/admin-credentials.sh setup
+
+# Update credentials if needed
+./scripts/admin-credentials.sh update dev your.email@example.com "First Name" "Last Name"
+
+# Seed the database
+./scripts/admin-credentials.sh seed dev
+
+# If you need to reset the admin user
+./scripts/admin-credentials.sh reset dev
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Connection Issues**:
+   ```bash
+   # Verify PostgreSQL is running
+   pg_isready -h localhost -p 5432 -U quyen
+
+   # Check database exists
+   psql -h localhost -U quyen -l
+   ```
+
+2. **Prisma Migration Issues**:
+   ```bash
+   # Reset the database (WARNING: This will delete all data)
+   npx prisma migrate reset
+
+   # Generate migrations
+   npx prisma migrate dev --name init
+   ```
+
+3. **Admin User Issues**:
+   ```bash
+   # Check if admin user exists
+   psql -h localhost -U quyen -d auth_service -c "SELECT email, role FROM users WHERE role = 'admin';"
+
+   # Reset admin user
+   ./scripts/admin-credentials.sh reset dev
+   ```
+
+### Environment Variables
+Make sure these environment variables are set correctly:
+```bash
+# In .env_admin
+ADMIN_EMAIL_DEV=your.email@example.com
+ADMIN_PASSWORD_DEV=YourSecurePassword123!
+ADMIN_FIRST_NAME_DEV=First
+ADMIN_LAST_NAME_DEV=Last
+ADMIN_SECRET_DEV=YourAdminSecret123!
+
+# In .env
+DATABASE_URL="postgresql://quyen:Praise_God@localhost:5432/auth_service"
+```
+
+## Security Considerations
+
+1. **Password Requirements**:
+   - Minimum 8 characters
+   - At least one uppercase letter
+   - At least one lowercase letter
+   - At least one number
+   - Special characters are allowed
+
+2. **Environment Files**:
+   - Never commit `.env` or `.env_admin` to version control
+   - Keep backup copies of credentials in a secure location
+   - Use different credentials for development and production
+
+## Maintenance
+
+### Backup Procedures
+```bash
+# Create a backup
+pg_dump -h localhost -U quyen auth_service > backup.sql
+
+# Restore from backup
+psql -h localhost -U quyen auth_service < backup.sql
+```
+
+### Monitoring
+- Regular index maintenance
+- Performance monitoring
+- Security audits
+
+## Support
+For database-related issues, contact the database administrator or refer to the PostgreSQL documentation.
+
+## Database Structure
+
+### Users Table
+The `users` table is the core of our authentication system, storing user information and authentication details:
 
 ```sql
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     password_salt TEXT NOT NULL,
     password_reset_token VARCHAR(255),
+    password_reset_expiry TIMESTAMP,
+    admin_secret_hash TEXT,
+    admin_secret_salt TEXT,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     full_name VARCHAR(255) GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED,
     phone_number VARCHAR(20) UNIQUE,
     phone_region VARCHAR(10),
-    role ENUM('guest', 'user', 'admin') DEFAULT 'guest' NOT NULL,
+    role role_type DEFAULT 'guest' NOT NULL,
     privacy_settings JSONB DEFAULT '{}'::jsonb,
-    session_type ENUM('session', 'persistent') DEFAULT 'session',
+    session_type session_type_enum DEFAULT 'session' NOT NULL,
     biometric_enabled BOOLEAN DEFAULT false,
     last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     profile_picture_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT phone_number_format CHECK (phone_number ~ '^\+?[0-9\s\-]{10,20}$'),
-    CONSTRAINT email_format CHECK (email ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
-### Fields
-- id: UUID, unique identifier for the user.
-- email: User's email address, unique and required.
-- password_hash: Hashed password stored securely (bcrypt/Argon2).
-- password_salt: Salt used with the password hash.
-- password_reset_token: Token used for password recovery.
-- first_name: User's first name.
-- last_name: User's last name.
-- full_name: Precomputed field combining first and last name for optimized search.
-- phone_number: User's phone number, unique.
-- phone_region: Country code for international compatibility.
-- role: User role (guest, user, or admin).
-- privacy_settings: JSONB field for user-defined privacy preferences (e.g., who can see email, phone number, profile picture).
-- session_type: Defines whether the user is logged in for a session or persistently.
-- biometric_enabled: Indicates whether biometric login is enabled.
-- last_login_at: Timestamp of the last login.
-- profile_picture_url: URL to the user's profile picture.
-- created_at: Timestamp when the account was created.
-- updated_at: Timestamp when the account was last updated.
+
+### Key Features
+
+1. **Security Features**:
+   - UUID-based primary keys to prevent enumeration attacks
+   - Secure password hashing with salt
+   - Admin secret authentication
+   - Password reset functionality with expiry
+   - Biometric authentication support
+
+2. **Data Validation**:
+   - Email format validation
+   - Phone number format validation
+   - Role type enforcement
+   - Session type enforcement
+
+3. **Performance Optimizations**:
+   - Indexed fields for fast lookups
+   - Generated full name column
+   - Optimized search fields
 
 ### Indexes
-- email (Unique, Indexed for authentication & searches)
-- first_name (Indexed for name-based searches)
-- last_name (Indexed for name-based searches)
-- full_name (Precomputed & Indexed for better performance)
-- phone_number (Indexed for contact searches)
+The database includes several indexes for optimal performance:
 
-### Validation Rules
-- Email: Must contain @ symbol, valid domain, and no spaces or special characters (except for . and -). Max length of 255 characters. Case-insensitive uniqueness check.
-- Phone Number: Valid phone number format (e.g., +1234567890 or 123-456-7890). Only numbers, spaces, +, and - are allowed.
-
-### Environment Variables
-#### Database Configuration
-
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=Praise_God
-DB_NAME=auth_service
-```
-
-#### JWT Configuration
-JWT (JSON Web Token) is a compact, URL-safe means of representing claims to be transferred between two parties. It is commonly used to handle user authentication and authorization in web applications.
-
-##### Setting Up JWT Secret and Expiration
-1. Generate a JWT Secret;
-- The `JWT_SECRET` is a secret key that is used to signed in the JWT token. It should use a strong, random string for security.
-- We can use `openssl rand -base64 32`. This will be at the `JWT_SECRET` in `env` file.
-2. JWT Expiration:
-- `JWT_EXPIRATION` defines how long the token will remain valid. Common values are `1d` (1 day), `1h`, `7d`, etc.
-- We can set it as `7d` for this example.
-
-```env
-JWT_SECRET=5jLRnqMXlNuS2cR4pcHHRrGV07m3uF9S/00DeYtEg+E=
-JWT_EXPIRATION=7d
-```
-
-#### Firebase Configuration
-1. Set Up Firebase
-a. Create a Firebase Project:
-- Go to the Firebase Console.
-- Click "Add project" (`Auth-Service`) and follow the instructions to create a new Firebase project.
-
-b. Enable Authentication Providers:
-- After the project is created, navigate to the **Authentication** section in Firebase Console.
-- Under the **Sign-in method** tab, enable Email/Password, Google, or any other authentication providers that we want to use.
-
-c. Generate Firebase Service Account JSON File:
-- Go to **Project Settings** (gear icon) > **Service accounts** tab.
-- Click on **Generate new private key**. This will download a JSON file to the computer. (`/auth-service/database/auth-service-1619a-firebase-adminsdk-fbsvc-6ccfdf2990.json`)
-- This file contains the credentials required to authenticate with Firebase services.
-
-d. Install Firebase Admin SDK::
-- In the project directory `auth-service`, install the Firebase Admin SDK to allow the server to interact with Firebase for authentication and other Firebase services.
-
-```
-npm install firebase-admin
-```
-e. Configure Firebase `env` file:
-
-```env
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_SERVICE_ACCOUNT=your_service_account_json
-```
-
-f. Use Firebase Admin SDK in the Application
-In the backend code (e.g., `server.js` or `app.js`), initialize Firebase Admin SDK using the service account JSON and project ID from the `.env` file.
-- Make sure to install `dotenv` for loading `.env` variables:
-```
-npm install dotenv
-```
-
-
-#### Server Configuration
-1. Set Up Server Configuration
-The server configuration includes setting up the port and the environment (`NODE_ENV`), which helps to determine whether the app is running in development, production, or another environment.
-a. Port Configuration:
-- The `PORT` variable defines the port on which the server will run. The default value is `3000`.
-
-b. Environment Configuration:
-- The `NODE_ENV` variable helps the app understand whether it is running in a development environment (`development`), production (`production`), or testing (`test`).
-
-2. Add to `.env` file:
-```
-PORT=3000
-NODE_ENV=development
-```
-- `PORT=3000` means the app will run on `http://localhost:3000`
-- `NODE_ENV=development` specifies that the app is running in development mode.
-
-3. Use the Server Configuration in The Code:
-In the application code (e.g., `server.js`), we can use these environment variables.
-
-#### Install Dependencies
-- jsonwebtoken, dotenv, firebase-admin, express
+- `idx_users_email_lower`: Case-insensitive email search
+- `idx_users_first_name`: First name search
+- `idx_users_last_name`: Last name search
+- `idx_users_full_name`: Full name search
+- `idx_users_phone_number`: Phone number lookup
+- `idx_users_password_reset_token`: Password reset token lookup
+- `idx_users_password_reset_expiry`: Password reset expiry management
