@@ -28,11 +28,11 @@ backend/
 │   ├── auth/                    # Authentication module
 │   │   ├── dto/                 # Data Transfer Objects
 │   │   │   ├── login.dto.ts     # Login request validation
-│   │   │   └── register-user.dto.ts # Registration validation
+│   │   │   ├── register-user.dto.ts # Registration validation
+│   │   │   └── admin-login.dto.ts # Admin login validation
 │   │   ├── guards/              # Authorization guards
-│   │   │   └── roles.guard.ts   # Role-based access control
-│   │   ├── strategies/          # Authentication strategies
-│   │   │   └── jwt.strategy.ts  # JWT authentication
+│   │   │   ├── jwt-auth.guard.ts # JWT authentication guard
+│   │   │   └── admin.guard.ts   # Admin role guard
 │   │   ├── auth.controller.ts   # API endpoints
 │   │   ├── auth.service.ts      # Business logic
 │   │   └── auth.module.ts       # Module configuration
@@ -69,29 +69,33 @@ The authentication service follows a specific implementation order to ensure pro
 2. **Data Transfer Objects (DTOs)**
    - `auth/dto/register-user.dto.ts`: Defines user registration validation
    - `auth/dto/login.dto.ts`: Defines login request validation
+   - `auth/dto/admin-login.dto.ts`: Defines admin login validation with admin secret
 
-3. **Authentication Strategies**
-   - `auth/strategies/jwt.strategy.ts`: Implements JWT token validation
-   - `auth/guards/roles.guard.ts`: Implements role-based access control
+3. **Authentication Guards**
+   - `auth/guards/jwt-auth.guard.ts`: Implements JWT token validation
+   - `auth/guards/admin.guard.ts`: Implements admin role verification
 
 4. **Core Authentication Logic**
    - `auth/auth.service.ts`: Implements business logic for:
      - User registration
      - User authentication
-     - Token generation
+     - Admin authentication with secret
+     - Token generation with user details
      - Firebase integration
      - Password hashing
+     - Admin dashboard statistics
 
 5. **API Layer**
    - `auth/auth.controller.ts`: Exposes REST endpoints for:
      - User registration
      - User login
-     - Token management
+     - Admin login
+     - Token validation
+     - Admin dashboard access
 
 6. **Module Configuration**
    - `auth/auth.module.ts`: Configures the authentication module with:
      - JWT configuration
-     - Passport strategies
      - Service providers
      - Guards
 
@@ -107,6 +111,9 @@ The authentication service follows a specific implementation order to ensure pro
      - Global validation pipe
      - Swagger documentation
      - Server startup
+     - Security headers
+     - Cookie parsing
+     - Structured logging
 
 ### Flow of Execution
 
@@ -117,7 +124,6 @@ The authentication service follows a specific implementation order to ensure pro
    - `ConfigModule` for environment variables
 3. The `AuthModule` initializes:
    - JWT configuration
-   - Passport strategies
    - Authentication services
    - Authorization guards
 4. When a request comes in:
@@ -125,8 +131,7 @@ The authentication service follows a specific implementation order to ensure pro
    - The request is validated against DTOs
    - The service layer processes the business logic
    - Database operations are performed through Prisma
-   - Authentication strategies validate tokens
-   - Role guards check permissions
+   - Authentication guards validate tokens and roles
    - Response is sent back to the client
 
 This architecture ensures:
@@ -144,16 +149,24 @@ This architecture ensures:
   - Firebase integration
   - PostgreSQL storage
 - ✅ User Authentication
-  - JWT token generation
+  - JWT token generation with user details
   - Firebase token generation
   - Session management
+- ✅ Admin Authentication
+  - Admin secret verification
+  - Role-based access control
+  - Admin dashboard access
 - ✅ Role-Based Authorization
-  - Guest, User, Admin roles
-  - Role guards
+  - User, Admin roles
+  - JWT and Admin guards
 - ✅ Database Integration
   - Prisma ORM
   - PostgreSQL schema
   - Migrations
+- ✅ Admin Dashboard
+  - User statistics
+  - System status monitoring
+  - Recent activity tracking
 
 ### Planned Features
 - 🔄 Password Reset
@@ -181,6 +194,7 @@ This architecture ensures:
 - `POST /auth/login` - Login as a regular user
 - `POST /auth/admin/login` - Login as an admin (requires admin secret)
 - `GET /auth/validate` - Validate authentication token
+- `GET /auth/admin/dashboard` - Access admin dashboard (requires admin role)
 - `POST /auth/logout` - User logout (planned)
 - `POST /auth/refresh` - Refresh token (planned)
 - `POST /auth/reset-password` - Password reset (planned)
@@ -193,19 +207,16 @@ This architecture ensures:
 ## Security Features
 
 ### Implemented
-- ✅ JWT token authentication
+- ✅ JWT token authentication with user details
 - ✅ Password hashing with bcrypt
+- ✅ Admin secret verification
 - ✅ Role-based access control
 - ✅ Firebase integration
 - ✅ Input validation
-- ✅ SQL injection prevention (via Prisma)
-
-### Planned
-- 🔄 Rate limiting
-- 🔄 IP blocking
-- 🔄 2FA support
-- 🔄 Session management
-- 🔄 Audit logging
+- ✅ CORS configuration
+- ✅ Security headers
+- ✅ Cookie parsing
+- ✅ Structured logging
 
 ## Development
 

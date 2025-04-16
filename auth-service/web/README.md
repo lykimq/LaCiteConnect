@@ -1,107 +1,246 @@
-# LaCiteConnect Admin Web Interface
+# LaCiteConnect Web Application
 
 ## Overview
-This is the admin web interface for LaCiteConnect, built with React, TypeScript, and Material-UI. It provides a modern and responsive interface for managing users and monitoring system activity, with separate interfaces for regular users and administrators.
+This is the web application for LaCiteConnect, built with React, TypeScript, and Material-UI. It provides a modern, responsive interface for user authentication and admin dashboard functionality.
+
+## Architecture
+
+### Tech Stack
+- **Frontend Framework**: React
+- **Language**: TypeScript
+- **UI Library**: Material-UI (MUI)
+- **State Management**: React Context
+- **HTTP Client**: Axios
+- **Testing**: Jest + React Testing Library
+- **Build Tool**: Vite
+
+### Design Patterns
+- Component-Based Architecture
+- Context API for State Management
+- Custom Hooks for Reusable Logic
+- Higher-Order Components for Authentication
+- Container/Presenter Pattern
+
+## Directory Structure
+
+```
+web/
+├── src/
+│   ├── components/              # Reusable UI components
+│   │   ├── AdminLoginForm.tsx   # Admin login form
+│   │   ├── UserLoginForm.tsx    # User login form
+│   │   └── RegisterForm.tsx     # User registration form
+│   ├── context/                 # React Context providers
+│   │   └── AuthContext.tsx      # Authentication context
+│   ├── pages/                   # Page components
+│   │   ├── AdminLogin.tsx       # Admin login page
+│   │   ├── UserLogin.tsx        # User login page
+│   │   ├── Register.tsx         # Registration page
+│   │   └── AdminDashboard.tsx   # Admin dashboard
+│   ├── services/                # API services
+│   │   └── api.ts               # API client configuration
+│   ├── types/                   # TypeScript types
+│   │   └── auth.ts              # Authentication types
+│   ├── App.tsx                  # Root component
+│   └── main.tsx                 # Application entry point
+├── public/                      # Static assets
+├── .env                         # Environment variables
+├── package.json                # Dependencies and scripts
+└── tsconfig.json              # TypeScript configuration
+```
+
+## Code Flow and Implementation Order
+
+The implementation follows a component-based approach:
+1. First, the core authentication context is set up
+2. Then, the API service layer is implemented
+3. Next, the reusable form components are created
+4. After that, the page components are built
+5. Finally, the routing and navigation are configured
+
+### Implementation Details
+
+1. **Authentication Context**
+   - `context/AuthContext.tsx`: Manages authentication state and provides:
+     - User authentication status
+     - Login/logout functionality
+     - Token management
+     - Admin role verification
+
+2. **API Service Layer**
+   - `services/api.ts`: Handles API communication with:
+     - Axios instance configuration
+     - Request/response interceptors
+     - Error handling
+     - Authentication endpoints
+
+3. **Form Components**
+   - `components/AdminLoginForm.tsx`: Admin authentication form with:
+     - Email and password fields
+     - Admin secret field
+     - Error handling
+     - Loading states
+   - `components/UserLoginForm.tsx`: User authentication form
+   - `components/RegisterForm.tsx`: User registration form
+
+4. **Page Components**
+   - `pages/AdminLogin.tsx`: Admin login page
+   - `pages/UserLogin.tsx`: User login page
+   - `pages/Register.tsx`: Registration page
+   - `pages/AdminDashboard.tsx`: Admin dashboard with:
+     - User statistics
+     - System status
+     - Recent activity
+
+5. **Application Setup**
+   - `App.tsx`: Configures:
+     - Routing
+     - Theme provider
+     - Authentication context
+     - Global styles
 
 ## Features
-- User authentication (login/logout)
-- Admin authentication with secret key
-- Role-based access control
-- Protected routes
-- Responsive design
-- Form validation
-- Error handling
-- Type safety
-- Theme customization
 
-## Project Structure
-```
-src/
-├── pages/         # Page components
-│   ├── Login.tsx  # Regular user login
-│   ├── AdminLogin.tsx  # Admin login
-│   ├── DashBoard.tsx  # User dashboard
-│   └── AdminDashboard.tsx  # Admin dashboard
-├── services/      # API services
-│   └── api.ts     # Axios instance and API service methods
-├── types/         # TypeScript type definitions
-│   └── index.ts  # Shared type definitions
-├── context/       # React context providers
-│   └── AuthContext.tsx  # Authentication context and provider
-├── theme.ts       # Material-UI theme configuration
-├── App.tsx        # Main application component
-└── index.tsx      # Application entry point
-```
+### Implemented
+- ✅ User Authentication
+  - Login form with validation
+  - Registration form
+  - Token management
+  - Session persistence
+- ✅ Admin Authentication
+  - Admin login form
+  - Admin secret verification
+  - Role-based access control
+- ✅ Admin Dashboard
+  - User statistics display
+  - System status monitoring
+  - Recent activity tracking
+- ✅ Responsive Design
+  - Mobile-first approach
+  - Material-UI components
+  - Responsive layouts
+- ✅ Error Handling
+  - Form validation
+  - API error messages
+  - Loading states
 
-## Authentication Flow
-
-### Regular User Authentication
-1. User enters credentials on the login page
-2. Credentials are sent to the auth service
-3. Upon successful authentication:
-   - JWT token is stored in localStorage
-   - User is redirected to the dashboard
-
-### Admin Authentication
-1. Admin enters credentials and admin secret on the admin login page
-2. Credentials and secret are sent to the auth service
-3. Upon successful authentication:
-   - JWT token is stored in localStorage
-   - Admin is redirected to the admin dashboard
-
-### Protected Routes
-- Regular routes require authentication
-- Admin routes require both authentication and admin role
-- Unauthorized access redirects to appropriate login page
-
-## State Management
-- Uses React Context API for global state management
-- Implements custom hooks for authentication
-- Manages loading and error states
-- Handles token persistence
+### Planned Features
+- 🔄 User Profile
+  - Profile management
+  - Password change
+  - Account settings
+- 🔄 Enhanced Security
+  - 2FA support
+  - Session timeout
+  - Password strength meter
+- 🔄 Analytics Dashboard
+  - User activity charts
+  - System performance metrics
+  - Custom reports
+- 🔄 Theme Customization
+  - Dark/light mode
+  - Custom color schemes
+  - Responsive typography
 
 ## API Integration
-- Axios instance with interceptors for auth
-- Centralized error handling
-- Type-safe API calls
-- Automatic token management
 
-## UI Components
-- Material-UI components with custom theme
-- Responsive design
-- Form validation
-- Error handling and display
+### Authentication Endpoints
+- `POST /auth/login` - User login
+- `POST /auth/admin/login` - Admin login
+- `POST /auth/register` - User registration
+- `GET /auth/validate` - Token validation
+- `GET /auth/admin/dashboard` - Admin dashboard data
 
-## Security Considerations
-- JWT tokens are stored securely
-- API requests include authentication headers
-- Input validation is performed
-- Error handling is implemented
-- Protected routes are enforced
-- Admin access requires additional secret key
+### Error Handling
+- Network errors
+- Authentication failures
+- Validation errors
+- Server errors
 
-## Prerequisites
+## Security Features
+
+### Implemented
+- ✅ Secure token storage
+- ✅ CSRF protection
+- ✅ Input validation
+- ✅ XSS prevention
+- ✅ CORS configuration
+- ✅ HTTPS enforcement
+
+## Development
+
+### Prerequisites
 - Node.js >= 18.0.0
 - npm or yarn
-- LaCiteConnect Auth Service running on port 3000
 
-## Setup
+### Setup
 1. Install dependencies:
 ```bash
-make install
+npm install
 ```
 
-2. Setup development environment:
+2. Configure environment variables:
 ```bash
-make dev-setup
+cp .env.example .env
+# Edit .env with your configuration
 ```
 
 3. Start development server:
 ```bash
-make start
+npm run dev
 ```
 
-The application will be available at http://localhost:3001
+### Testing
+```bash
+# Run unit tests
+npm test
+
+# Run tests with coverage
+npm run test:cov
+
+# Run e2e tests
+npm run test:e2e
+```
+
+## Deployment
+
+### Production Setup
+1. Build the application:
+```bash
+npm run build
+```
+
+2. Serve the static files:
+```bash
+npm run preview
+```
+
+### Environment Variables
+```env
+VITE_API_URL=http://localhost:3000/api
+VITE_ENV=development
+```
+
+## Development Guidelines
+
+### Code Style
+- Use TypeScript for type safety
+- Follow React best practices
+- Use functional components with hooks
+- Implement proper error handling
+- Write meaningful comments
+
+### Testing
+- Unit tests for components
+- Integration tests for forms
+- E2E tests for critical flows
+- Snapshot testing for UI components
+
+### Performance
+- Code splitting
+- Lazy loading
+- Image optimization
+- Bundle size monitoring
 
 ## Make Commands
 ```bash
@@ -114,11 +253,14 @@ make clean         # Clean build artifacts
 make lint          # Lint code
 make format        # Format code
 make type-check    # Check TypeScript types
-make dev-setup     # Setup development environment
-make prod-setup    # Setup production environment
 ```
 
 ## Development
 - Use `make start` for development
 - Use `make test` for running tests
 - Use `make build` for production build
+
+## Testing
+- Unit tests for components and hooks
+- Integration tests for forms and API calls
+- E2E tests for authentication flow
