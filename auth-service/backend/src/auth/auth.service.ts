@@ -1,131 +1,133 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { AdminLoginDto } from './dto/admin-login.dto';
 import * as bcrypt from 'bcryptjs';
 import * as admin from 'firebase-admin';
+import { Logger } from '@nestjs/common';
 
 /**
  * Authentication Service
- * This service handles all authentication-related business logic:
- * - User registration
- * - User login
- * - Password hashing
- * - Token generation
- * - Firebase integration
+ * Handles all authentication-related business logic including:
+ * - User registration and management
+ * - Password hashing and verification
+ * - JWT token generation and validation
+ * - Admin authentication and authorization
+ * - Firebase integration for additional security
  */
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
 
-    // Constructor for the AuthService
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
     ) {
-        // Initialize Firebase Admin
+        // Initialize Firebase Admin SDK for additional security features
         admin.initializeApp({
             credential: admin.credential.applicationDefault(),
         });
     }
 
     /**
-     * Register a new user
-     * @param registerUserDto User registration data
-     * @returns Created user information
+     * Register a new user in the system
+     * @param registerUserDto User registration data including email, password, and personal information
+     * @returns Created user information without sensitive data
+     * @throws ConflictException if user already exists
      */
     async register(registerUserDto: RegisterUserDto) {
-        // Check if user already exists
+        // Check for existing user to prevent duplicates
         const existingUser = await this.prisma.user.findUnique({
-            where: { email: registerUserDto.email }, // Check if user already exists
+            where: { email: registerUserDto.email },
         });
 
-        // If user already exists, throw a conflict exception
         if (existingUser) {
             throw new ConflictException('Email already exists');
         }
 
-        // Generate salt and hash password
-        const salt = await bcrypt.genSalt(10); // Generate a salt
-        const passwordHash = await bcrypt.hash(registerUserDto.password, salt); // Hash the password
+        // Generate secure password hash and salt
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(registerUserDto.password, salt);
 
-        // Create user in Firebase
+        // Create user in Firebase for additional security layer
         const firebaseUser = await admin.auth().createUser({
-            email: registerUserDto.email, // User email address
-            password: registerUserDto.password, // User password
-            displayName: `${registerUserDto.firstName} ${registerUserDto.lastName}`, // User display name
+            email: registerUserDto.email,
+            password: registerUserDto.password,
+            displayName: `${registerUserDto.firstName} ${registerUserDto.lastName}`,
         });
 
-        // Create user in PostgreSQL
+        // Create user in PostgreSQL database
         const user = await this.prisma.user.create({
             data: {
-                email: registerUserDto.email, // User email address
-                passwordHash, // Password hash
-                passwordSalt: salt, // Password salt
-                firstName: registerUserDto.firstName, // User first name
-                lastName: registerUserDto.lastName, // User last name
-                fullName: `${registerUserDto.firstName} ${registerUserDto.lastName}`, // User full name
-                phoneNumber: registerUserDto.phoneNumber, // User phone number
-                phoneRegion: registerUserDto.phoneRegion, // User phone region
-                sessionType: registerUserDto.sessionType, // User session type
+                email: registerUserDto.email,
+                passwordHash,
+                passwordSalt: salt,
+                firstName: registerUserDto.firstName,
+                lastName: registerUserDto.lastName,
+                fullName: `${registerUserDto.firstName} ${registerUserDto.lastName}`,
+                phoneNumber: registerUserDto.phoneNumber,
+                phoneRegion: registerUserDto.phoneRegion,
+                sessionType: registerUserDto.sessionType,
                 biometricEnabled: registerUserDto.biometricEnabled,
-                role: 'user', // Default role for new users
+                role: 'user',
             },
         });
 
         return {
-            id: user.id, // User ID
-            email: user.email, // User email address
-            firstName: user.firstName, // User first name
-            lastName: user.lastName, // User last name
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
         };
     }
 
     /**
-     * Authenticate a user and generate tokens
+     * Authenticate a user and generate access tokens
      * @param loginDto User login credentials
      * @returns Authentication tokens and user information
+     * @throws UnauthorizedException if credentials are invalid
      */
     async login(loginDto: LoginDto) {
-        // Verify credentials with Firebase
         try {
-            const firebaseUser = await admin.auth().getUserByEmail(loginDto.email); // Get user by email
-            const customToken = await admin.auth().createCustomToken(firebaseUser.uid); // Create custom token
+            // Verify user exists in Firebase
+            const firebaseUser = await admin.auth().getUserByEmail(loginDto.email);
+            const customToken = await admin.auth().createCustomToken(firebaseUser.uid);
 
-            // Get user from PostgreSQL
+            // Get user from database
             const user = await this.prisma.user.findUnique({
-                where: { email: loginDto.email }, // Get user by email
+                where: { email: loginDto.email },
             });
 
-            // If user not found, throw an unauthorized exception
             if (!user) {
                 throw new UnauthorizedException('Invalid credentials');
             }
 
-            // Update last login time
+            // Update last login timestamp
             await this.prisma.user.update({
-                where: { id: user.id }, // Update user by ID
-                data: { lastLoginAt: new Date() }, // Update last login time
+                where: { id: user.id },
+                data: { lastLoginAt: new Date() },
             });
 
-            // Generate JWT token
+            // Generate JWT token with user claims
             const payload = {
-                sub: user.id, // User ID
-                email: user.email, // User email address
-                role: user.role, // User role
+                sub: user.id,
+                email: user.email,
+                role: user.role,
             };
 
-            const accessToken = this.jwtService.sign(payload); // Generate JWT token
+            const accessToken = this.jwtService.sign(payload);
 
             return {
-                accessToken, // Access token
-                firebaseToken: customToken, // Firebase token
+                accessToken,
+                firebaseToken: customToken,
                 user: {
-                    id: user.id, // User ID
-                    email: user.email, // User email address
-                    firstName: user.firstName, // User first name
-                    lastName: user.lastName, // User last name
-                    role: user.role, // User role
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    role: user.role,
                 },
             };
         } catch (error) {
@@ -134,17 +136,16 @@ export class AuthService {
     }
 
     /**
-     * Validate user credentials
-     * @param email User email
+     * Validate user credentials against stored hash
+     * @param email User email address
      * @param password User password
-     * @returns User information if valid, null otherwise
+     * @returns User information without sensitive data if valid, null otherwise
      */
     async validateUser(email: string, password: string) {
         const user = await this.prisma.user.findUnique({
-            where: { email }, // Get user by email
+            where: { email },
         });
 
-        // If user exists and password is valid, return the user
         if (user && (await bcrypt.compare(password, user.passwordHash))) {
             const { passwordHash, passwordSalt, ...result } = user;
             return result;
@@ -154,26 +155,147 @@ export class AuthService {
 
     /**
      * Validate the current authentication token
-     * @returns User information if token is valid
+     * @returns Token validation result
+     * @note This is a placeholder for token validation logic
      */
     async validateToken() {
-        // The JWT strategy will automatically validate the token
-        // and attach the user to the request
-        const user = await this.prisma.user.findUnique({
-            where: { id: this.jwtService.decode(this.jwtService.sign({}))['sub'] },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                role: true,
+        return { valid: true };
+    }
+
+    /**
+     * Authenticate an admin user with additional security checks
+     * @param adminLoginDto Admin login credentials including email, password, and admin secret
+     * @returns Authentication token and admin information
+     * @throws UnauthorizedException if credentials are invalid
+     */
+    async adminLogin(adminLoginDto: AdminLoginDto) {
+        this.logger.debug('Admin login attempt', { email: adminLoginDto.email });
+
+        // Find admin user with case-insensitive email search
+        const admin = await this.prisma.user.findFirst({
+            where: {
+                email: {
+                    equals: adminLoginDto.email,
+                    mode: 'insensitive'
+                },
+                role: 'admin',
             },
         });
 
-        if (!user) {
-            throw new UnauthorizedException('Invalid token');
+        if (!admin) {
+            this.logger.warn('Admin not found', { email: adminLoginDto.email });
+            throw new UnauthorizedException('Invalid credentials');
         }
 
-        return user;
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(adminLoginDto.password, admin.passwordHash);
+        if (!isPasswordValid) {
+            this.logger.warn('Invalid password for admin', { email: adminLoginDto.email });
+            throw new UnauthorizedException('Invalid credentials');
+        }
+
+        // Verify admin secret
+        const isAdminSecretValid = await bcrypt.compare(adminLoginDto.adminSecret, admin.adminSecretHash || '');
+        if (!isAdminSecretValid) {
+            this.logger.warn('Invalid admin secret', { email: adminLoginDto.email });
+            throw new UnauthorizedException('Invalid admin secret');
+        }
+
+        // Generate JWT token with admin claims
+        const payload = {
+            sub: admin.id,
+            email: admin.email,
+            role: admin.role,
+            firstName: admin.firstName,
+            lastName: admin.lastName,
+        };
+
+        const accessToken = this.jwtService.sign(payload);
+
+        this.logger.debug('Admin login successful', { email: adminLoginDto.email });
+        return {
+            accessToken,
+            user: {
+                id: admin.id,
+                email: admin.email,
+                role: admin.role,
+                firstName: admin.firstName,
+                lastName: admin.lastName,
+            },
+        };
+    }
+
+    /**
+     * Get admin dashboard data including system status and user statistics
+     * @returns Dashboard data with system status, user statistics, and recent activity
+     */
+    async getAdminDashboard() {
+        this.logger.debug('Fetching admin dashboard data');
+
+        try {
+            // Get total users count
+            const totalUsers = await this.prisma.user.count();
+            this.logger.debug(`Total users: ${totalUsers}`);
+
+            // Get active users (users who logged in within the last 24 hours)
+            const activeUsers = await this.prisma.user.count({
+                where: {
+                    lastLoginAt: {
+                        gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+                    }
+                }
+            });
+            this.logger.debug(`Active users: ${activeUsers}`);
+
+            // Get recent activity (last 10 logins)
+            const recentActivity = await this.prisma.user.findMany({
+                where: {
+                    lastLoginAt: {
+                        not: undefined
+                    }
+                },
+                orderBy: {
+                    lastLoginAt: 'desc'
+                },
+                take: 10,
+                select: {
+                    email: true,
+                    lastLoginAt: true,
+                    role: true
+                }
+            });
+            this.logger.debug(`Recent activity count: ${recentActivity.length}`);
+
+            // Format recent activity
+            const formattedActivity = recentActivity.map(user => ({
+                description: `${user.email} (${user.role}) logged in at ${user.lastLoginAt?.toISOString()}`
+            }));
+
+            // Get system status from database
+            interface SystemStatusResult {
+                status: number;
+            }
+            const systemStatus = await this.prisma.$queryRaw<SystemStatusResult[]>`
+                SELECT 1 as status
+                FROM pg_stat_activity
+                WHERE datname = current_database()
+                LIMIT 1
+            `;
+            this.logger.debug(`System status check: ${systemStatus.length > 0 ? 'Operational' : 'Unknown'}`);
+
+            const lastUpdated = new Date().toISOString();
+            this.logger.debug(`Dashboard data last updated: ${lastUpdated}`);
+
+            return {
+                totalUsers,
+                activeUsers,
+                systemStatus: systemStatus.length > 0 ? 'Operational' : 'Unknown',
+                lastUpdated,
+                recentActivity: formattedActivity
+            };
+        } catch (error) {
+            this.logger.error('Error fetching dashboard data:', error);
+            throw error;
+        }
     }
 }

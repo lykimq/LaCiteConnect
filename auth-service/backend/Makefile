@@ -112,3 +112,30 @@ help:
 	@echo "  db-seed      - Seed the database"
 	@echo "  generate     - Generate NestJS resources"
 	@echo "  help         - Show this help message"
+
+# Seed the database with admin user (development)
+seed:
+	@echo "Seeding database with admin user..."
+	@if [ -z "$(ADMIN_EMAIL)" ] || [ -z "$(ADMIN_PASSWORD)" ] || [ -z "$(ADMIN_FIRST_NAME)" ] || [ -z "$(ADMIN_LAST_NAME)" ]; then \
+		echo "Error: Required environment variables are not set"; \
+		echo "Please set ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_FIRST_NAME, and ADMIN_LAST_NAME"; \
+		exit 1; \
+	fi
+	npx prisma db seed
+
+# Seed the database with admin user (production)
+seed-prod:
+	@echo "Seeding database with admin user in production..."
+	@if [ -z "$(ADMIN_EMAIL)" ] || [ -z "$(ADMIN_PASSWORD)" ] || [ -z "$(ADMIN_FIRST_NAME)" ] || [ -z "$(ADMIN_LAST_NAME)" ]; then \
+		echo "Error: Required environment variables are not set"; \
+		echo "Please set ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_FIRST_NAME, and ADMIN_LAST_NAME"; \
+		exit 1; \
+	fi
+	@read -p "Are you sure you want to seed the production database? (y/n) " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		npx prisma db seed; \
+	else \
+		echo "Operation cancelled"; \
+		exit 1; \
+	fi

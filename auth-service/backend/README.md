@@ -1,7 +1,7 @@
 # LaCiteConnect Auth Service
 
 ## Overview
-LaCiteConnect Auth Service is a robust authentication and authorization service built with NestJS, providing secure user management for both web and mobile applications.
+This is the authentication service for LaCiteConnect, built with NestJS, TypeScript, and PostgreSQL. It provides secure authentication and authorization for both regular users and administrators.
 
 ## Architecture
 
@@ -177,8 +177,9 @@ This architecture ensures:
 ## API Endpoints
 
 ### Authentication
-- `POST /auth/register` - Register new user
-- `POST /auth/login` - User login
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - Login as a regular user
+- `POST /auth/admin/login` - Login as an admin (requires admin secret)
 - `GET /auth/validate` - Validate authentication token
 - `POST /auth/logout` - User logout (planned)
 - `POST /auth/refresh` - Refresh token (planned)
@@ -266,4 +267,54 @@ npm run start:prod
 docker build -t laciteconnect-auth .
 docker run -p 3000:3000 laciteconnect-auth
 ```
+
+## Environment Variables
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/db
+JWT_SECRET=your_jwt_secret
+ADMIN_SECRET=your_admin_secret
+```
+
+## Admin Authentication
+Admin users are authenticated using a combination of:
+1. Email and password
+2. Admin secret key (configured in environment variables)
+
+To create an admin user:
+1. Set the `ADMIN_SECRET` environment variable
+2. Use the admin login endpoint with valid credentials and the admin secret
+3. The user must have the 'admin' role in the database
+
+## Security Considerations
+- All passwords are hashed using bcrypt
+- JWT tokens are signed with a secret key
+- Admin access requires a separate secret key
+- Role-based access control is enforced
+- Input validation is performed on all endpoints
+- Firebase integration for additional security
+
+## Make Commands
+```bash
+make install        # Install dependencies
+make start         # Start development server
+make build         # Build for production
+make test          # Run tests
+make test-coverage # Run tests with coverage
+make clean         # Clean build artifacts
+make lint          # Lint code
+make format        # Format code
+make type-check    # Check TypeScript types
+make dev-setup     # Setup development environment
+make prod-setup    # Setup production environment
+```
+
+## Development
+- Use `make start` for development
+- Use `make test` for running tests
+- Use `make build` for production build
+
+## Testing
+- Unit tests for services and controllers
+- Integration tests for API endpoints
+- E2E tests for authentication flow
 

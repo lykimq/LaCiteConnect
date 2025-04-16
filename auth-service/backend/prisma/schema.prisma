@@ -29,6 +29,9 @@ model User {
   passwordHash        String      @map("password_hash")
   passwordSalt        String      @map("password_salt")
   passwordResetToken  String?     @map("password_reset_token")
+  passwordResetExpiry DateTime?   @map("password_reset_expiry")
+  adminSecretHash     String?     @map("admin_secret_hash")
+  adminSecretSalt     String?     @map("admin_secret_salt")
   firstName           String      @map("first_name")
   lastName            String      @map("last_name")
   fullName            String      @map("full_name")
@@ -49,4 +52,6 @@ model User {
   @@index([lastName])
   @@index([fullName])
   @@index([phoneNumber])
+  @@index([passwordResetToken])
+  @@index([passwordResetExpiry])
 }
