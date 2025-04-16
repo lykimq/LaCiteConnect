@@ -1,15 +1,32 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import App from './App';
+import theme from './theme';
+import './index.css';
 import reportWebVitals from './reportWebVitals';
 
+/**
+ * Application Entry Point
+ * Initializes the React application with:
+ * - Material-UI theme provider
+ * - CSS baseline for consistent styling
+ * - Root application component
+ */
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
 root.render(
   <React.StrictMode>
-    <App />
+    {/* Provide Material-UI theme to all components */}
+    <ThemeProvider theme={theme}>
+      {/* Apply CSS baseline for consistent styling */}
+      <CssBaseline />
+      {/* Render the main application component */}
+      <App />
+    </ThemeProvider>
   </React.StrictMode>
 );
 

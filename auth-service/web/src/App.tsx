@@ -1,40 +1,44 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { AuthProvider } from './context/AuthContext';
-import theme from './theme';
-import Login from './pages/Login';
-import Dashboard from './pages/DashBoard';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, ProtectedRoute } from './context/AuthContext';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 
 /**
- * Main application component
+ * Main Application Component
  * Sets up the application structure with:
- * - Theme provider for Material-UI styling
- * - Authentication context for user state
+ * - Authentication context for managing user state
  * - React Router for navigation
- * - Base styles with CssBaseline
+ * - Protected routes for admin access
+ * - Public routes for authentication
  */
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
-      {/* Normalize CSS styles */}
-      <CssBaseline />
-      {/* Provide authentication context to all components */}
+    <Router>
+      {/* Provide authentication context to all child components */}
       <AuthProvider>
-        {/* Set up routing */}
-        <Router>
-          <Routes>
-            {/* Public route */}
-            <Route path="/login" element={<Login />} />
-            {/* Protected route */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            {/* Default route redirects to login */}
-            <Route path="/" element={<Login />} />
-          </Routes>
-        </Router>
+        <Routes>
+          {/* Redirect root path to admin login */}
+          <Route path="/" element={<Navigate to="/admin/login" replace />} />
+
+          {/* Public route for admin login */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+
+          {/* Protected route for admin dashboard */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch-all route redirects to admin login */}
+          <Route path="*" element={<Navigate to="/admin/login" replace />} />
+        </Routes>
       </AuthProvider>
-    </ThemeProvider>
+    </Router>
   );
 };
 

@@ -1,14 +1,27 @@
 # LaCiteConnect Admin Web Interface
 
 ## Overview
-This is the admin web interface for LaCiteConnect, built with React, TypeScript, and Material-UI. It provides a modern and responsive interface for managing users and monitoring system activity.
+This is the admin web interface for LaCiteConnect, built with React, TypeScript, and Material-UI. It provides a modern and responsive interface for managing users and monitoring system activity, with separate interfaces for regular users and administrators.
+
+## Features
+- User authentication (login/logout)
+- Admin authentication with secret key
+- Role-based access control
+- Protected routes
+- Responsive design
+- Form validation
+- Error handling
+- Type safety
+- Theme customization
 
 ## Project Structure
 ```
 src/
-├── pages/     # Reusable UI components
-│   ├── Login.tsx  # Login page with authentication form
-│   └── DashBoard.tsx  # Main dashboard after authentication
+├── pages/         # Page components
+│   ├── Login.tsx  # Regular user login
+│   ├── AdminLogin.tsx  # Admin login
+│   ├── DashBoard.tsx  # User dashboard
+│   └── AdminDashboard.tsx  # Admin dashboard
 ├── services/      # API services
 │   └── api.ts     # Axios instance and API service methods
 ├── types/         # TypeScript type definitions
@@ -20,96 +33,52 @@ src/
 └── index.tsx      # Application entry point
 ```
 
-## Code Implementation Flow
+## Authentication Flow
 
-### 1. Authentication Flow
+### Regular User Authentication
 1. User enters credentials on the login page
 2. Credentials are sent to the auth service
 3. Upon successful authentication:
    - JWT token is stored in localStorage
    - User is redirected to the dashboard
-4. For protected routes:
-   - Token is validated
-   - User role is checked
-   - Access is granted or denied accordingly
 
-### 2. State Management
+### Admin Authentication
+1. Admin enters credentials and admin secret on the admin login page
+2. Credentials and secret are sent to the auth service
+3. Upon successful authentication:
+   - JWT token is stored in localStorage
+   - Admin is redirected to the admin dashboard
+
+### Protected Routes
+- Regular routes require authentication
+- Admin routes require both authentication and admin role
+- Unauthorized access redirects to appropriate login page
+
+## State Management
 - Uses React Context API for global state management
 - Implements custom hooks for authentication
 - Manages loading and error states
 - Handles token persistence
 
-### 3. API Integration
+## API Integration
 - Axios instance with interceptors for auth
 - Centralized error handling
 - Type-safe API calls
 - Automatic token management
 
-### 4. UI Components
+## UI Components
 - Material-UI components with custom theme
 - Responsive design
 - Form validation
 - Error handling and display
 
-## File Details
-
-### `src/types/index.ts`
-- Defines shared TypeScript interfaces and types
-- Includes user, authentication, and API response types
-- Ensures type safety across the application
-
-### `src/services/api.ts`
-- Configures Axios instance with base URL and headers
-- Implements request/response interceptors
-- Handles authentication token management
-- Provides type-safe API service methods
-
-### `src/context/AuthContext.tsx`
-- Manages authentication state
-- Provides login/logout functionality
-- Handles token persistence
-- Exposes authentication state to components
-
-### `src/pages/Login.tsx`
-- Implements login form with validation
-- Handles form submission and error display
-- Manages loading states
-- Provides user feedback
-
-### `src/pages/DashBoard.tsx`
-- Displays user information
-- Provides logout functionality
-- Shows authentication status
-- Protected route implementation
-
-### `src/App.tsx`
-- Sets up routing configuration
-- Provides theme and authentication context
-- Manages protected routes
-- Handles navigation
-
-### `src/theme.ts`
-- Configures Material-UI theme
-- Defines color palette
-- Sets typography styles
-- Customizes component styles
-
-## Features
-- User authentication (login/logout)
-- Protected routes
-- Responsive design
-- Form validation
-- Error handling
-- Type safety
-- Theme customization
-
-## Tech Stack
-- React 18
-- TypeScript
-- Material-UI
-- React Router
-- Axios
-- Jest (testing)
+## Security Considerations
+- JWT tokens are stored securely
+- API requests include authentication headers
+- Input validation is performed
+- Error handling is implemented
+- Protected routes are enforced
+- Admin access requires additional secret key
 
 ## Prerequisites
 - Node.js >= 18.0.0
@@ -153,10 +122,3 @@ make prod-setup    # Setup production environment
 - Use `make start` for development
 - Use `make test` for running tests
 - Use `make build` for production build
-
-## Security Considerations
-- JWT tokens are stored securely
-- API requests include authentication headers
-- Input validation is performed
-- Error handling is implemented
-- Protected routes are enforced
