@@ -6,6 +6,8 @@ NPM=npm
 NEST=npx @nestjs/cli
 NODE_ENV=development
 PORT=3000
+DB_USER=quyen
+DB_NAME=auth_service
 
 # Default target
 .PHONY: all
@@ -25,13 +27,13 @@ dev:
 	NODE_ENV=$(NODE_ENV) $(NPM) run start:dev
 
 .PHONY: start
-start: build
+start: check-db build
 	@echo "Starting production server..."
 	NODE_ENV=production node dist/main.js
 
 # Build targets
 .PHONY: build
-build:
+build: backup-db
 	@echo "Building the application..."
 	rm -rf dist
 	npx prisma generate
@@ -40,6 +42,28 @@ build:
 		cp -r dist/src/* dist/ && \
 		rm -rf dist/src; \
 	fi
+
+# Database safety checks
+.PHONY: check-db
+check-db:
+	@echo "Checking database connection..."
+	@if ! psql -U $(DB_USER) -d $(DB_NAME) -c "\q" 2>/dev/null; then \
+		echo "Error: Cannot connect to database. Please check your database configuration."; \
+		exit 1; \
+	fi
+
+# Database backup
+.PHONY: backup-db
+backup-db:
+	@echo "Backing up database users and permissions..."
+	@./scripts/backup-db-users.sh
+
+# Clean target with safety check
+.PHONY: clean
+clean: backup-db
+	@echo "Cleaning build artifacts..."
+	rm -rf dist
+	@echo "Note: Database users and permissions have been backed up"
 
 # Test targets
 .PHONY: test
@@ -52,90 +76,29 @@ test-coverage:
 	@echo "Running tests with coverage..."
 	$(NPM) run test:cov
 
-.PHONY: test-e2e
-test-e2e:
-	@echo "Running end-to-end tests..."
-	$(NPM) run test:e2e
-
-# Clean targets
-.PHONY: clean
-clean:
-	@echo "Cleaning build artifacts..."
-	rm -rf dist
-	rm -rf node_modules
-	rm -rf .next
-
-# Linting and formatting
-.PHONY: lint
-lint:
-	@echo "Running linter..."
-	$(NPM) run lint
-
-.PHONY: format
-format:
-	@echo "Formatting code..."
-	$(NPM) run format
-
-# Database targets
-.PHONY: db-migrate
-db-migrate:
+# Database migration targets
+.PHONY: migrate
+migrate: check-db
 	@echo "Running database migrations..."
-	$(NPM) run migrate
+	npx prisma migrate dev
 
-.PHONY: db-seed
-db-seed:
-	@echo "Seeding database..."
-	$(NPM) run seed
-
-# Generate resources
-.PHONY: generate
-generate:
-	@echo "Generating NestJS resources..."
-	$(NEST) generate
+.PHONY: migrate-prod
+migrate-prod: check-db
+	@echo "Running production database migrations..."
+	npx prisma migrate deploy
 
 # Help target
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  all          - Install dependencies (default target)"
+	@echo "  all          - Install dependencies (default)"
 	@echo "  install      - Install dependencies"
 	@echo "  dev          - Start development server"
 	@echo "  start        - Start production server"
 	@echo "  build        - Build the application"
-	@echo "  test         - Run unit tests"
-	@echo "  test-coverage - Run tests with coverage report"
-	@echo "  test-e2e     - Run end-to-end tests"
-	@echo "  clean        - Clean build artifacts"
-	@echo "  lint         - Run linter"
-	@echo "  format       - Format code"
-	@echo "  db-migrate   - Run database migrations"
-	@echo "  db-seed      - Seed the database"
-	@echo "  generate     - Generate NestJS resources"
+	@echo "  clean        - Clean build artifacts (with database backup)"
+	@echo "  test         - Run tests"
+	@echo "  test-coverage - Run tests with coverage"
+	@echo "  migrate      - Run database migrations"
+	@echo "  migrate-prod - Run production database migrations"
 	@echo "  help         - Show this help message"
-
-# Seed the database with admin user (development)
-seed:
-	@echo "Seeding database with admin user..."
-	@if [ -z "$(ADMIN_EMAIL)" ] || [ -z "$(ADMIN_PASSWORD)" ] || [ -z "$(ADMIN_FIRST_NAME)" ] || [ -z "$(ADMIN_LAST_NAME)" ]; then \
-		echo "Error: Required environment variables are not set"; \
-		echo "Please set ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_FIRST_NAME, and ADMIN_LAST_NAME"; \
-		exit 1; \
-	fi
-	npx prisma db seed
-
-# Seed the database with admin user (production)
-seed-prod:
-	@echo "Seeding database with admin user in production..."
-	@if [ -z "$(ADMIN_EMAIL)" ] || [ -z "$(ADMIN_PASSWORD)" ] || [ -z "$(ADMIN_FIRST_NAME)" ] || [ -z "$(ADMIN_LAST_NAME)" ]; then \
-		echo "Error: Required environment variables are not set"; \
-		echo "Please set ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_FIRST_NAME, and ADMIN_LAST_NAME"; \
-		exit 1; \
-	fi
-	@read -p "Are you sure you want to seed the production database? (y/n) " -n 1 -r; \
-	echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		npx prisma db seed; \
-	else \
-		echo "Operation cancelled"; \
-		exit 1; \
-	fi

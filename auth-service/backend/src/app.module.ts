@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { LoggerModule } from 'nestjs-pino';
+import { PrismaService } from './database/prisma.service';
+import { DatabaseHealthService } from './database/database.health';
 
 /**
  * Root application module
@@ -33,5 +35,6 @@ import { LoggerModule } from 'nestjs-pino';
         AuthModule, // Authentication and authorization module
         PrismaModule, // Database access module
     ],
+    providers: [PrismaService, DatabaseHealthService],
 })
 export class AppModule { }
