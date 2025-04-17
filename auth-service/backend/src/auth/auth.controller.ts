@@ -153,4 +153,28 @@ export class AuthController {
             });
         }
     }
+
+    /**
+     * Handle user logout
+     * @param res Express response object
+     * @returns HTTP response with logout confirmation
+     */
+    @Post('logout')
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Logout current user' })
+    @ApiResponse({ status: 200, description: 'Successfully logged out' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiBearerAuth()
+    async logout(@Res() res: Response) {
+        this.logger.debug('Logout request received');
+        try {
+            const result = await this.authService.logout();
+            return res.status(HttpStatus.OK).json(result);
+        } catch (error) {
+            return res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
+                message: error.message || 'Internal server error'
+            });
+        }
+    }
 }

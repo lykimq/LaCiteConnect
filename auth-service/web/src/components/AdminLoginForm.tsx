@@ -12,6 +12,7 @@ import {
     CircularProgress,
     IconButton,
     InputAdornment,
+    Snackbar,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
@@ -34,6 +35,8 @@ const AdminLoginForm: React.FC = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showAdminSecret, setShowAdminSecret] = useState(false);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     /**
      * Handle form input changes
@@ -56,8 +59,10 @@ const AdminLoginForm: React.FC = () => {
         try {
             await login(formData);
             navigate('/admin/dashboard');
-        } catch (err) {
-            // Error is handled by the auth context
+        } catch (err: any) {
+            const message = err.response?.data?.message || 'An error occurred during login';
+            setErrorMessage(message);
+            setSnackbarOpen(true);
         }
     };
 
@@ -73,6 +78,10 @@ const AdminLoginForm: React.FC = () => {
      */
     const handleToggleAdminSecret = () => {
         setShowAdminSecret(!showAdminSecret);
+    };
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
     };
 
     return (
@@ -102,12 +111,6 @@ const AdminLoginForm: React.FC = () => {
                 >
                     Admin Login
                 </Typography>
-
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                        {error}
-                    </Alert>
-                )}
 
                 <form onSubmit={handleSubmit}>
                     <TextField
@@ -184,6 +187,22 @@ const AdminLoginForm: React.FC = () => {
                     </Button>
                 </form>
             </Paper>
+
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={handleSnackbarClose}
+                    severity="error"
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {errorMessage}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

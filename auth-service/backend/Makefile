@@ -33,7 +33,7 @@ start: check-db build
 
 # Build targets
 .PHONY: build
-build: backup-db
+build:
 	@echo "Building the application..."
 	rm -rf dist
 	npx prisma generate
@@ -52,7 +52,7 @@ check-db:
 		exit 1; \
 	fi
 
-# Database backup
+# Database backup (only used in clean target)
 .PHONY: backup-db
 backup-db:
 	@echo "Backing up database users and permissions..."

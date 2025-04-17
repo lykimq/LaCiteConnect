@@ -21,9 +21,22 @@ async function bootstrap() {
     const configService = app.get(ConfigService);
 
     // Parse CORS origins from environment variable
-    const corsOrigins = configService.get('CORS_ORIGINS')?.split(',') || ['http://localhost:3000'];
-    const corsMethods = configService.get('CORS_METHODS')?.split(',') || ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
-    const corsHeaders = configService.get('CORS_ALLOWED_HEADERS')?.split(',') || ['Content-Type', 'Authorization'];
+    const corsOrigins = configService.get('CORS_ORIGINS')?.split(',') || [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3001'
+    ];
+    const corsMethods = configService.get('CORS_METHODS')?.split(',') || ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'];
+    const corsHeaders = configService.get('CORS_ALLOWED_HEADERS')?.split(',') || [
+        'Content-Type',
+        'Authorization',
+        'Accept',
+        'Origin',
+        'X-Requested-With',
+        'Access-Control-Request-Method',
+        'Access-Control-Request-Headers'
+    ];
 
     // Configure CORS with environment-specific settings
     app.enableCors({
@@ -45,7 +58,7 @@ async function bootstrap() {
 
             return callback(new Error('Not allowed by CORS'), false);
         },
-        credentials: configService.get('CORS_CREDENTIALS') === 'true',
+        credentials: true, // Allow credentials
         methods: corsMethods,
         allowedHeaders: corsHeaders,
         exposedHeaders: ['Authorization'],

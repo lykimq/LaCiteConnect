@@ -184,14 +184,14 @@ export class AuthService {
 
         if (!admin) {
             this.logger.warn('Admin not found', { email: adminLoginDto.email });
-            throw new UnauthorizedException('Invalid credentials');
+            throw new UnauthorizedException('Admin user not found');
         }
 
         // Verify password
         const isPasswordValid = await bcrypt.compare(adminLoginDto.password, admin.passwordHash);
         if (!isPasswordValid) {
             this.logger.warn('Invalid password for admin', { email: adminLoginDto.email });
-            throw new UnauthorizedException('Invalid credentials');
+            throw new UnauthorizedException('Invalid password');
         }
 
         // Verify admin secret
@@ -297,5 +297,18 @@ export class AuthService {
             this.logger.error('Error fetching dashboard data:', error);
             throw error;
         }
+    }
+
+    /**
+     * Handle user logout
+     * This method can be extended to handle server-side session invalidation
+     * or token blacklisting if needed
+     * @returns Success message
+     */
+    async logout(): Promise<{ message: string }> {
+        this.logger.log('User logged out');
+        // Note: In a stateless JWT system, the token is invalidated client-side
+        // If you need server-side token invalidation, implement it here
+        return { message: 'Successfully logged out' };
     }
 }

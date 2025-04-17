@@ -52,8 +52,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(response.user);
             localStorage.setItem('token', response.accessToken);
             navigate('/admin/dashboard');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred during login');
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || 'An error occurred during login';
+            setError(errorMessage);
             throw err;
         } finally {
             setLoading(false);

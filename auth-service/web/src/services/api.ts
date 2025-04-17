@@ -52,7 +52,10 @@ class ApiService {
                 if (error.response?.status === 401) {
                     // Handle unauthorized access
                     localStorage.removeItem('token');
-                    window.location.href = '/admin/login';
+                    // Only redirect if not already on the login page
+                    if (!window.location.pathname.includes('/login')) {
+                        window.location.href = '/admin/login';
+                    }
                 }
                 return Promise.reject(error);
             }
@@ -88,8 +91,21 @@ class ApiService {
          * @returns Logout confirmation
          */
         logout: async (): Promise<void> => {
-            localStorage.removeItem('token');
-            window.location.href = '/admin/login';
+            try {
+                // First, try to call the backend logout endpoint if it exists
+                await this.api.post('/api/auth/logout');
+            } catch (error) {
+                console.error('Logout API call failed:', error);
+                // Continue with client-side cleanup even if API call fails
+            } finally {
+                // Clear client-side authentication state
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                sessionStorage.clear();
+
+                // Redirect to the root path, which will be handled by the router
+                window.location.href = '/';
+            }
         },
     };
 
