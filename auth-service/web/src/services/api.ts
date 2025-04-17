@@ -1,5 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { LoginCredentials, RegisterUserDto, AuthResponse, User, AdminLoginCredentials } from '@/types';
+import axios, { AxiosInstance } from 'axios';
+import { AuthResponse, User, AdminLoginCredentials } from '@/types';
 
 /**
  * API Service Configuration
