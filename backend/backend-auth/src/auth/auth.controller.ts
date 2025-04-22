@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Res, Req, Logger } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Res, Req, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -6,7 +6,9 @@ import { AdminLoginDto } from './dto/admin-login.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Response, Request } from 'express';
-import { AdminGuard } from './guards/admin.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { RoleType } from '@prisma/client';
+import { Roles } from './decorators';
 
 /**
  * Authentication Controller
@@ -131,7 +133,8 @@ export class AuthController {
      * @throws ForbiddenException if user is not an admin
      */
     @Get('admin/dashboard')
-    @UseGuards(JwtAuthGuard, AdminGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RoleType.admin)
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Access admin dashboard' })
     @ApiResponse({ status: 200, description: 'Admin dashboard data' })

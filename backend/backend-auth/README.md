@@ -33,6 +33,7 @@ backend/
 │   │   ├── guards/              # Authorization guards
 │   │   │   ├── jwt-auth.guard.ts # JWT authentication guard
 │   │   │   └── admin.guard.ts   # Admin role guard
+│   │   │   └── roles.guard.ts   # Roles guard
 │   │   ├── auth.controller.ts   # API endpoints
 │   │   ├── auth.service.ts      # Business logic
 │   │   └── auth.module.ts       # Module configuration
@@ -43,6 +44,7 @@ backend/
 │   └── app.module.ts            # Root module
 ├── prisma/
 │   └── schema.prisma            # Database schema
+│   └── seed.ts                  # Seed for admin generation
 ├── test/                        # Test files
 ├── .env                         # Environment variables
 ├── jest.config.js              # Jest configuration
