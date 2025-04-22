@@ -1,0 +1,21 @@
+{
+  "name": "laciteconnect-web",
+  "version": "1.0.0",
+  "description": "LaCiteConnect Web Microservices",
+  "private": true,
+  "workspaces": [
+    "web-auth"
+  ],
+  "scripts": {
+    "start:auth": "cd web-auth && npm run dev",
+    "build:auth": "cd web-auth && npm run build",
+    "test:auth": "cd web-auth && npm run test",
+    "lint:auth": "cd web-auth && npm run lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "prettier": "^3.0.0",
+    "eslint": "^8.0.0"
+  }
+}
