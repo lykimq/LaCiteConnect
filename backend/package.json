@@ -1,0 +1,21 @@
+{
+  "name": "laciteconnect-backend",
+  "version": "1.0.0",
+  "description": "LaCiteConnect Backend Microservices",
+  "private": true,
+  "workspaces": [
+    "backend-auth"
+  ],
+  "scripts": {
+    "start:auth": "cd backend-auth && npm run start:dev",
+    "build:auth": "cd backend-auth && npm run build",
+    "test:auth": "cd backend-auth && npm run test",
+    "lint:auth": "cd backend-auth && npm run lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "prettier": "^3.0.0",
+    "eslint": "^8.0.0"
+  }
+}

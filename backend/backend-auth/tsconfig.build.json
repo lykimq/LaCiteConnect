@@ -1,0 +1,17 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist", // Output directory for compiled files
+        "module": "CommonJS", // Module format for compatibility
+        "moduleResolution": "node", // Use Node.js style module resolution
+        "target": "ES2020" // Target ES2020 for modern JavaScript features
+    },
+    "exclude": [
+        "node_modules",
+        "dist", // Exclude the dist directory from being included in the build
+        "test", // Exclude test files
+        "**/*.spec.ts", // Exclude test specification files
+        "**/*.test.ts", // Exclude test files
+        "**/*.e2e-spec.ts" // Exclude end-to-end test files
+    ]
+}
