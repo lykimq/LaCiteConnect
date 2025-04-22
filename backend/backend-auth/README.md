@@ -26,13 +26,15 @@ This is the authentication service for LaCiteConnect, built with NestJS, TypeScr
 backend/
 ├── src/
 │   ├── auth/                    # Authentication module
+│   │   ├── decorators/          # Decorators
+│   │   │   ├── roles.decorators.ts     # Roles decorators
+│   │   │   ├── index.ts         # Roles decorators
 │   │   ├── dto/                 # Data Transfer Objects
 │   │   │   ├── login.dto.ts     # Login request validation
 │   │   │   ├── register-user.dto.ts # Registration validation
 │   │   │   └── admin-login.dto.ts # Admin login validation
 │   │   ├── guards/              # Authorization guards
 │   │   │   ├── jwt-auth.guard.ts # JWT authentication guard
-│   │   │   └── admin.guard.ts   # Admin role guard
 │   │   │   └── roles.guard.ts   # Roles guard
 │   │   ├── auth.controller.ts   # API endpoints
 │   │   ├── auth.service.ts      # Business logic
@@ -75,7 +77,7 @@ The authentication service follows a specific implementation order to ensure pro
 
 3. **Authentication Guards**
    - `auth/guards/jwt-auth.guard.ts`: Implements JWT token validation
-   - `auth/guards/admin.guard.ts`: Implements admin role verification
+   - `auth/guards/roles.guard.ts`: Implements role verification
 
 4. **Core Authentication Logic**
    - `auth/auth.service.ts`: Implements business logic for:
