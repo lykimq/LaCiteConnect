@@ -28,14 +28,10 @@ web/
 ├── src/
 │   ├── components/              # Reusable UI components
 │   │   ├── AdminLoginForm.tsx   # Admin login form
-│   │   ├── UserLoginForm.tsx    # User login form
-│   │   └── RegisterForm.tsx     # User registration form
 │   ├── context/                 # React Context providers
 │   │   └── AuthContext.tsx      # Authentication context
 │   ├── pages/                   # Page components
 │   │   ├── AdminLogin.tsx       # Admin login page
-│   │   ├── UserLogin.tsx        # User login page
-│   │   ├── Register.tsx         # Registration page
 │   │   └── AdminDashboard.tsx   # Admin dashboard
 │   ├── services/                # API services
 │   │   └── api.ts               # API client configuration
@@ -80,13 +76,9 @@ The implementation follows a component-based approach:
      - Admin secret field
      - Error handling
      - Loading states
-   - `components/UserLoginForm.tsx`: User authentication form
-   - `components/RegisterForm.tsx`: User registration form
 
 4. **Page Components**
    - `pages/AdminLogin.tsx`: Admin login page
-   - `pages/UserLogin.tsx`: User login page
-   - `pages/Register.tsx`: Registration page
    - `pages/AdminDashboard.tsx`: Admin dashboard with:
      - User statistics
      - System status
@@ -102,11 +94,6 @@ The implementation follows a component-based approach:
 ## Features
 
 ### Implemented
-- ✅ User Authentication
-  - Login form with validation
-  - Registration form
-  - Token management
-  - Session persistence
 - ✅ Admin Authentication
   - Admin login form
   - Admin secret verification
