@@ -103,7 +103,6 @@ The implementation follows a component-based approach:
   - System status monitoring
   - Recent activity tracking
 - ✅ Responsive Design
-  - Mobile-first approach
   - Material-UI components
   - Responsive layouts
 - ✅ Error Handling
@@ -132,6 +131,7 @@ The implementation follows a component-based approach:
 ## API Integration
 
 ### Authentication Endpoints
+Version `api/v1`:
 - `POST /auth/login` - User login
 - `POST /auth/admin/login` - Admin login
 - `POST /auth/register` - User registration
