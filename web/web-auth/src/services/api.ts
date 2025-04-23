@@ -10,7 +10,7 @@ import { AuthResponse, User, AdminLoginCredentials } from '@/types';
  * - Request interceptors for authentication
  */
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
-
+const API_PREFIX = '/api/v1';
 /**
  * API Service Class
  * Handles all HTTP requests to the backend API:
@@ -73,7 +73,7 @@ class ApiService {
          * @returns Authentication response with token and user info
          */
         adminLogin: async (credentials: AdminLoginCredentials): Promise<AuthResponse> => {
-            const response = await this.api.post<AuthResponse>('/api/auth/admin/login', credentials);
+            const response = await this.api.post<AuthResponse>(`${API_PREFIX}/auth/admin/login`, credentials);
             return response.data;
         },
 
@@ -82,7 +82,7 @@ class ApiService {
          * @returns Token validation result
          */
         validateToken: async (): Promise<{ valid: boolean }> => {
-            const response = await this.api.get<{ valid: boolean }>('/api/auth/validate');
+            const response = await this.api.get<{ valid: boolean }>(`${API_PREFIX}/auth/validate`);
             return response.data;
         },
 
@@ -93,7 +93,7 @@ class ApiService {
         logout: async (): Promise<void> => {
             try {
                 // First, try to call the backend logout endpoint if it exists
-                await this.api.post('/api/auth/logout');
+                await this.api.post(`${API_PREFIX}/auth/logout`);
             } catch (error) {
                 console.error('Logout API call failed:', error);
                 // Continue with client-side cleanup even if API call fails
@@ -119,7 +119,7 @@ class ApiService {
          * @returns User profile information
          */
         getProfile: async (): Promise<User> => {
-            const response = await this.api.get<User>('/api/users/profile');
+            const response = await this.api.get<User>(`${API_PREFIX}/users/profile`);
             return response.data;
         },
 
@@ -129,7 +129,7 @@ class ApiService {
          * @returns Updated user profile
          */
         updateProfile: async (data: Partial<User>): Promise<User> => {
-            const response = await this.api.put<User>('/api/users/profile', data);
+            const response = await this.api.put<User>(`${API_PREFIX}/users/profile`, data);
             return response.data;
         },
     };
@@ -144,7 +144,7 @@ class ApiService {
          * @returns Dashboard statistics
          */
         getDashboard: async () => {
-            const response = await this.api.get('/api/auth/admin/dashboard');
+            const response = await this.api.get(`${API_PREFIX}/auth/admin/dashboard`);
             return response.data;
         },
     };
