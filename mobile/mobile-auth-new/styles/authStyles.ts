@@ -78,6 +78,10 @@ export const authStyles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 20,
     },
+    buttonDisabled: {
+        backgroundColor: '#FF9843',
+        opacity: 0.7,
+    },
     buttonText: {
         color: '#fff',
         fontSize: 16,

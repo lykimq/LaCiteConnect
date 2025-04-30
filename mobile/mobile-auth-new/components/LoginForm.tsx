@@ -1,28 +1,85 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Dimensions, Image } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Dimensions, Image, Alert } from 'react-native';
 import { useLogin } from '../hooks/useLogin';
 import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/authStyles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Welcome from './Welcome';
 
-const LoginForm = () => {
+const LoginForm: React.FC = () => {
     const router = useRouter();
-    const { formState, updateFormState, login } = useLogin();
-    const [rememberMe, setRememberMe] = useState(false);
-    const [email, setEmail] = useState(formState.email);
-    const [password, setPassword] = useState(formState.password);
-    const [error, setError] = useState(formState.error);
+    const { formState, updateFormState, login, validateEmail, validatePassword } = useLogin();
+    const [error, setError] = useState<string | null>(null);
+    const [showWelcome, setShowWelcome] = useState(false);
 
     const handleSubmit = async () => {
         try {
+            console.log('Starting login process...');
+            setError(null);
+            updateFormState({ isLoading: true });
+
+            if (!formState.email?.trim()) {
+                console.log('Email validation failed: empty email');
+                setError('Email is required');
+                return;
+            }
+
+            if (!validateEmail(formState.email)) {
+                console.log('Email validation failed: invalid email format');
+                setError('Please enter a valid email address');
+                return;
+            }
+
+            if (!formState.password?.trim()) {
+                console.log('Password validation failed: empty password');
+                setError('Password is required');
+                return;
+            }
+
+            if (!validatePassword(formState.password)) {
+                console.log('Password validation failed: password too short');
+                setError('Password must be at least 6 characters');
+                return;
+            }
+
             const credentials = {
-                email: email,
-                password: password
+                email: formState.email.trim(),
+                password: formState.password
             };
-            await login(credentials);
-            router.replace('/(tabs)');
+
+            console.log('Attempting login with credentials:', { email: credentials.email });
+            const response = await login(credentials);
+            console.log('Login response:', response);
+
+            if (response) {
+                console.log('Login successful, storing user data...');
+                // Store user data in AsyncStorage
+                await AsyncStorage.setItem('userData', JSON.stringify({
+                    id: response.user.id,
+                    email: response.user.email,
+                    firstName: response.user.firstName,
+                    lastName: response.user.lastName,
+                    role: response.user.role
+                }));
+                console.log('User data stored successfully');
+
+                // Clear the form
+                updateFormState({
+                    email: '',
+                    password: '',
+                    isLoading: false
+                });
+
+                // Show welcome screen
+                setShowWelcome(true);
+            }
         } catch (error) {
             console.error('Login error:', error);
-            setError('An error occurred. Please try again later.');
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred. Please try again later.';
+            setError(errorMessage);
+            Alert.alert('Login Failed', errorMessage);
+        } finally {
+            updateFormState({ isLoading: false });
         }
     };
 
@@ -49,6 +106,10 @@ const LoginForm = () => {
         console.log('Forgot password');
     };
 
+    if (showWelcome) {
+        return <Welcome />;
+    }
+
     return (
         <View style={authStyles.container}>
             <View style={authStyles.formContainer}>
@@ -60,8 +121,11 @@ const LoginForm = () => {
                     <TextInput
                         style={authStyles.input}
                         placeholder="Enter your email"
-                        value={email}
-                        onChangeText={setEmail}
+                        value={formState.email}
+                        onChangeText={(text) => {
+                            updateFormState({ email: text });
+                            setError(null);
+                        }}
                         keyboardType="email-address"
                         autoCapitalize="none"
                     />
@@ -72,8 +136,11 @@ const LoginForm = () => {
                     <TextInput
                         style={authStyles.input}
                         placeholder="Enter your password"
-                        value={password}
-                        onChangeText={setPassword}
+                        value={formState.password}
+                        onChangeText={(text) => {
+                            updateFormState({ password: text });
+                            setError(null);
+                        }}
                         secureTextEntry
                     />
                 </View>
@@ -81,10 +148,10 @@ const LoginForm = () => {
                 <View style={authStyles.optionsContainer}>
                     <TouchableOpacity
                         style={authStyles.rememberMeContainer}
-                        onPress={() => setRememberMe(!rememberMe)}
+                        onPress={() => updateFormState({ rememberMe: !formState.rememberMe })}
                     >
-                        <View style={[authStyles.checkbox, rememberMe && authStyles.checkboxChecked]}>
-                            {rememberMe && <View style={authStyles.checkboxInner} />}
+                        <View style={[authStyles.checkbox, formState.rememberMe && authStyles.checkboxChecked]}>
+                            {formState.rememberMe && <View style={authStyles.checkboxInner} />}
                         </View>
                         <Text style={authStyles.rememberMeText}>Remember me</Text>
                     </TouchableOpacity>
@@ -93,8 +160,16 @@ const LoginForm = () => {
                     </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={authStyles.button} onPress={handleSubmit}>
-                    <Text style={authStyles.buttonText}>Login</Text>
+                <TouchableOpacity
+                    style={[authStyles.button, formState.isLoading && authStyles.buttonDisabled]}
+                    onPress={handleSubmit}
+                    disabled={formState.isLoading}
+                >
+                    {formState.isLoading ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                        <Text style={authStyles.buttonText}>Login</Text>
+                    )}
                 </TouchableOpacity>
 
                 <View style={authStyles.dividerContainer}>
@@ -106,13 +181,13 @@ const LoginForm = () => {
                 <TouchableOpacity style={authStyles.googleButton} onPress={handleGoogleSignIn}>
                     <Image
                         source={require('../assets/icons8-google-30.png')}
-                        style={authStyles.googleIcon}
                         tintColor="#FFFFFF"
+                        style={authStyles.googleIcon}
                     />
                     <Text style={authStyles.googleButtonText}>Continue with Google</Text>
                 </TouchableOpacity>
 
-                <View style={authStyles.signUpContainer}>
+                <View style={[authStyles.signUpContainer, { pointerEvents: 'auto' }]}>
                     <Text style={authStyles.signUpText}>Don't have an account? </Text>
                     <TouchableOpacity onPress={handleNavigateToRegister}>
                         <Text style={authStyles.signUpLink}>Sign Up</Text>
@@ -123,8 +198,6 @@ const LoginForm = () => {
     );
 };
 
-LoginForm.displayName = 'LoginForm';
-
-export { LoginForm };
+export default LoginForm;
 
 

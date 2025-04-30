@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { LoginCredentials, LoginFormState, AuthResponse } from '../types/auth.types';
+import { authService } from '../services/authService';
 
 export const useLogin = () => {
     const [formState, setFormState] = useState<LoginFormState>({
@@ -17,7 +17,7 @@ export const useLogin = () => {
     }
 
     const validateEmail = (email: string): boolean => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         return emailRegex.test(email);
     };
 
@@ -29,37 +29,33 @@ export const useLogin = () => {
         try {
             updateFormState({ isLoading: true, error: null });
 
+            if (!credentials.email?.trim()) {
+                throw new Error('Email is required');
+            }
+
             if (!validateEmail(credentials.email)) {
-                throw new Error('Invalid email format');
+                throw new Error('Please enter a valid email address');
+            }
+
+            if (!credentials.password?.trim()) {
+                throw new Error('Password is required');
             }
 
             if (!validatePassword(credentials.password)) {
                 throw new Error('Password must be at least 6 characters');
             }
 
-            // API call from backend
-            const response = await fetch('/api/v1/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(credentials),
-            })
-
-            if (!response.ok) {
-                throw new Error('Login failed');
-            }
-
-            const data: AuthResponse = await response.json();
+            const response = await authService.login(credentials);
 
             if (formState.rememberMe) {
-                await AsyncStorage.setItem('userToken', data.accessToken);
+                await AsyncStorage.setItem('userToken', response.accessToken);
             }
 
-            return data;
+            return response;
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
             updateFormState({
-                error: error instanceof Error ? error.message : 'An error occurred',
+                error: errorMessage,
                 isLoading: false
             });
             throw error;
@@ -68,5 +64,11 @@ export const useLogin = () => {
         }
     };
 
-    return { formState, updateFormState, login };
+    return {
+        formState,
+        updateFormState,
+        login,
+        validateEmail,
+        validatePassword
+    };
 };

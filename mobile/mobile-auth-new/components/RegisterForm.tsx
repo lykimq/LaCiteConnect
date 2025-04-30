@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Dimensions, Image, ScrollView, KeyboardAvoidingView, Modal, Pressable } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Dimensions, Image, ScrollView, KeyboardAvoidingView, Modal, Pressable, Alert } from 'react-native';
 import { useRegister } from '../hooks/useRegister';
 import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/authStyles';
@@ -32,7 +32,7 @@ const initialFormState = {
     error: null
 };
 
-const RegisterForm = () => {
+const RegisterForm: React.FC = () => {
     const router = useRouter();
     const {
         formState,
@@ -86,15 +86,44 @@ const RegisterForm = () => {
     };
 
     const handleSubmit = async () => {
+        console.log('Register form submitted');
         if (!validateFields()) {
+            console.log('Form validation failed');
             return;
         }
 
         try {
-            await handleRegister();
-            router.replace('/(tabs)');
+            console.log('Starting registration process');
+            updateFormState({ isLoading: true, error: null });
+            const response = await handleRegister();
+            console.log('Registration response received:', response);
+
+            if (response) {
+                console.log('Registration successful, showing alert');
+                Alert.alert(
+                    'Registration Successful',
+                    'Your account has been created successfully. You can now log in with your credentials.',
+                    [
+                        {
+                            text: 'Go to Login',
+                            onPress: () => {
+                                // Clear the form
+                                updateFormState(initialFormState);
+                                // Navigate to login
+                                router.replace('/(auth)/login');
+                            }
+                        }
+                    ],
+                    { cancelable: false }
+                );
+            }
         } catch (error) {
-            setError(error instanceof Error ? error.message : 'An error occurred');
+            console.error('Registration error in form:', error);
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
+            setError(errorMessage);
+            Alert.alert('Registration Failed', errorMessage);
+        } finally {
+            updateFormState({ isLoading: false });
         }
     };
 
@@ -361,8 +390,16 @@ const RegisterForm = () => {
                         </View>
                     </View>
 
-                    <TouchableOpacity style={authStyles.button} onPress={handleSubmit}>
-                        <Text style={authStyles.buttonText}>Register</Text>
+                    <TouchableOpacity
+                        style={[authStyles.button, formState.isLoading && authStyles.buttonDisabled]}
+                        onPress={handleSubmit}
+                        disabled={formState.isLoading}
+                    >
+                        {formState.isLoading ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                            <Text style={authStyles.buttonText}>Register</Text>
+                        )}
                     </TouchableOpacity>
 
                     <View style={authStyles.dividerContainer}>
@@ -374,8 +411,7 @@ const RegisterForm = () => {
                     <TouchableOpacity style={authStyles.googleButton} onPress={handleGoogleSignIn}>
                         <Image
                             source={require('../assets/icons8-google-30.png')}
-                            style={authStyles.googleIcon}
-                            tintColor="#FFFFFF"
+                            style={[authStyles.googleIcon, { tintColor: '#FFFFFF' }]}
                         />
                         <Text style={authStyles.googleButtonText}>Continue with Google</Text>
                     </TouchableOpacity>
@@ -392,6 +428,4 @@ const RegisterForm = () => {
     );
 };
 
-RegisterForm.displayName = 'RegisterForm';
-
-export { RegisterForm };
+export default RegisterForm;

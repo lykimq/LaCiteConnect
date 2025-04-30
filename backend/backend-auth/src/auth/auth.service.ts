@@ -20,15 +20,22 @@ import { Logger } from '@nestjs/common';
 @Injectable()
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
+    private firebaseApp: admin.app.App | null = null;
 
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
     ) {
-        // Initialize Firebase Admin SDK for additional security features
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-        });
+        try {
+            // Try to initialize Firebase Admin SDK
+            this.firebaseApp = admin.initializeApp({
+                credential: admin.credential.applicationDefault(),
+            });
+            this.logger.log('Firebase Admin SDK initialized successfully');
+        } catch (error) {
+            this.logger.warn('Firebase Admin SDK initialization failed, continuing without Firebase features');
+            this.logger.debug(error);
+        }
     }
 
     /**
@@ -51,13 +58,6 @@ export class AuthService {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(registerUserDto.password, salt);
 
-        // Create user in Firebase for additional security layer
-        const firebaseUser = await admin.auth().createUser({
-            email: registerUserDto.email,
-            password: registerUserDto.password,
-            displayName: `${registerUserDto.firstName} ${registerUserDto.lastName}`,
-        });
-
         // Create user in PostgreSQL database
         const user = await this.prisma.user.create({
             data: {
@@ -75,6 +75,20 @@ export class AuthService {
             },
         });
 
+        // Only try to create Firebase user if Firebase is initialized
+        if (this.firebaseApp) {
+            try {
+                await this.firebaseApp.auth().createUser({
+                    email: registerUserDto.email,
+                    password: registerUserDto.password,
+                    displayName: `${registerUserDto.firstName} ${registerUserDto.lastName}`,
+                });
+            } catch (error) {
+                this.logger.error('Failed to create Firebase user:', error);
+                // Don't throw error, continue with the registration
+            }
+        }
+
         return {
             id: user.id,
             email: user.email,
@@ -91,16 +105,18 @@ export class AuthService {
      */
     async login(loginDto: LoginDto) {
         try {
-            // Verify user exists in Firebase
-            const firebaseUser = await admin.auth().getUserByEmail(loginDto.email);
-            const customToken = await admin.auth().createCustomToken(firebaseUser.uid);
-
             // Get user from database
             const user = await this.prisma.user.findUnique({
                 where: { email: loginDto.email },
             });
 
             if (!user) {
+                throw new UnauthorizedException('Invalid credentials');
+            }
+
+            // Verify password
+            const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
+            if (!isPasswordValid) {
                 throw new UnauthorizedException('Invalid credentials');
             }
 
@@ -119,9 +135,20 @@ export class AuthService {
 
             const accessToken = this.jwtService.sign(payload);
 
+            // Only try to get Firebase token if Firebase is initialized
+            let firebaseToken = null;
+            if (this.firebaseApp) {
+                try {
+                    const firebaseUser = await this.firebaseApp.auth().getUserByEmail(loginDto.email);
+                    firebaseToken = await this.firebaseApp.auth().createCustomToken(firebaseUser.uid);
+                } catch (error) {
+                    this.logger.warn('Failed to get Firebase token:', error);
+                }
+            }
+
             return {
                 accessToken,
-                firebaseToken: customToken,
+                firebaseToken,
                 user: {
                     id: user.id,
                     email: user.email,
@@ -131,6 +158,7 @@ export class AuthService {
                 },
             };
         } catch (error) {
+            this.logger.error('Login error:', error);
             throw new UnauthorizedException('Invalid credentials');
         }
     }
