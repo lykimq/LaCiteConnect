@@ -4,12 +4,14 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-    user: {
+    accessToken: string;
+    firebaseToken: string;
+    user?: {
         id: string;
         email: string;
-        name: string;
+        firstName: string;
+        lastName: string;
     };
-    token: string;
 }
 
 export interface LoginFormState {
@@ -20,4 +22,21 @@ export interface LoginFormState {
     error: string | null;
 }
 
+
+export interface RegisterCredentials {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+}
+
+export interface RegisterFormState {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    isLoading: boolean;
+    error: string | null;
+}
 

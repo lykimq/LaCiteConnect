@@ -1,28 +1,41 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Dimensions, Image } from 'react-native';
-import { useLogin } from '../hooks/useLogin';
+import { useRegister } from '../hooks/useRegister';
 import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/authStyles';
 
-export const LoginForm = () => {
+export const RegisterForm = () => {
     const router = useRouter();
-    const { formState, updateFormState, login } = useLogin();
-    const [rememberMe, setRememberMe] = useState(false);
-    const [email, setEmail] = useState(formState.email);
-    const [password, setPassword] = useState(formState.password);
-    const [error, setError] = useState(formState.error);
+    const {
+        formState,
+        updateFormState,
+        handleRegister,
+        validateEmail,
+        validatePassword,
+        validateConfirmPassword,
+    } = useRegister();
 
     const handleSubmit = async () => {
+        if (!validateEmail(formState.email)) {
+            updateFormState({ error: 'Please enter a valid email address' });
+            return;
+        }
+
+        if (!validatePassword(formState.password)) {
+            updateFormState({ error: 'Password must be at least 6 characters long' });
+            return;
+        }
+
+        if (!validateConfirmPassword(formState.password, formState.confirmPassword)) {
+            updateFormState({ error: 'Passwords do not match' });
+            return;
+        }
+
         try {
-            const credentials = {
-                email: email,
-                password: password
-            };
-            await login(credentials);
+            await handleRegister();
             router.replace('/(tabs)');
         } catch (error) {
-            console.error('Login error:', error);
-            setError('An error occurred. Please try again later.');
+            console.error('Registration error:', error);
         }
     };
 
@@ -32,36 +45,41 @@ export const LoginForm = () => {
             // Google Sign In implementation
         } catch (error) {
             console.error('Google Sign In failed:', error);
-            setError('Google Sign In failed. Please try again later.');
         }
     };
 
-    const handleNavigateToRegister = () => {
+    const handleNavigateToLogin = () => {
         try {
-            router.push('/(auth)/register');
+            router.push('/(auth)/login');
         } catch (error) {
             console.error('Navigation error:', error);
         }
     };
 
-    const handleForgotPassword = () => {
-        // Implement forgot password logic here
-        console.log('Forgot password');
-    };
-
     return (
         <View style={authStyles.container}>
             <View style={authStyles.formContainer}>
-                <Text style={authStyles.title}>Welcome to La Cite Connect</Text>
-                {error && <Text style={authStyles.error}>{error}</Text>}
+                <Text style={authStyles.title}>Create Account</Text>
+                {formState.error && <Text style={authStyles.error}>{formState.error}</Text>}
+
+                <View style={authStyles.inputContainer}>
+                    <Text style={authStyles.label}>Full Name</Text>
+                    <TextInput
+                        style={authStyles.input}
+                        placeholder="Enter your full name"
+                        value={formState.firstName}
+                        onChangeText={(text) => updateFormState({ firstName: text })}
+                        autoCapitalize="words"
+                    />
+                </View>
 
                 <View style={authStyles.inputContainer}>
                     <Text style={authStyles.label}>Email</Text>
                     <TextInput
                         style={authStyles.input}
                         placeholder="Enter your email"
-                        value={email}
-                        onChangeText={setEmail}
+                        value={formState.email}
+                        onChangeText={(text) => updateFormState({ email: text })}
                         keyboardType="email-address"
                         autoCapitalize="none"
                     />
@@ -72,29 +90,25 @@ export const LoginForm = () => {
                     <TextInput
                         style={authStyles.input}
                         placeholder="Enter your password"
-                        value={password}
-                        onChangeText={setPassword}
+                        value={formState.password}
+                        onChangeText={(text) => updateFormState({ password: text })}
                         secureTextEntry
                     />
                 </View>
 
-                <View style={authStyles.optionsContainer}>
-                    <TouchableOpacity
-                        style={authStyles.rememberMeContainer}
-                        onPress={() => setRememberMe(!rememberMe)}
-                    >
-                        <View style={[authStyles.checkbox, rememberMe && authStyles.checkboxChecked]}>
-                            {rememberMe && <View style={authStyles.checkboxInner} />}
-                        </View>
-                        <Text style={authStyles.rememberMeText}>Remember me</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={handleForgotPassword}>
-                        <Text style={authStyles.forgotPassword}>Forgot Password?</Text>
-                    </TouchableOpacity>
+                <View style={authStyles.inputContainer}>
+                    <Text style={authStyles.label}>Confirm Password</Text>
+                    <TextInput
+                        style={authStyles.input}
+                        placeholder="Confirm your password"
+                        value={formState.confirmPassword}
+                        onChangeText={(text) => updateFormState({ confirmPassword: text })}
+                        secureTextEntry
+                    />
                 </View>
 
                 <TouchableOpacity style={authStyles.button} onPress={handleSubmit}>
-                    <Text style={authStyles.buttonText}>Login</Text>
+                    <Text style={authStyles.buttonText}>Register</Text>
                 </TouchableOpacity>
 
                 <View style={authStyles.dividerContainer}>
@@ -112,9 +126,9 @@ export const LoginForm = () => {
                 </TouchableOpacity>
 
                 <View style={authStyles.signUpContainer}>
-                    <Text style={authStyles.signUpText}>Don't have an account? </Text>
-                    <TouchableOpacity onPress={handleNavigateToRegister}>
-                        <Text style={authStyles.signUpLink}>Sign Up</Text>
+                    <Text style={authStyles.signUpText}>Already have an account? </Text>
+                    <TouchableOpacity onPress={handleNavigateToLogin}>
+                        <Text style={authStyles.signUpLink}>Login</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -226,43 +240,6 @@ const styles = StyleSheet.create({
         color: '#333',
         backgroundColor: '#f8f8f8',
     },
-    optionsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 25,
-    },
-    rememberMeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    checkbox: {
-        width: 20,
-        height: 20,
-        borderWidth: 2,
-        borderColor: '#666',
-        borderRadius: 4,
-        marginRight: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    checkboxInner: {
-        width: 12,
-        height: 12,
-        borderRadius: 2,
-    },
-    checkboxChecked: {
-        backgroundColor: '#FF9843',
-    },
-    rememberMeText: {
-        fontSize: 14,
-        color: '#666',
-    },
-    forgotPassword: {
-        fontSize: 14,
-        color: '#FF9843',
-        textDecorationLine: 'underline',
-    },
     error: {
         color: '#ff3b30',
         marginBottom: 15,
@@ -296,7 +273,3 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
-
-export default LoginForm;
-
-
