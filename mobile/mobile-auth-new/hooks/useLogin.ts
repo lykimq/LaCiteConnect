@@ -53,7 +53,7 @@ export const useLogin = () => {
             const data: AuthResponse = await response.json();
 
             if (formState.rememberMe) {
-                await AsyncStorage.setItem('userToken', data.token);
+                await AsyncStorage.setItem('userToken', data.accessToken);
             }
 
             return data;

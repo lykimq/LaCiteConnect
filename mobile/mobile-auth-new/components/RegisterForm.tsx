@@ -4,7 +4,7 @@ import { useRegister } from '../hooks/useRegister';
 import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/authStyles';
 
-export const RegisterForm = () => {
+const RegisterForm = () => {
     const router = useRouter();
     const {
         formState,
@@ -136,4 +136,6 @@ export const RegisterForm = () => {
     );
 };
 
-export default RegisterForm;
+RegisterForm.displayName = 'RegisterForm';
+
+export { RegisterForm };

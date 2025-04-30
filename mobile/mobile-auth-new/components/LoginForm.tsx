@@ -4,7 +4,7 @@ import { useLogin } from '../hooks/useLogin';
 import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/authStyles';
 
-export const LoginForm = () => {
+const LoginForm = () => {
     const router = useRouter();
     const { formState, updateFormState, login } = useLogin();
     const [rememberMe, setRememberMe] = useState(false);
@@ -107,6 +107,7 @@ export const LoginForm = () => {
                     <Image
                         source={require('../assets/icons8-google-30.png')}
                         style={authStyles.googleIcon}
+                        tintColor="#FFFFFF"
                     />
                     <Text style={authStyles.googleButtonText}>Continue with Google</Text>
                 </TouchableOpacity>
@@ -122,6 +123,8 @@ export const LoginForm = () => {
     );
 };
 
-export default LoginForm;
+LoginForm.displayName = 'LoginForm';
+
+export { LoginForm };
 
 
