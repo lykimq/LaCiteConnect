@@ -38,6 +38,7 @@ export interface RegisterFormState {
     confirmPassword: string;
     phoneNumber?: string;
     phoneRegion?: string;
+    profilePictureUrl?: string;
     isLoading: boolean;
     error: string | null;
 }

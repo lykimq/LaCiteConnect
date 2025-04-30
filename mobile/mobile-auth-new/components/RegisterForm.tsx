@@ -3,6 +3,7 @@ import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator,
 import { useRegister } from '../hooks/useRegister';
 import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/authStyles';
+import * as ImagePicker from 'expo-image-picker';
 
 // Common country codes with their flags and names
 const countryCodes = [
@@ -29,22 +30,46 @@ const RegisterForm = () => {
         validateConfirmPassword,
     } = useRegister();
     const [error, setError] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [showCountryPicker, setShowCountryPicker] = useState(false);
     const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+
+    const validateFields = () => {
+        const errors: Record<string, string> = {};
+
+        if (!formState.firstName?.trim()) {
+            errors.firstName = 'First name is required';
+        }
+
+        if (!formState.lastName?.trim()) {
+            errors.lastName = 'Last name is required';
+        }
+
+        if (!formState.email?.trim()) {
+            errors.email = 'Email is required';
+        } else if (!validateEmail(formState.email)) {
+            errors.email = 'Please enter a valid email address';
+        }
+
+        if (!formState.password?.trim()) {
+            errors.password = 'Password is required';
+        } else if (!validatePassword(formState.password)) {
+            errors.password = 'Password must be at least 6 characters long';
+        }
+
+        if (!formState.confirmPassword?.trim()) {
+            errors.confirmPassword = 'Please confirm your password';
+        } else if (!validateConfirmPassword(formState.password, formState.confirmPassword)) {
+            errors.confirmPassword = 'Passwords do not match';
+        }
+
+        setFieldErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const handleSubmit = async () => {
-        if (!validateEmail(formState.email)) {
-            updateFormState({ error: 'Please enter a valid email address' });
-            return;
-        }
-
-        if (!validatePassword(formState.password)) {
-            updateFormState({ error: 'Password must be at least 6 characters long' });
-            return;
-        }
-
-        if (!validateConfirmPassword(formState.password, formState.confirmPassword)) {
-            updateFormState({ error: 'Passwords do not match' });
+        if (!validateFields()) {
             return;
         }
 
@@ -53,6 +78,20 @@ const RegisterForm = () => {
             router.replace('/(tabs)');
         } catch (error) {
             setError(error instanceof Error ? error.message : 'An error occurred');
+        }
+    };
+
+    const pickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets[0].uri) {
+            setProfileImage(result.assets[0].uri);
+            updateFormState({ profilePictureUrl: result.assets[0].uri });
         }
     };
 
@@ -171,60 +210,122 @@ const RegisterForm = () => {
                     <Text style={authStyles.title}>Create Account</Text>
                     {error && <Text style={authStyles.error}>{error}</Text>}
 
+                    <View style={authStyles.profileImageContainer}>
+                        <TouchableOpacity onPress={pickImage} style={authStyles.profileImageButton}>
+                            {profileImage ? (
+                                <Image
+                                    source={{ uri: profileImage }}
+                                    style={authStyles.profileImage}
+                                />
+                            ) : (
+                                <>
+                                    <View style={authStyles.profileImagePlaceholder}>
+                                        <Text style={authStyles.profileImagePlaceholderText}>Add Photo</Text>
+                                    </View>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+
                     <View style={authStyles.inputContainer}>
                         <Text style={authStyles.label}>First Name *</Text>
                         <TextInput
-                            style={authStyles.input}
+                            style={[
+                                authStyles.input,
+                                fieldErrors.firstName && authStyles.inputError
+                            ]}
                             placeholder="Enter your first name"
                             value={formState.firstName}
-                            onChangeText={(text) => updateFormState({ firstName: text })}
+                            onChangeText={(text) => {
+                                updateFormState({ firstName: text });
+                                setFieldErrors(prev => ({ ...prev, firstName: '' }));
+                            }}
                             autoCapitalize="words"
                         />
+                        {fieldErrors.firstName && (
+                            <Text style={authStyles.errorText}>{fieldErrors.firstName}</Text>
+                        )}
                     </View>
 
                     <View style={authStyles.inputContainer}>
                         <Text style={authStyles.label}>Last Name *</Text>
                         <TextInput
-                            style={authStyles.input}
+                            style={[
+                                authStyles.input,
+                                fieldErrors.lastName && authStyles.inputError
+                            ]}
                             placeholder="Enter your last name"
                             value={formState.lastName}
-                            onChangeText={(text) => updateFormState({ lastName: text })}
+                            onChangeText={(text) => {
+                                updateFormState({ lastName: text });
+                                setFieldErrors(prev => ({ ...prev, lastName: '' }));
+                            }}
                             autoCapitalize="words"
                         />
+                        {fieldErrors.lastName && (
+                            <Text style={authStyles.errorText}>{fieldErrors.lastName}</Text>
+                        )}
                     </View>
 
                     <View style={authStyles.inputContainer}>
                         <Text style={authStyles.label}>Email *</Text>
                         <TextInput
-                            style={authStyles.input}
+                            style={[
+                                authStyles.input,
+                                fieldErrors.email && authStyles.inputError
+                            ]}
                             placeholder="Enter your email"
                             value={formState.email}
-                            onChangeText={(text) => updateFormState({ email: text })}
+                            onChangeText={(text) => {
+                                updateFormState({ email: text });
+                                setFieldErrors(prev => ({ ...prev, email: '' }));
+                            }}
                             keyboardType="email-address"
                             autoCapitalize="none"
                         />
+                        {fieldErrors.email && (
+                            <Text style={authStyles.errorText}>{fieldErrors.email}</Text>
+                        )}
                     </View>
 
                     <View style={authStyles.inputContainer}>
                         <Text style={authStyles.label}>Password *</Text>
                         <TextInput
-                            style={authStyles.input}
+                            style={[
+                                authStyles.input,
+                                fieldErrors.password && authStyles.inputError
+                            ]}
                             placeholder="Enter your password"
                             value={formState.password}
-                            onChangeText={(text) => updateFormState({ password: text })}
+                            onChangeText={(text) => {
+                                updateFormState({ password: text });
+                                setFieldErrors(prev => ({ ...prev, password: '' }));
+                            }}
                             secureTextEntry
                         />
+                        {fieldErrors.password && (
+                            <Text style={authStyles.errorText}>{fieldErrors.password}</Text>
+                        )}
                     </View>
 
                     <View style={authStyles.inputContainer}>
                         <Text style={authStyles.label}>Confirm Password *</Text>
                         <TextInput
-                            style={authStyles.input}
+                            style={[
+                                authStyles.input,
+                                fieldErrors.confirmPassword && authStyles.inputError
+                            ]}
                             placeholder="Confirm your password"
                             value={formState.confirmPassword}
-                            onChangeText={(text) => updateFormState({ confirmPassword: text })}
+                            onChangeText={(text) => {
+                                updateFormState({ confirmPassword: text });
+                                setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
+                            }}
                             secureTextEntry
                         />
+                        {fieldErrors.confirmPassword && (
+                            <Text style={authStyles.errorText}>{fieldErrors.confirmPassword}</Text>
+                        )}
                     </View>
 
                     <View style={authStyles.inputContainer}>

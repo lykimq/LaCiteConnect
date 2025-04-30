@@ -272,4 +272,44 @@ export const authStyles = StyleSheet.create({
         fontSize: 14,
         color: '#333',
     },
+
+    // Profile image styles
+    profileImageContainer: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    profileImageButton: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#f8f8f8',
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    profileImage: {
+        width: '100%',
+        height: '100%',
+    },
+    profileImagePlaceholder: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    profileImagePlaceholderText: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+    },
+
+    // Error styles
+    inputError: {
+        borderColor: '#ff3b30',
+    },
+    errorText: {
+        color: '#ff3b30',
+        fontSize: 12,
+        marginTop: 4,
+    },
 });
