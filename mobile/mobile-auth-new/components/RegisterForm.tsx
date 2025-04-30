@@ -19,6 +19,19 @@ const countryCodes = [
     { code: '+34', name: 'Spain', flag: '🇪🇸' },
 ];
 
+const initialFormState = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phoneNumber: '',
+    phoneRegion: '+1',
+    profilePictureUrl: '',
+    isLoading: false,
+    error: null
+};
+
 const RegisterForm = () => {
     const router = useRouter();
     const {
@@ -34,6 +47,10 @@ const RegisterForm = () => {
     const [showCountryPicker, setShowCountryPicker] = useState(false);
     const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
     const [profileImage, setProfileImage] = useState<string | null>(null);
+
+    React.useEffect(() => {
+        updateFormState(initialFormState);
+    }, []);
 
     const validateFields = () => {
         const errors: Record<string, string> = {};
@@ -83,7 +100,7 @@ const RegisterForm = () => {
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: 'images',
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
@@ -96,7 +113,6 @@ const RegisterForm = () => {
     };
 
     const handleGoogleSignIn = async () => {
-        // Implement Google Sign In logic here
         try {
             // Google Sign In implementation
         } catch (error) {
@@ -165,7 +181,10 @@ const RegisterForm = () => {
                     animationType="slide"
                     onRequestClose={() => setShowCountryPicker(false)}
                 >
-                    <View style={authStyles.modalOverlay}>
+                    <Pressable
+                        style={authStyles.modalOverlay}
+                        onPress={() => setShowCountryPicker(false)}
+                    >
                         <View style={authStyles.modalContent}>
                             <View style={authStyles.modalHeader}>
                                 <Text style={authStyles.modalTitle}>Select Country</Text>
@@ -190,7 +209,7 @@ const RegisterForm = () => {
                                 ))}
                             </ScrollView>
                         </View>
-                    </View>
+                    </Pressable>
                 </Modal>
             </>
         );
@@ -208,7 +227,7 @@ const RegisterForm = () => {
             >
                 <View style={authStyles.formContainer}>
                     <Text style={authStyles.title}>Create Account</Text>
-                    {error && <Text style={authStyles.error}>{error}</Text>}
+                    {error ? <Text style={authStyles.error}>{error}</Text> : null}
 
                     <View style={authStyles.profileImageContainer}>
                         <TouchableOpacity onPress={pickImage} style={authStyles.profileImageButton}>
@@ -218,11 +237,11 @@ const RegisterForm = () => {
                                     style={authStyles.profileImage}
                                 />
                             ) : (
-                                <>
-                                    <View style={authStyles.profileImagePlaceholder}>
-                                        <Text style={authStyles.profileImagePlaceholderText}>Add Photo</Text>
-                                    </View>
-                                </>
+                                <View style={authStyles.profileImagePlaceholder}>
+                                    <Text style={authStyles.profileImagePlaceholderText}>
+                                        Add Photo
+                                    </Text>
+                                </View>
                             )}
                         </TouchableOpacity>
                     </View>
@@ -235,16 +254,16 @@ const RegisterForm = () => {
                                 fieldErrors.firstName && authStyles.inputError
                             ]}
                             placeholder="Enter your first name"
-                            value={formState.firstName}
+                            value={formState.firstName || ''}
                             onChangeText={(text) => {
                                 updateFormState({ firstName: text });
                                 setFieldErrors(prev => ({ ...prev, firstName: '' }));
                             }}
                             autoCapitalize="words"
                         />
-                        {fieldErrors.firstName && (
+                        {fieldErrors.firstName ? (
                             <Text style={authStyles.errorText}>{fieldErrors.firstName}</Text>
-                        )}
+                        ) : null}
                     </View>
 
                     <View style={authStyles.inputContainer}>
@@ -255,16 +274,16 @@ const RegisterForm = () => {
                                 fieldErrors.lastName && authStyles.inputError
                             ]}
                             placeholder="Enter your last name"
-                            value={formState.lastName}
+                            value={formState.lastName || ''}
                             onChangeText={(text) => {
                                 updateFormState({ lastName: text });
                                 setFieldErrors(prev => ({ ...prev, lastName: '' }));
                             }}
                             autoCapitalize="words"
                         />
-                        {fieldErrors.lastName && (
+                        {fieldErrors.lastName ? (
                             <Text style={authStyles.errorText}>{fieldErrors.lastName}</Text>
-                        )}
+                        ) : null}
                     </View>
 
                     <View style={authStyles.inputContainer}>
@@ -275,7 +294,7 @@ const RegisterForm = () => {
                                 fieldErrors.email && authStyles.inputError
                             ]}
                             placeholder="Enter your email"
-                            value={formState.email}
+                            value={formState.email || ''}
                             onChangeText={(text) => {
                                 updateFormState({ email: text });
                                 setFieldErrors(prev => ({ ...prev, email: '' }));
@@ -283,9 +302,9 @@ const RegisterForm = () => {
                             keyboardType="email-address"
                             autoCapitalize="none"
                         />
-                        {fieldErrors.email && (
+                        {fieldErrors.email ? (
                             <Text style={authStyles.errorText}>{fieldErrors.email}</Text>
-                        )}
+                        ) : null}
                     </View>
 
                     <View style={authStyles.inputContainer}>
@@ -296,16 +315,16 @@ const RegisterForm = () => {
                                 fieldErrors.password && authStyles.inputError
                             ]}
                             placeholder="Enter your password"
-                            value={formState.password}
+                            value={formState.password || ''}
                             onChangeText={(text) => {
                                 updateFormState({ password: text });
                                 setFieldErrors(prev => ({ ...prev, password: '' }));
                             }}
                             secureTextEntry
                         />
-                        {fieldErrors.password && (
+                        {fieldErrors.password ? (
                             <Text style={authStyles.errorText}>{fieldErrors.password}</Text>
-                        )}
+                        ) : null}
                     </View>
 
                     <View style={authStyles.inputContainer}>
@@ -316,16 +335,16 @@ const RegisterForm = () => {
                                 fieldErrors.confirmPassword && authStyles.inputError
                             ]}
                             placeholder="Confirm your password"
-                            value={formState.confirmPassword}
+                            value={formState.confirmPassword || ''}
                             onChangeText={(text) => {
                                 updateFormState({ confirmPassword: text });
                                 setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
                             }}
                             secureTextEntry
                         />
-                        {fieldErrors.confirmPassword && (
+                        {fieldErrors.confirmPassword ? (
                             <Text style={authStyles.errorText}>{fieldErrors.confirmPassword}</Text>
-                        )}
+                        ) : null}
                     </View>
 
                     <View style={authStyles.inputContainer}>
@@ -335,7 +354,7 @@ const RegisterForm = () => {
                             <TextInput
                                 style={[authStyles.input, authStyles.phoneInput]}
                                 placeholder="Enter your phone number"
-                                value={formState.phoneNumber}
+                                value={formState.phoneNumber || ''}
                                 onChangeText={(text) => updateFormState({ phoneNumber: text })}
                                 keyboardType="phone-pad"
                             />
@@ -362,7 +381,7 @@ const RegisterForm = () => {
                     </TouchableOpacity>
 
                     <View style={authStyles.signUpContainer}>
-                        <Text style={authStyles.signUpText}>Already have an account? </Text>
+                        <Text style={authStyles.signUpText}>Already have an account?</Text>
                         <TouchableOpacity onPress={handleNavigateToLogin}>
                             <Text style={authStyles.signUpLink}>Login</Text>
                         </TouchableOpacity>
