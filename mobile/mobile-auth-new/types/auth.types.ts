@@ -36,6 +36,8 @@ export interface RegisterFormState {
     email: string;
     password: string;
     confirmPassword: string;
+    phoneNumber?: string;
+    phoneRegion?: string;
     isLoading: boolean;
     error: string | null;
 }

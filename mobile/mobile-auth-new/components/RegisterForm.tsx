@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Dimensions, Image } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Dimensions, Image, ScrollView, KeyboardAvoidingView, Modal, Pressable } from 'react-native';
 import { useRegister } from '../hooks/useRegister';
 import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/authStyles';
+
+// Common country codes with their flags and names
+const countryCodes = [
+    { code: '+1', name: 'United States', flag: '🇺🇸' },
+    { code: '+44', name: 'United Kingdom', flag: '🇬🇧' },
+    { code: '+33', name: 'France', flag: '🇫🇷' },
+    { code: '+49', name: 'Germany', flag: '🇩🇪' },
+    { code: '+81', name: 'Japan', flag: '🇯🇵' },
+    { code: '+86', name: 'China', flag: '🇨🇳' },
+    { code: '+91', name: 'India', flag: '🇮🇳' },
+    { code: '+61', name: 'Australia', flag: '🇦🇺' },
+    { code: '+55', name: 'Brazil', flag: '🇧🇷' },
+    { code: '+34', name: 'Spain', flag: '🇪🇸' },
+];
 
 const RegisterForm = () => {
     const router = useRouter();
@@ -14,6 +28,9 @@ const RegisterForm = () => {
         validatePassword,
         validateConfirmPassword,
     } = useRegister();
+    const [error, setError] = useState<string | null>(null);
+    const [showCountryPicker, setShowCountryPicker] = useState(false);
+    const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
 
     const handleSubmit = async () => {
         if (!validateEmail(formState.email)) {
@@ -35,7 +52,7 @@ const RegisterForm = () => {
             await handleRegister();
             router.replace('/(tabs)');
         } catch (error) {
-            console.error('Registration error:', error);
+            setError(error instanceof Error ? error.message : 'An error occurred');
         }
     };
 
@@ -56,83 +73,202 @@ const RegisterForm = () => {
         }
     };
 
+    const handleCountrySelect = (country: typeof countryCodes[0]) => {
+        setSelectedCountry(country);
+        setShowCountryPicker(false);
+        updateFormState({ phoneRegion: country.code });
+    };
+
+    const renderCountrySelector = () => {
+        if (Platform.OS === 'web') {
+            return (
+                <select
+                    value={selectedCountry.code}
+                    onChange={(e) => {
+                        const country = countryCodes.find(c => c.code === e.target.value);
+                        if (country) handleCountrySelect(country);
+                    }}
+                    style={{
+                        height: '50px',
+                        padding: '0 12px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        backgroundColor: '#f8f8f8',
+                        marginRight: '8px',
+                        fontSize: '16px',
+                        color: '#333',
+                        cursor: 'pointer',
+                        outline: 'none',
+                    }}
+                >
+                    {countryCodes.map((country) => (
+                        <option key={country.code} value={country.code}>
+                            {country.flag} {country.name} ({country.code})
+                        </option>
+                    ))}
+                </select>
+            );
+        }
+
+        return (
+            <>
+                <TouchableOpacity
+                    style={authStyles.countryCodeButton}
+                    onPress={() => setShowCountryPicker(true)}
+                >
+                    <Text style={authStyles.countryCodeText}>
+                        {selectedCountry.flag} {selectedCountry.code}
+                    </Text>
+                </TouchableOpacity>
+                <Modal
+                    visible={showCountryPicker}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={() => setShowCountryPicker(false)}
+                >
+                    <View style={authStyles.modalOverlay}>
+                        <View style={authStyles.modalContent}>
+                            <View style={authStyles.modalHeader}>
+                                <Text style={authStyles.modalTitle}>Select Country</Text>
+                                <TouchableOpacity onPress={() => setShowCountryPicker(false)}>
+                                    <Text style={authStyles.modalClose}>✕</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <ScrollView style={authStyles.countryList}>
+                                {countryCodes.map((country) => (
+                                    <Pressable
+                                        key={country.code}
+                                        style={({ pressed }) => [
+                                            authStyles.countryItem,
+                                            pressed && authStyles.countryItemPressed
+                                        ]}
+                                        onPress={() => handleCountrySelect(country)}
+                                    >
+                                        <Text style={authStyles.countryItemText}>
+                                            {country.flag} {country.name} ({country.code})
+                                        </Text>
+                                    </Pressable>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    </View>
+                </Modal>
+            </>
+        );
+    };
+
     return (
-        <View style={authStyles.container}>
-            <View style={authStyles.formContainer}>
-                <Text style={authStyles.title}>Create Account</Text>
-                {formState.error && <Text style={authStyles.error}>{formState.error}</Text>}
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={authStyles.container}
+        >
+            <ScrollView
+                contentContainerStyle={authStyles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={authStyles.formContainer}>
+                    <Text style={authStyles.title}>Create Account</Text>
+                    {error && <Text style={authStyles.error}>{error}</Text>}
 
-                <View style={authStyles.inputContainer}>
-                    <Text style={authStyles.label}>Full Name</Text>
-                    <TextInput
-                        style={authStyles.input}
-                        placeholder="Enter your full name"
-                        value={formState.firstName}
-                        onChangeText={(text) => updateFormState({ firstName: text })}
-                        autoCapitalize="words"
-                    />
-                </View>
+                    <View style={authStyles.inputContainer}>
+                        <Text style={authStyles.label}>First Name *</Text>
+                        <TextInput
+                            style={authStyles.input}
+                            placeholder="Enter your first name"
+                            value={formState.firstName}
+                            onChangeText={(text) => updateFormState({ firstName: text })}
+                            autoCapitalize="words"
+                        />
+                    </View>
 
-                <View style={authStyles.inputContainer}>
-                    <Text style={authStyles.label}>Email</Text>
-                    <TextInput
-                        style={authStyles.input}
-                        placeholder="Enter your email"
-                        value={formState.email}
-                        onChangeText={(text) => updateFormState({ email: text })}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
-                </View>
+                    <View style={authStyles.inputContainer}>
+                        <Text style={authStyles.label}>Last Name *</Text>
+                        <TextInput
+                            style={authStyles.input}
+                            placeholder="Enter your last name"
+                            value={formState.lastName}
+                            onChangeText={(text) => updateFormState({ lastName: text })}
+                            autoCapitalize="words"
+                        />
+                    </View>
 
-                <View style={authStyles.inputContainer}>
-                    <Text style={authStyles.label}>Password</Text>
-                    <TextInput
-                        style={authStyles.input}
-                        placeholder="Enter your password"
-                        value={formState.password}
-                        onChangeText={(text) => updateFormState({ password: text })}
-                        secureTextEntry
-                    />
-                </View>
+                    <View style={authStyles.inputContainer}>
+                        <Text style={authStyles.label}>Email *</Text>
+                        <TextInput
+                            style={authStyles.input}
+                            placeholder="Enter your email"
+                            value={formState.email}
+                            onChangeText={(text) => updateFormState({ email: text })}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+                    </View>
 
-                <View style={authStyles.inputContainer}>
-                    <Text style={authStyles.label}>Confirm Password</Text>
-                    <TextInput
-                        style={authStyles.input}
-                        placeholder="Confirm your password"
-                        value={formState.confirmPassword}
-                        onChangeText={(text) => updateFormState({ confirmPassword: text })}
-                        secureTextEntry
-                    />
-                </View>
+                    <View style={authStyles.inputContainer}>
+                        <Text style={authStyles.label}>Password *</Text>
+                        <TextInput
+                            style={authStyles.input}
+                            placeholder="Enter your password"
+                            value={formState.password}
+                            onChangeText={(text) => updateFormState({ password: text })}
+                            secureTextEntry
+                        />
+                    </View>
 
-                <TouchableOpacity style={authStyles.button} onPress={handleSubmit}>
-                    <Text style={authStyles.buttonText}>Register</Text>
-                </TouchableOpacity>
+                    <View style={authStyles.inputContainer}>
+                        <Text style={authStyles.label}>Confirm Password *</Text>
+                        <TextInput
+                            style={authStyles.input}
+                            placeholder="Confirm your password"
+                            value={formState.confirmPassword}
+                            onChangeText={(text) => updateFormState({ confirmPassword: text })}
+                            secureTextEntry
+                        />
+                    </View>
 
-                <View style={authStyles.dividerContainer}>
-                    <View style={authStyles.dividerLine} />
-                    <Text style={authStyles.dividerText}>or</Text>
-                    <View style={authStyles.dividerLine} />
-                </View>
+                    <View style={authStyles.inputContainer}>
+                        <Text style={authStyles.label}>Phone Number</Text>
+                        <View style={authStyles.phoneInputContainer}>
+                            {renderCountrySelector()}
+                            <TextInput
+                                style={[authStyles.input, authStyles.phoneInput]}
+                                placeholder="Enter your phone number"
+                                value={formState.phoneNumber}
+                                onChangeText={(text) => updateFormState({ phoneNumber: text })}
+                                keyboardType="phone-pad"
+                            />
+                        </View>
+                    </View>
 
-                <TouchableOpacity style={authStyles.googleButton} onPress={handleGoogleSignIn}>
-                    <Image
-                        source={require('../assets/icons8-google-30.png')}
-                        style={authStyles.googleIcon}
-                    />
-                    <Text style={authStyles.googleButtonText}>Continue with Google</Text>
-                </TouchableOpacity>
-
-                <View style={authStyles.signUpContainer}>
-                    <Text style={authStyles.signUpText}>Already have an account? </Text>
-                    <TouchableOpacity onPress={handleNavigateToLogin}>
-                        <Text style={authStyles.signUpLink}>Login</Text>
+                    <TouchableOpacity style={authStyles.button} onPress={handleSubmit}>
+                        <Text style={authStyles.buttonText}>Register</Text>
                     </TouchableOpacity>
+
+                    <View style={authStyles.dividerContainer}>
+                        <View style={authStyles.dividerLine} />
+                        <Text style={authStyles.dividerText}>or</Text>
+                        <View style={authStyles.dividerLine} />
+                    </View>
+
+                    <TouchableOpacity style={authStyles.googleButton} onPress={handleGoogleSignIn}>
+                        <Image
+                            source={require('../assets/icons8-google-30.png')}
+                            style={authStyles.googleIcon}
+                            tintColor="#FFFFFF"
+                        />
+                        <Text style={authStyles.googleButtonText}>Continue with Google</Text>
+                    </TouchableOpacity>
+
+                    <View style={authStyles.signUpContainer}>
+                        <Text style={authStyles.signUpText}>Already have an account? </Text>
+                        <TouchableOpacity onPress={handleNavigateToLogin}>
+                            <Text style={authStyles.signUpLink}>Login</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
-        </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 };
 

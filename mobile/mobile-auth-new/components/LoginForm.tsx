@@ -52,7 +52,7 @@ const LoginForm = () => {
     return (
         <View style={authStyles.container}>
             <View style={authStyles.formContainer}>
-                <Text style={authStyles.title}>Welcome to La Cite Connect</Text>
+                <Text style={authStyles.title}>Sign In</Text>
                 {error && <Text style={authStyles.error}>{error}</Text>}
 
                 <View style={authStyles.inputContainer}>

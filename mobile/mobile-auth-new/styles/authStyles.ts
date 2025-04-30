@@ -11,11 +11,18 @@ export const authStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFFFF',
+    },
+    scrollContent: {
+        flexGrow: 1,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
     },
     formContainer: {
-        width: isWeb ? Math.min(400, width * 0.9) : '100%',
-        maxWidth: 400,
+        width: isWeb ? Math.min(450, width * 0.9) : '100%',
+        maxWidth: 450,
         padding: 20,
         borderRadius: 12,
         backgroundColor: '#fff',
@@ -189,5 +196,80 @@ export const authStyles = StyleSheet.create({
         fontSize: 14,
         color: '#FF9843',
         textDecorationLine: 'underline',
+    },
+
+    // Phone input styles
+    phoneInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        gap: 8,
+    },
+    countryCodeButton: {
+        height: 50,
+        paddingHorizontal: 12,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        borderRadius: 8,
+        backgroundColor: '#f8f8f8',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minWidth: 100,
+        maxWidth: 120,
+        flexShrink: 0,
+    },
+    countryCodeText: {
+        fontSize: 16,
+        color: '#333',
+    },
+    phoneInput: {
+        flex: 1,
+        minWidth: 120,
+    },
+
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 16,
+        maxHeight: '50%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    modalTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    modalClose: {
+        fontSize: 18,
+        color: '#666',
+        padding: 4,
+    },
+    countryList: {
+        maxHeight: 200,
+    },
+    countryItem: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    countryItemPressed: {
+        backgroundColor: '#f5f5f5',
+    },
+    countryItemText: {
+        fontSize: 14,
+        color: '#333',
     },
 });
