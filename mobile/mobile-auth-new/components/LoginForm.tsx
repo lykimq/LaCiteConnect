@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Dimensions, Image, Alert } from 'react-native';
+import { TextInput, TouchableOpacity, View, Text, ActivityIndicator, Image, Alert } from 'react-native';
 import { useLogin } from '../hooks/useLogin';
 import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/authStyles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Welcome from './Welcome';
+import { handleGoogleSignIn } from '../utils/googleSignIn';
+import { validateLoginFields } from '../utils/formValidation';
 
 const LoginForm: React.FC = () => {
     const router = useRouter();
-    const { formState, updateFormState, login, validateEmail, validatePassword } = useLogin();
+    const { formState, updateFormState, login } = useLogin();
     const [error, setError] = useState<string | null>(null);
     const [showWelcome, setShowWelcome] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+    // Add dialog state for Google Sign-In
+    const [dialogMessage, setDialogMessage] = useState<{ title: string; message: string }>({ title: '', message: '' });
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogCallback, setDialogCallback] = useState<(() => void) | null>(null);
+
+    const alertUtils = {
+        setDialogMessage,
+        setDialogVisible,
+        setDialogCallback
+    };
 
     const handleSubmit = async () => {
         try {
@@ -18,27 +32,10 @@ const LoginForm: React.FC = () => {
             setError(null);
             updateFormState({ isLoading: true });
 
-            if (!formState.email?.trim()) {
-                console.log('Email validation failed: empty email');
-                setError('Email is required');
-                return;
-            }
-
-            if (!validateEmail(formState.email)) {
-                console.log('Email validation failed: invalid email format');
-                setError('Please enter a valid email address');
-                return;
-            }
-
-            if (!formState.password?.trim()) {
-                console.log('Password validation failed: empty password');
-                setError('Password is required');
-                return;
-            }
-
-            if (!validatePassword(formState.password)) {
-                console.log('Password validation failed: password too short');
-                setError('Password must be at least 6 characters');
+            const validationResult = validateLoginFields(formState);
+            if (!validationResult.isValid) {
+                console.log('Form validation failed:', validationResult.errors);
+                setFieldErrors(validationResult.errors);
                 return;
             }
 
@@ -83,14 +80,8 @@ const LoginForm: React.FC = () => {
         }
     };
 
-    const handleGoogleSignIn = async () => {
-        // Implement Google Sign In logic here
-        try {
-            // Google Sign In implementation
-        } catch (error) {
-            console.error('Google Sign In failed:', error);
-            setError('Google Sign In failed. Please try again later.');
-        }
+    const handleGoogleSignInPress = async () => {
+        await handleGoogleSignIn(alertUtils);
     };
 
     const handleNavigateToRegister = () => {
@@ -119,30 +110,34 @@ const LoginForm: React.FC = () => {
                 <View style={authStyles.inputContainer}>
                     <Text style={authStyles.label}>Email</Text>
                     <TextInput
-                        style={authStyles.input}
+                        style={[authStyles.input, fieldErrors.email && authStyles.inputError]}
                         placeholder="Enter your email"
                         value={formState.email}
                         onChangeText={(text) => {
                             updateFormState({ email: text });
                             setError(null);
+                            setFieldErrors(prev => ({ ...prev, email: '' }));
                         }}
                         keyboardType="email-address"
                         autoCapitalize="none"
                     />
+                    {fieldErrors.email && <Text style={authStyles.errorText}>{fieldErrors.email}</Text>}
                 </View>
 
                 <View style={authStyles.inputContainer}>
                     <Text style={authStyles.label}>Password</Text>
                     <TextInput
-                        style={authStyles.input}
+                        style={[authStyles.input, fieldErrors.password && authStyles.inputError]}
                         placeholder="Enter your password"
                         value={formState.password}
                         onChangeText={(text) => {
                             updateFormState({ password: text });
                             setError(null);
+                            setFieldErrors(prev => ({ ...prev, password: '' }));
                         }}
                         secureTextEntry
                     />
+                    {fieldErrors.password && <Text style={authStyles.errorText}>{fieldErrors.password}</Text>}
                 </View>
 
                 <View style={authStyles.optionsContainer}>
@@ -178,7 +173,7 @@ const LoginForm: React.FC = () => {
                     <View style={authStyles.dividerLine} />
                 </View>
 
-                <TouchableOpacity style={authStyles.googleButton} onPress={handleGoogleSignIn}>
+                <TouchableOpacity style={authStyles.googleButton} onPress={handleGoogleSignInPress}>
                     <Image
                         source={require('../assets/icons8-google-30.png')}
                         tintColor="#FFFFFF"

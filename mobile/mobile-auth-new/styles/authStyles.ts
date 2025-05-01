@@ -235,46 +235,41 @@ export const authStyles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'flex-end',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 16,
-        maxHeight: '50%',
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        width: '90%',
+        maxWidth: 400,
         alignItems: 'center',
-        marginBottom: 12,
     },
     modalTitle: {
-        fontSize: 16,
+        fontSize: 20,
         fontWeight: 'bold',
+        marginBottom: 10,
         color: '#333',
     },
-    modalClose: {
-        fontSize: 18,
+    modalMessage: {
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
         color: '#666',
-        padding: 4,
     },
-    countryList: {
-        maxHeight: 200,
+    modalButton: {
+        backgroundColor: '#007AFF',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 5,
+        minWidth: 100,
+        alignItems: 'center',
     },
-    countryItem: {
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-    },
-    countryItemPressed: {
-        backgroundColor: '#f5f5f5',
-    },
-    countryItemText: {
-        fontSize: 14,
-        color: '#333',
+    modalButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
     },
 
     // Profile image styles
@@ -315,5 +310,35 @@ export const authStyles = StyleSheet.create({
         color: '#ff3b30',
         fontSize: 12,
         marginTop: 4,
+    },
+
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        marginBottom: 10,
+    },
+    modalClose: {
+        fontSize: 20,
+        color: '#666',
+        padding: 5,
+    },
+    countryList: {
+        width: '100%',
+        maxHeight: 300,
+    },
+    countryItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+    },
+    countryItemPressed: {
+        backgroundColor: '#f5f5f5',
+    },
+    countryItemText: {
+        fontSize: 16,
+        color: '#333',
     },
 });
