@@ -2,6 +2,7 @@ import { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoginCredentials, LoginFormState, AuthResponse } from '../types/auth.types';
 import { authService } from '../services/authService';
+import { validateLoginFields } from '../utils/formValidation';
 
 export const useLogin = () => {
     const [formState, setFormState] = useState<LoginFormState>({
@@ -16,33 +17,21 @@ export const useLogin = () => {
         setFormState(prev => ({ ...prev, ...updates }));
     }
 
-    const validateEmail = (email: string): boolean => {
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        return emailRegex.test(email);
-    };
-
-    const validatePassword = (password: string): boolean => {
-        return password.length >= 6;
-    };
-
     const login = async (credentials: LoginCredentials) => {
         try {
             updateFormState({ isLoading: true, error: null });
 
-            if (!credentials.email?.trim()) {
-                throw new Error('Email is required');
-            }
+            // Validate credentials using the centralized validation
+            const validationResult = validateLoginFields({
+                email: credentials.email,
+                password: credentials.password,
+                rememberMe: formState.rememberMe,
+                isLoading: false,
+                error: null
+            });
 
-            if (!validateEmail(credentials.email)) {
-                throw new Error('Please enter a valid email address');
-            }
-
-            if (!credentials.password?.trim()) {
-                throw new Error('Password is required');
-            }
-
-            if (!validatePassword(credentials.password)) {
-                throw new Error('Password must be at least 6 characters');
+            if (!validationResult.isValid) {
+                throw new Error(Object.values(validationResult.errors)[0]);
             }
 
             const response = await authService.login(credentials);
@@ -67,8 +56,6 @@ export const useLogin = () => {
     return {
         formState,
         updateFormState,
-        login,
-        validateEmail,
-        validatePassword
+        login
     };
 };

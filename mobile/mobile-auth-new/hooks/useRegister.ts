@@ -2,6 +2,7 @@ import { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RegisterFormState, RegisterCredentials, AuthResponse, SessionType } from '../types/auth.types';
 import { authService } from '../services/authService';
+import { validateRegisterFields } from '../utils/formValidation';
 
 export const useRegister = () => {
     const [formState, setFormState] = useState<RegisterFormState>({
@@ -21,19 +22,6 @@ export const useRegister = () => {
 
     const updateFormState = (updates: Partial<RegisterFormState>) => {
         setFormState(prev => ({ ...prev, ...updates }));
-    };
-
-    const validateEmail = (email: string): boolean => {
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        return emailRegex.test(email);
-    };
-
-    const validatePassword = (password: string): boolean => {
-        return password.length >= 6;
-    };
-
-    const validateConfirmPassword = (password: string, confirmPassword: string): boolean => {
-        return password === confirmPassword;
     };
 
     const validatePhoneNumber = (phoneNumber: string, phoneRegion: string): boolean => {
@@ -60,39 +48,10 @@ export const useRegister = () => {
             console.log('useRegister hook: Starting registration');
             updateFormState({ isLoading: true, error: null });
 
-            if (!formState.email?.trim()) {
-                console.log('useRegister hook: Email validation failed');
-                throw new Error('Email is required');
-            }
-
-            if (!validateEmail(formState.email)) {
-                console.log('useRegister hook: Email format validation failed');
-                throw new Error('Please enter a valid email address');
-            }
-
-            if (!formState.password?.trim()) {
-                console.log('useRegister hook: Password validation failed');
-                throw new Error('Password is required');
-            }
-
-            if (!validatePassword(formState.password)) {
-                console.log('useRegister hook: Password length validation failed');
-                throw new Error('Password must be at least 6 characters');
-            }
-
-            if (!validateConfirmPassword(formState.password, formState.confirmPassword)) {
-                console.log('useRegister hook: Password confirmation validation failed');
-                throw new Error('Passwords do not match');
-            }
-
-            if (!formState.firstName?.trim()) {
-                console.log('useRegister hook: First name validation failed');
-                throw new Error('First name is required');
-            }
-
-            if (!formState.lastName?.trim()) {
-                console.log('useRegister hook: Last name validation failed');
-                throw new Error('Last name is required');
+            // Validate form using the centralized validation
+            const validationResult = validateRegisterFields(formState);
+            if (!validationResult.isValid) {
+                throw new Error(Object.values(validationResult.errors)[0]);
             }
 
             // Format phone number for backend validation
@@ -145,9 +104,6 @@ export const useRegister = () => {
         formState,
         updateFormState,
         handleRegister,
-        validateEmail,
-        validatePassword,
-        validateConfirmPassword,
         validatePhoneNumber,
     };
 };
