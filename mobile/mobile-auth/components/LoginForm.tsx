@@ -21,22 +21,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
 
     const handleSubmit = async () => {
         try {
-            setIsTestingConnection(true);
-            console.log('Testing connection before login...');
-            const isConnected = await authService.testConnection();
-
-            if (!isConnected) {
-                Alert.alert(
-                    'Connection Error',
-                    'Unable to connect to the server. Please check your internet connection and try again.'
-                );
-                return;
-            }
-
-            console.log('Connection test successful, proceeding with login...');
-            setError(null);
-            updateFormState({ isLoading: true });
-
             const validationResult = validateLoginFields(formState);
             if (!validationResult.isValid) {
                 console.log('Form validation failed:', validationResult.errors);
@@ -49,12 +33,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
                 password: formState.password
             };
 
-            console.log('Attempting login with credentials:', { email: credentials.email });
             const response = await login(credentials);
-            console.log('Login response:', response);
 
             if (response) {
-                console.log('Login successful, storing user data...');
                 // Store user data in AsyncStorage
                 await AsyncStorage.setItem('userData', JSON.stringify({
                     id: response.user.id,
@@ -63,7 +44,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
                     lastName: response.user.lastName,
                     role: response.user.role
                 }));
-                console.log('User data stored successfully');
 
                 // Clear the form
                 updateFormState({

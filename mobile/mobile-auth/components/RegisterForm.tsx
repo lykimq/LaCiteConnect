@@ -1,119 +1,186 @@
 import React, { useState } from 'react';
-import { TextInput, TouchableOpacity, View, Text, ActivityIndicator, Alert } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Image, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { useRegister } from '../hooks/useRegister';
+import { useRouter } from 'expo-router';
 import { authStyles } from '../styles/auth.styles';
-import { authService } from '../services/authService';
+import { countryCodes } from '../utils/countries';
+import { ProfileImagePicker } from './ProfileImagePicker';
+import CountryPicker from './CountryPicker';
+import RegisterInputFields from './RegisterInputFields';
+import DialogModal from './DialogModal';
+import { validateRegisterFields } from '../utils/formValidation';
 
-type RegisterFormProps = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
+const initialFormState = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phoneNumber: '',
+    phoneRegion: '+1',
+    profilePictureUrl: '',
+    isLoading: false,
+    error: null
 };
 
-export const RegisterForm: React.FC<RegisterFormProps> = ({ navigation }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+const RegisterForm: React.FC = () => {
+    const router = useRouter();
+    const {
+        formState,
+        updateFormState,
+        handleRegister,
+    } = useRegister();
+    const [error, setError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [dialogMessage, setDialogMessage] = useState<{ title: string; message: string }>({ title: '', message: '' });
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogCallback, setDialogCallback] = useState<(() => void) | null>(null);
 
-    const handleRegister = async () => {
-        if (!email || !password || !firstName || !lastName) {
-            Alert.alert('Error', 'Please fill in all fields');
+    const alertUtils = {
+        setDialogMessage,
+        setDialogVisible,
+        setDialogCallback
+    };
+
+    React.useEffect(() => {
+        updateFormState(initialFormState);
+    }, []);
+
+    const handleSubmit = async () => {
+        const validationResult = validateRegisterFields(formState);
+
+        if (!validationResult.isValid) {
+            setFieldErrors(validationResult.errors);
             return;
         }
 
         try {
-            setIsLoading(true);
-            const response = await authService.register({
-                email: email.trim(),
-                password,
-                firstName,
-                lastName,
-            });
+            updateFormState({ isLoading: true, error: null });
+            const response = await handleRegister();
 
-            console.log('Registration successful:', response);
-            Alert.alert('Success', 'Registration successful! Please log in.');
-            navigation.navigate('Login');
+            if (response) {
+                handleAlert(
+                    'Registration Successful',
+                    'Your account has been created successfully. You can now log in with your credentials.',
+                    () => {
+                        updateFormState(initialFormState);
+                        router.replace('/(auth)/login');
+                    },
+                    alertUtils
+                );
+            }
         } catch (error) {
-            console.error('Registration error:', error);
-            Alert.alert('Error', error instanceof Error ? error.message : 'An unexpected error occurred');
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
+            setError(errorMessage);
+            handleAlert('Registration Failed', errorMessage, null, alertUtils);
         } finally {
-            setIsLoading(false);
+            updateFormState({ isLoading: false });
         }
     };
 
+    const handleGoogleSignInPress = async () => {
+        await handleGoogleSignIn(alertUtils);
+    };
+
+    const handleNavigateToLogin = () => {
+        router.push('/(auth)/login');
+    };
+
     return (
-        <View style={authStyles.container}>
-            <View style={authStyles.formContainer}>
-                <Text style={authStyles.title}>Create Account</Text>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1, backgroundColor: '#fff' }}
+        >
+            <DialogModal
+                visible={dialogVisible}
+                message={dialogMessage}
+                onClose={() => setDialogVisible(false)}
+            />
+
+            <ScrollView
+                contentContainerStyle={{
+                    paddingHorizontal: 20,
+                    paddingTop: 40,
+                    paddingBottom: 32,
+                    flexGrow: 1,
+                }}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                <Text style={[authStyles.title, { marginBottom: 24, textAlign: 'left' }]}>Create Account</Text>
+                {error && <Text style={authStyles.error}>{error}</Text>}
+
+                <ProfileImagePicker
+                    profileImage={profileImage}
+                    setProfileImage={setProfileImage}
+                    updateFormState={updateFormState}
+                />
+
+                <RegisterInputFields
+                    formState={formState}
+                    updateFormState={updateFormState}
+                    fieldErrors={fieldErrors}
+                    setFieldErrors={setFieldErrors}
+                />
 
                 <View style={authStyles.inputContainer}>
-                    <Text style={authStyles.label}>First Name</Text>
-                    <TextInput
-                        style={[authStyles.input, fieldErrors.firstName && authStyles.inputError]}
-                        placeholder="Enter your first name"
-                        value={firstName}
-                        onChangeText={setFirstName}
-                    />
-                    {fieldErrors.firstName && <Text style={authStyles.errorText}>{fieldErrors.firstName}</Text>}
-                </View>
-
-                <View style={authStyles.inputContainer}>
-                    <Text style={authStyles.label}>Last Name</Text>
-                    <TextInput
-                        style={[authStyles.input, fieldErrors.lastName && authStyles.inputError]}
-                        placeholder="Enter your last name"
-                        value={lastName}
-                        onChangeText={setLastName}
-                    />
-                    {fieldErrors.lastName && <Text style={authStyles.errorText}>{fieldErrors.lastName}</Text>}
-                </View>
-
-                <View style={authStyles.inputContainer}>
-                    <Text style={authStyles.label}>Email</Text>
-                    <TextInput
-                        style={[authStyles.input, fieldErrors.email && authStyles.inputError]}
-                        placeholder="Enter your email"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
-                    {fieldErrors.email && <Text style={authStyles.errorText}>{fieldErrors.email}</Text>}
-                </View>
-
-                <View style={authStyles.inputContainer}>
-                    <Text style={authStyles.label}>Password</Text>
-                    <TextInput
-                        style={[authStyles.input, fieldErrors.password && authStyles.inputError]}
-                        placeholder="Enter your password"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-                    {fieldErrors.password && <Text style={authStyles.errorText}>{fieldErrors.password}</Text>}
+                    <Text style={authStyles.label}>Phone Number</Text>
+                    <View style={authStyles.phoneInputContainer}>
+                        <CountryPicker
+                            selectedCountry={selectedCountry}
+                            setSelectedCountry={setSelectedCountry}
+                            updateFormState={updateFormState}
+                        />
+                        <TextInput
+                            style={[authStyles.input, authStyles.phoneInput]}
+                            placeholder="Enter your phone number"
+                            value={formState.phoneNumber || ''}
+                            onChangeText={(text) => updateFormState({ phoneNumber: text })}
+                            keyboardType="phone-pad"
+                        />
+                    </View>
+                    {fieldErrors.phoneNumber && (
+                        <Text style={authStyles.error}>{fieldErrors.phoneNumber}</Text>
+                    )}
                 </View>
 
                 <TouchableOpacity
-                    style={[authStyles.button, isLoading && authStyles.buttonDisabled]}
-                    onPress={handleRegister}
-                    disabled={isLoading}
+                    style={[authStyles.button, { width: '100%', marginTop: 8 }]}
+                    onPress={handleSubmit}
+                    disabled={formState.isLoading}
                 >
-                    {isLoading ? (
+                    {formState.isLoading ? (
                         <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                        <Text style={authStyles.buttonText}>Register</Text>
+                        <Text style={authStyles.buttonText}>Create Account</Text>
                     )}
                 </TouchableOpacity>
 
-                <View style={authStyles.signUpContainer}>
-                    <Text style={authStyles.signUpText}>Already have an account? </Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                        <Text style={authStyles.signUpLink}>Sign In</Text>
+                <View style={authStyles.dividerContainer}>
+                    <View style={authStyles.dividerLine} />
+                    <Text style={authStyles.dividerText}>or</Text>
+                    <View style={authStyles.dividerLine} />
+                </View>
+
+                <TouchableOpacity style={[authStyles.googleButton, { width: '100%' }]} onPress={handleGoogleSignInPress}>
+                    <Image
+                        source={require('../assets/icons8-google-30.png')}
+                        style={[authStyles.googleIcon, { tintColor: '#FFFFFF' }]}
+                    />
+                    <Text style={authStyles.googleButtonText}>Continue with Google</Text>
+                </TouchableOpacity>
+
+                <View style={[authStyles.signUpContainer, { marginTop: 24 }]}>
+                    <Text style={authStyles.signUpText}>Already have an account?</Text>
+                    <TouchableOpacity onPress={handleNavigateToLogin}>
+                        <Text style={authStyles.signUpLink}>Login</Text>
                     </TouchableOpacity>
                 </View>
-            </View>
-        </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 };
+
+export default RegisterForm;

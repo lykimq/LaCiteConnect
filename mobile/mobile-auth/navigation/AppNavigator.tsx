@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { WelcomePage } from '../components/WelcomePage';
 import { LoginForm } from '../components/LoginForm';
-import { RegisterForm } from '../components/RegisterForm';
+import RegisterForm from '../components/RegisterForm';
 
 export type RootStackParamList = {
     Welcome: undefined;

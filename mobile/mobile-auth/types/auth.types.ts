@@ -29,3 +29,30 @@ export interface LoginFormState {
     isLoading: boolean;
     error: string | null;
 }
+
+export interface RegisterCredentials {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber?: string;
+    phoneRegion?: string;
+    sessionType?: SessionType;
+    biometricEnabled?: boolean;
+}
+
+export interface RegisterFormState {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    phoneNumber: string;
+    phoneRegion: string;
+    profilePictureUrl: string;
+    sessionType?: SessionType;
+    biometricEnabled?: boolean;
+    isLoading: boolean;
+    error: string | null;
+}
+

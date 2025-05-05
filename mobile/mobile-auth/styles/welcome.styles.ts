@@ -1,6 +1,7 @@
 import { StyleSheet, Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
+import { authStyles } from './auth.styles';
 
 export const welcomeStyles = StyleSheet.create({
     safeArea: {
@@ -62,21 +63,15 @@ export const welcomeStyles = StyleSheet.create({
     actionContainer: {
         marginBottom: 20,
     },
+    // Reusable button styles
     loginButton: {
-        height: 50,
-        borderRadius: 25,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 15,
+        ...authStyles.button,
     },
     loginButtonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '600',
+        ...authStyles.buttonText,
     },
     registerButton: {
-        height: 50,
-        borderRadius: 25,
+        ...authStyles.button,
         backgroundColor: '#fff',
         borderWidth: 1,
         borderColor: '#3498DB',
@@ -85,6 +80,7 @@ export const welcomeStyles = StyleSheet.create({
         marginBottom: 15,
     },
     registerButtonText: {
+        ...authStyles.buttonText,
         color: '#3498DB',
         fontSize: 18,
         fontWeight: '600',
