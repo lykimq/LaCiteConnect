@@ -1,68 +1,61 @@
 import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LoginFormState, LoginCredentials } from '../types/auth.types';
+import { authService } from '../services/authService';
+import { validateLoginFields } from '../utils/formValidation';
 
-interface LoginState {
-    email: string;
-    password: string;
-    isLoading: boolean;
-    error: string | null;
-}
-
-interface UseLoginReturn {
-    loginState: LoginState;
-    setEmail: (email: string) => void;
-    setPassword: (password: string) => void;
-    handleLogin: () => Promise<void>;
-    resetError: () => void;
-}
-
-export const useLogin = (): UseLoginReturn => {
-    const [loginState, setLoginState] = useState<LoginState>({
+export const useLogin = () => {
+    const [formState, setFormState] = useState<LoginFormState>({
         email: '',
         password: '',
+        rememberMe: false,
         isLoading: false,
-        error: null,
+        error: null
     });
 
-    const setEmail = (email: string) => {
-        setLoginState(prev => ({ ...prev, email }));
-    };
+    const updateFormState = (updates: Partial<LoginFormState>) => {
+        setFormState(prev => ({ ...prev, ...updates }));
+    }
 
-    const setPassword = (password: string) => {
-        setLoginState(prev => ({ ...prev, password }));
-    };
-
-    const resetError = () => {
-        setLoginState(prev => ({ ...prev, error: null }));
-    };
-
-    const handleLogin = async () => {
+    const login = async (credentials: LoginCredentials) => {
         try {
-            setLoginState(prev => ({ ...prev, isLoading: true, error: null }));
+            updateFormState({ isLoading: true, error: null });
 
-            // TODO: Implement actual login logic here
-            console.log('Login attempted with:', {
-                email: loginState.email,
-                password: loginState.password,
+            // Validate credentials using the centralized validation
+            const validationResult = validateLoginFields({
+                email: credentials.email,
+                password: credentials.password,
+                rememberMe: formState.rememberMe,
+                isLoading: false,
+                error: null
             });
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!validationResult.isValid) {
+                throw new Error(Object.values(validationResult.errors)[0]);
+            }
 
+            const response = await authService.login(credentials);
+
+            if (formState.rememberMe) {
+                await AsyncStorage.setItem('userToken', response.accessToken);
+            }
+
+            return response;
         } catch (error) {
-            setLoginState(prev => ({
-                ...prev,
-                error: error instanceof Error ? error.message : 'An error occurred',
-            }));
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+            updateFormState({
+                error: errorMessage,
+                isLoading: false
+            });
+            throw error;
         } finally {
-            setLoginState(prev => ({ ...prev, isLoading: false }));
+            updateFormState({ isLoading: false });
         }
     };
 
     return {
-        loginState,
-        setEmail,
-        setPassword,
-        handleLogin,
-        resetError,
+        formState,
+        updateFormState,
+        login
     };
 };

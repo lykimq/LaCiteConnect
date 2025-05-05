@@ -54,7 +54,7 @@ export const WelcomePage = ({ navigation }: WelcomePageProps) => {
 
                     <TouchableOpacity
                         style={welcomeStyles.registerButton}
-                        onPress={() => {/* TODO: Navigate to Register */ }}
+                        onPress={() => { navigation.navigate('Register') }}
                     >
                         <Text style={welcomeStyles.registerButtonText}>Create Account</Text>
                     </TouchableOpacity>
