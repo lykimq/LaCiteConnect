@@ -1,69 +1,77 @@
-import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View, Text, ActivityIndicator } from 'react-native';
-import { useLogin } from '../hooks/useLogin';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState } from 'react';
 
-export const LoginForm = () => {
-    const { formState, updateFormState, login } = useLogin();
+interface LoginFormProps {
+    onLogin?: (email: string, password: string) => void;
+}
 
-    const handleSubmit = async () => {
-        try {
-            const credentials = {
-                email: formState.email,
-                password: formState.password
-            };
-            await login(credentials);
-            // Handle successful login (e.g., navigation)
-        } catch (error) {
-            // Error is already handled in the hook
+export const LoginForm = ({ onLogin }: LoginFormProps) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleLogin = () => {
+        if (onLogin) {
+            onLogin(email, password);
+        } else {
+            console.log('Login attempted with:', { email, password });
         }
     };
 
     return (
-        <View style={styles.container}>
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={formState.email}
-                onChangeText={(text) => updateFormState({ email: text })}
-                keyboardType="email-address"
-                autoCapitalize="none"
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={formState.password}
-                onChangeText={(text) => updateFormState({ password: text })}
-                secureTextEntry
-            />
-            <View style={styles.rememberMeContainer}>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
+        >
+            <View style={styles.formContainer}>
+                <Text style={styles.title}>Welcome Back</Text>
+
+                <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                />
+
+                <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoComplete="password"
+                />
+
                 <TouchableOpacity
-                    style={styles.checkbox}
-                    onPress={() => updateFormState({ rememberMe: !formState.rememberMe })}
+                    style={styles.loginButton}
+                    onPress={handleLogin}
                 >
-                    <View style={[styles.checkboxInner, formState.rememberMe && styles.checkboxChecked]} />
+                    <Text style={styles.loginButtonText}>Login</Text>
                 </TouchableOpacity>
-                <Text>Remember me</Text>
             </View>
-            {formState.error && <Text style={styles.error}>{formState.error}</Text>}
-            <TouchableOpacity
-                style={styles.button}
-                onPress={handleSubmit}
-                disabled={formState.isLoading}
-            >
-                {formState.isLoading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.buttonText}>Login</Text>
-                )}
-            </TouchableOpacity>
-        </View>
+        </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        width: '100%',
+        flex: 1,
+        backgroundColor: '#fff',
+    },
+    formContainer: {
+        flex: 1,
         padding: 20,
+        justifyContent: 'center',
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 30,
+        textAlign: 'center',
     },
     input: {
         height: 50,
@@ -73,44 +81,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         marginBottom: 15,
         fontSize: 16,
+        backgroundColor: '#f9f9f9',
     },
-    rememberMeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    checkbox: {
-        width: 20,
-        height: 20,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 4,
-        marginRight: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    checkboxInner: {
-        width: 12,
-        height: 12,
-        borderRadius: 2,
-    },
-    checkboxChecked: {
-        backgroundColor: '#007AFF',
-    },
-    error: {
-        color: 'red',
-        marginBottom: 15,
-    },
-    button: {
+    loginButton: {
         backgroundColor: '#007AFF',
         height: 50,
         borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
+        marginTop: 10,
     },
-    buttonText: {
+    loginButtonText: {
         color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '600',
     },
 });
