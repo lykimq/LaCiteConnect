@@ -1,16 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
-import { LoginForm } from './components/LoginForm';
+import { AppNavigator } from './navigation/AppNavigator';
 
 export default function App() {
-  const handleLogin = (email: string, password: string) => {
-    // TODO: Implement actual login logic here
-    console.log('Login attempted with:', { email, password });
-  };
-
   return (
     <View style={styles.container}>
-      <LoginForm onLogin={handleLogin} />
+      <AppNavigator />
       <StatusBar style="auto" />
     </View>
   );

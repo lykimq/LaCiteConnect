@@ -1,20 +1,19 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
-interface LoginFormProps {
-    onLogin?: (email: string, password: string) => void;
-}
+type LoginFormProps = {
+    navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
+};
 
-export const LoginForm = ({ onLogin }: LoginFormProps) => {
+export const LoginForm = ({ navigation }: LoginFormProps) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     const handleLogin = () => {
-        if (onLogin) {
-            onLogin(email, password);
-        } else {
-            console.log('Login attempted with:', { email, password });
-        }
+        // TODO: Implement login logic
+        console.log('Login attempted with:', { email, password });
     };
 
     return (
@@ -23,6 +22,13 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
             style={styles.container}
         >
             <View style={styles.formContainer}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Text style={styles.backButtonText}>← Back</Text>
+                </TouchableOpacity>
+
                 <Text style={styles.title}>Welcome Back</Text>
 
                 <TextInput
@@ -51,6 +57,10 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                 >
                     <Text style={styles.loginButtonText}>Login</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity style={styles.forgotPassword}>
+                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
     );
@@ -65,6 +75,16 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         justifyContent: 'center',
+    },
+    backButton: {
+        position: 'absolute',
+        top: 40,
+        left: 20,
+    },
+    backButtonText: {
+        color: '#3498DB',
+        fontSize: 16,
+        fontWeight: '600',
     },
     title: {
         fontSize: 28,
@@ -84,7 +104,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
     },
     loginButton: {
-        backgroundColor: '#007AFF',
+        backgroundColor: '#3498DB',
         height: 50,
         borderRadius: 8,
         justifyContent: 'center',
@@ -95,5 +115,13 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 18,
         fontWeight: '600',
+    },
+    forgotPassword: {
+        marginTop: 15,
+        alignItems: 'center',
+    },
+    forgotPasswordText: {
+        color: '#3498DB',
+        fontSize: 16,
     },
 });
