@@ -1,127 +1,81 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { useState } from 'react';
+import { Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { loginStyles } from '../styles/login.styles';
+import { useLogin } from '../hooks/useLogin';
 
 type LoginFormProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
 };
 
 export const LoginForm = ({ navigation }: LoginFormProps) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-
-    const handleLogin = () => {
-        // TODO: Implement login logic
-        console.log('Login attempted with:', { email, password });
-    };
+    const {
+        loginState,
+        setEmail,
+        setPassword,
+        handleLogin,
+        resetError,
+    } = useLogin();
 
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
+            style={loginStyles.container}
         >
-            <View style={styles.formContainer}>
+            <View style={loginStyles.formContainer}>
                 <TouchableOpacity
-                    style={styles.backButton}
+                    style={loginStyles.backButton}
                     onPress={() => navigation.goBack()}
                 >
-                    <Text style={styles.backButtonText}>← Back</Text>
+                    <Text style={loginStyles.backButtonText}>← Back</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.title}>Welcome Back</Text>
+                <Text style={loginStyles.title}>Welcome Back</Text>
 
                 <TextInput
-                    style={styles.input}
+                    style={loginStyles.input}
                     placeholder="Email"
-                    value={email}
+                    value={loginState.email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
+                    editable={!loginState.isLoading}
                 />
 
                 <TextInput
-                    style={styles.input}
+                    style={loginStyles.input}
                     placeholder="Password"
-                    value={password}
+                    value={loginState.password}
                     onChangeText={setPassword}
                     secureTextEntry
                     autoCapitalize="none"
                     autoComplete="password"
+                    editable={!loginState.isLoading}
                 />
 
+                {loginState.error && (
+                    <Text style={[loginStyles.errorText, { color: 'red', marginBottom: 10 }]}>
+                        {loginState.error}
+                    </Text>
+                )}
+
                 <TouchableOpacity
-                    style={styles.loginButton}
+                    style={loginStyles.loginButton}
                     onPress={handleLogin}
+                    disabled={loginState.isLoading}
                 >
-                    <Text style={styles.loginButtonText}>Login</Text>
+                    {loginState.isLoading ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={loginStyles.loginButtonText}>Login</Text>
+                    )}
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.forgotPassword}>
-                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                <TouchableOpacity style={loginStyles.forgotPassword}>
+                    <Text style={loginStyles.forgotPasswordText}>Forgot Password?</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    formContainer: {
-        flex: 1,
-        padding: 20,
-        justifyContent: 'center',
-    },
-    backButton: {
-        position: 'absolute',
-        top: 40,
-        left: 20,
-    },
-    backButtonText: {
-        color: '#3498DB',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 30,
-        textAlign: 'center',
-    },
-    input: {
-        height: 50,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        paddingHorizontal: 15,
-        marginBottom: 15,
-        fontSize: 16,
-        backgroundColor: '#f9f9f9',
-    },
-    loginButton: {
-        backgroundColor: '#3498DB',
-        height: 50,
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    loginButtonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    forgotPassword: {
-        marginTop: 15,
-        alignItems: 'center',
-    },
-    forgotPasswordText: {
-        color: '#3498DB',
-        fontSize: 16,
-    },
-});
