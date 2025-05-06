@@ -12,7 +12,6 @@ type LoginFormProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
     const { formState, updateFormState, login } = useLogin();
     const [error, setError] = useState<string | null>(null);
-    const [showWelcome, setShowWelcome] = useState(false);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [showPassword, setShowPassword] = useState(false);
     const [isTestingConnection, setIsTestingConnection] = useState(false);
@@ -51,7 +50,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
                 });
 
                 // Navigate to Welcome page
-                navigation.navigate('Welcome');
+                navigation.navigate('WelcomeUser');
             }
         } catch (error) {
             console.error('Login error:', error);

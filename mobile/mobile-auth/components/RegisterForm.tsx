@@ -40,13 +40,6 @@ const RegisterForm: React.FC = () => {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [dialogMessage, setDialogMessage] = useState<{ title: string; message: string }>({ title: '', message: '' });
     const [dialogVisible, setDialogVisible] = useState(false);
-    const [dialogCallback, setDialogCallback] = useState<(() => void) | null>(null);
-
-    const alertUtils = {
-        setDialogMessage,
-        setDialogVisible,
-        setDialogCallback
-    };
 
     React.useEffect(() => {
         updateFormState(initialFormState);

@@ -1,116 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { welcomeStyles } from '../styles/welcome.styles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type WelcomePageProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
 };
 
-type UserData = {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-};
-
 export const WelcomePage = ({ navigation }: WelcomePageProps) => {
-    const [userData, setUserData] = useState<UserData | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const checkUserData = async () => {
-            try {
-                const storedUserData = await AsyncStorage.getItem('userData');
-                if (storedUserData) {
-                    setUserData(JSON.parse(storedUserData));
-                }
-            } catch (error) {
-                console.error('Error reading user data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkUserData();
-    }, []);
-
-    const handleLogout = async () => {
-        try {
-            await AsyncStorage.removeItem('userData');
-            setUserData(null);
-        } catch (error) {
-            console.error('Error during logout:', error);
-        }
-    };
-
-    if (loading) {
-        return (
-            <SafeAreaView style={welcomeStyles.safeArea}>
-                <View style={welcomeStyles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#3498DB" />
-                </View>
-            </SafeAreaView>
-        );
-    }
-
-    if (userData) {
-        return (
-            <SafeAreaView style={welcomeStyles.safeArea}>
-                <ScrollView style={welcomeStyles.container} contentContainerStyle={welcomeStyles.scrollContent}>
-                    <View style={welcomeStyles.header}>
-                        <Image
-                            source={require('../assets/church-logo.png')}
-                            style={welcomeStyles.logo}
-                            resizeMode="contain"
-                        />
-                        <Text style={welcomeStyles.title}>Welcome, {userData.firstName}!</Text>
-                        <Text style={welcomeStyles.subtitle}>You're connected to La Cité</Text>
-                    </View>
-
-                    <View style={welcomeStyles.featuresContainer}>
-                        <View style={welcomeStyles.featureCard}>
-                            <Text style={welcomeStyles.featureTitle}>Your Profile</Text>
-                            <Text style={welcomeStyles.featureText}>
-                                Name: {userData.firstName} {userData.lastName}
-                                {'\n'}Email: {userData.email}
-                                {'\n'}Role: {userData.role}
-                            </Text>
-                        </View>
-
-                        <View style={welcomeStyles.featureCard}>
-                            <Text style={welcomeStyles.featureTitle}>Quick Actions</Text>
-                            <TouchableOpacity
-                                style={welcomeStyles.actionButton}
-                                onPress={() => {/* TODO: Navigate to profile */ }}
-                            >
-                                <Text style={welcomeStyles.actionButtonText}>View Profile</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={welcomeStyles.actionButton}
-                                onPress={() => {/* TODO: Navigate to events */ }}
-                            >
-                                <Text style={welcomeStyles.actionButtonText}>View Events</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    <View style={welcomeStyles.actionContainer}>
-                        <TouchableOpacity
-                            style={[welcomeStyles.logoutButton]}
-                            onPress={handleLogout}
-                        >
-                            <Text style={welcomeStyles.logoutButtonText}>Logout</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollView>
-            </SafeAreaView>
-        );
-    }
-
     return (
         <SafeAreaView style={welcomeStyles.safeArea}>
             <ScrollView style={welcomeStyles.container} contentContainerStyle={welcomeStyles.scrollContent}>
@@ -157,7 +55,7 @@ export const WelcomePage = ({ navigation }: WelcomePageProps) => {
 
                     <TouchableOpacity
                         style={welcomeStyles.registerButton}
-                        onPress={() => { navigation.navigate('Register') }}
+                        onPress={() => navigation.navigate('Register')}
                     >
                         <Text style={welcomeStyles.registerButtonText}>Create Account</Text>
                     </TouchableOpacity>
