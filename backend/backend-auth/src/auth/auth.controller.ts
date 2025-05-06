@@ -180,4 +180,16 @@ export class AuthController {
             });
         }
     }
+
+    @Get('health')
+    @ApiOperation({ summary: 'Check authentication service health' })
+    @ApiResponse({ status: 200, description: 'Service is healthy' })
+    async healthCheck(@Res() res: Response) {
+        this.logger.debug('Health check request received');
+        return res.status(HttpStatus.OK).json({
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            service: 'auth-service'
+        });
+    }
 }

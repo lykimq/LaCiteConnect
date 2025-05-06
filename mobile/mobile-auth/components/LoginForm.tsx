@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { TextInput, TouchableOpacity, View, Text, ActivityIndicator, Image, Alert } from 'react-native';
 import { useLogin } from '../hooks/useLogin';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { authStyles } from '../styles/auth.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateLoginFields } from '../utils/formValidation';
-import { authService } from '../services/authService';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type LoginFormProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -52,8 +50,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
                     isLoading: false
                 });
 
-                // Show welcome screen
-                setShowWelcome(true);
+                // Navigate to Welcome page
+                navigation.navigate('Welcome');
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -67,7 +65,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
     };
 
     const handleNavigateToRegister = () => {
-        navigation.navigate('Register');
+        try {
+            navigation.navigate('Register');
+        } catch (error) {
+            console.error('Navigation error:', error);
+        }
     };
 
     const handleForgotPassword = () => {

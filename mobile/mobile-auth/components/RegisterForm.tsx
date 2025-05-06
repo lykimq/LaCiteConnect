@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Image, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Image, ScrollView, KeyboardAvoidingView, Alert } from 'react-native';
 import { useRegister } from '../hooks/useRegister';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { authStyles } from '../styles/auth.styles';
 import { countryCodes } from '../utils/countries';
 import { ProfileImagePicker } from './ProfileImagePicker';
@@ -9,6 +9,10 @@ import CountryPicker from './CountryPicker';
 import RegisterInputFields from './RegisterInputFields';
 import DialogModal from './DialogModal';
 import { validateRegisterFields } from '../utils/formValidation';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+
+type RegisterFormNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
 
 const initialFormState = {
     firstName: '',
@@ -24,7 +28,7 @@ const initialFormState = {
 };
 
 const RegisterForm: React.FC = () => {
-    const router = useRouter();
+    const navigation = useNavigation<RegisterFormNavigationProp>();
     const {
         formState,
         updateFormState,
@@ -61,31 +65,39 @@ const RegisterForm: React.FC = () => {
             const response = await handleRegister();
 
             if (response) {
-                handleAlert(
+                Alert.alert(
                     'Registration Successful',
                     'Your account has been created successfully. You can now log in with your credentials.',
-                    () => {
-                        updateFormState(initialFormState);
-                        router.replace('/(auth)/login');
-                    },
-                    alertUtils
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                updateFormState(initialFormState);
+                                navigation.navigate('Login');
+                            }
+                        }
+                    ]
                 );
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
             setError(errorMessage);
-            handleAlert('Registration Failed', errorMessage, null, alertUtils);
+            Alert.alert('Registration Failed', errorMessage);
         } finally {
             updateFormState({ isLoading: false });
         }
     };
 
     const handleGoogleSignInPress = async () => {
-        await handleGoogleSignIn(alertUtils);
+        console.log('Google sign in pressed');
     };
 
     const handleNavigateToLogin = () => {
-        router.push('/(auth)/login');
+        try {
+            navigation.navigate('Login');
+        } catch (error) {
+            console.error('Navigation error:', error);
+        }
     };
 
     return (

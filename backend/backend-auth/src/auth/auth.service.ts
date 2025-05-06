@@ -5,8 +5,8 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import * as bcrypt from 'bcryptjs';
-import * as admin from 'firebase-admin';
 import { Logger } from '@nestjs/common';
+import { FirebaseAuthService } from '../firebase/firebase-auth.service';
 
 /**
  * Authentication Service
@@ -20,23 +20,12 @@ import { Logger } from '@nestjs/common';
 @Injectable()
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
-    private firebaseApp: admin.app.App | null = null;
 
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
-    ) {
-        try {
-            // Try to initialize Firebase Admin SDK
-            this.firebaseApp = admin.initializeApp({
-                credential: admin.credential.applicationDefault(),
-            });
-            this.logger.log('Firebase Admin SDK initialized successfully');
-        } catch (error) {
-            this.logger.warn('Firebase Admin SDK initialization failed, continuing without Firebase features');
-            this.logger.debug(error);
-        }
-    }
+        private firebaseAuthService: FirebaseAuthService,
+    ) { }
 
     /**
      * Register a new user in the system
@@ -76,13 +65,13 @@ export class AuthService {
         });
 
         // Only try to create Firebase user if Firebase is initialized
-        if (this.firebaseApp) {
+        if (this.firebaseAuthService.isInitialized()) {
             try {
-                await this.firebaseApp.auth().createUser({
-                    email: registerUserDto.email,
-                    password: registerUserDto.password,
-                    displayName: `${registerUserDto.firstName} ${registerUserDto.lastName}`,
-                });
+                await this.firebaseAuthService.createUser(
+                    registerUserDto.email,
+                    registerUserDto.password,
+                    `${registerUserDto.firstName} ${registerUserDto.lastName}`
+                );
             } catch (error) {
                 this.logger.error('Failed to create Firebase user:', error);
                 // Don't throw error, continue with the registration
@@ -137,10 +126,12 @@ export class AuthService {
 
             // Only try to get Firebase token if Firebase is initialized
             let firebaseToken = null;
-            if (this.firebaseApp) {
+            if (this.firebaseAuthService.isInitialized()) {
                 try {
-                    const firebaseUser = await this.firebaseApp.auth().getUserByEmail(loginDto.email);
-                    firebaseToken = await this.firebaseApp.auth().createCustomToken(firebaseUser.uid);
+                    const firebaseUser = await this.firebaseAuthService.getUserByEmail(loginDto.email);
+                    if (firebaseUser) {
+                        firebaseToken = await this.firebaseAuthService.createCustomToken(firebaseUser.uid);
+                    }
                 } catch (error) {
                     this.logger.warn('Failed to get Firebase token:', error);
                 }

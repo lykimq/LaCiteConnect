@@ -18,7 +18,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migrate": "prisma migrate dev",
     "seed": "prisma db seed",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "create:test-user": "ts-node scripts/create-test-user.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
