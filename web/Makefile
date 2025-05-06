@@ -1,36 +1,67 @@
-.PHONY: install build test lint clean start-all start-auth
+.PHONY: install start build test test-coverage clean lint format type-check dev-setup prod-setup help
 
-# Install dependencies for all microservices
+# Variables
+NODE_ENV ?= development
+PORT ?= 3001
+
+# Install dependencies
 install:
-	@echo "Installing dependencies for all web microservices..."
 	npm install
 
-# Build all microservices
+# Start development server
+start:
+	REACT_APP_API_URL=http://localhost:3000 PORT=$(PORT) npm start
+
+# Build for production
 build:
-	@echo "Building all web microservices..."
-	npm run build:auth
+	npm run build
 
-# Run tests for all microservices
+# Run tests
 test:
-	@echo "Running tests for all web microservices..."
-	npm run test:auth
+	npm test
 
-# Run linting for all microservices
-lint:
-	@echo "Running linting for all web microservices..."
-	npm run lint:auth
+# Run tests with coverage
+test-coverage:
+	npm run test:coverage
 
 # Clean build artifacts
 clean:
-	@echo "Cleaning build artifacts..."
-	rm -rf web-auth/dist
+	rm -rf build/
+	rm -rf node_modules/
+	rm -rf .cache/
+	rm -rf .npm/
 
-# Start all microservices
-start-all:
-	@echo "Starting all web microservices..."
-	npm run start:auth
+# Lint code
+lint:
+	npm run lint
 
-# Start auth microservice
-start-auth:
-	@echo "Starting auth microservice..."
-	npm run start:auth
+# Format code
+format:
+	npm run format
+
+# Check types
+type-check:
+	npm run type-check
+
+# Development setup
+dev-setup: install
+	cp .env.example .env
+
+# Production setup
+prod-setup: install
+	cp .env.example .env.production
+
+# Help command
+help:
+	@echo "Available commands:"
+	@echo "  make install        - Install dependencies"
+	@echo "  make start         - Start development server"
+	@echo "  make build         - Build for production"
+	@echo "  make test          - Run tests"
+	@echo "  make test-coverage - Run tests with coverage"
+	@echo "  make clean         - Clean build artifacts"
+	@echo "  make lint          - Lint code"
+	@echo "  make format        - Format code"
+	@echo "  make type-check    - Check TypeScript types"
+	@echo "  make dev-setup     - Setup development environment"
+	@echo "  make prod-setup    - Setup production environment"
