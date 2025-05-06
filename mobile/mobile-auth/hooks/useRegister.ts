@@ -81,15 +81,35 @@ export const useRegister = () => {
 
             console.log('Sending registration data:', userData);
             const response = await authService.register(userData);
-            console.log('Registration successful, storing token');
+            console.log('Registration successful');
 
-            // Store the access token
-            await AsyncStorage.setItem('userToken', response.accessToken);
+            // Store user data
+            if (response.user) {
+                await AsyncStorage.setItem('userData', JSON.stringify({
+                    id: response.user.id,
+                    email: response.user.email,
+                    firstName: response.user.firstName,
+                    lastName: response.user.lastName,
+                    role: response.user.role
+                }));
+            }
 
             return response;
         } catch (error) {
             console.error('useRegister hook: Error during registration:', error);
-            const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
+            let errorMessage = 'An error occurred during registration';
+
+            if (error instanceof Error) {
+                // Check for specific error messages
+                if (error.message.includes('phone_number')) {
+                    errorMessage = 'This phone number is already registered. Please use a different number or leave it empty.';
+                } else if (error.message.includes('email')) {
+                    errorMessage = 'This email is already registered. Please use a different email address.';
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+
             updateFormState({
                 error: errorMessage,
                 isLoading: false
