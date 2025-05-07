@@ -1,338 +1,160 @@
-# LaCiteConnect Auth Service
+# LaCiteConnect Backend
 
-## Overview
-This is the authentication service for LaCiteConnect, built with NestJS, TypeScript, and PostgreSQL. It provides secure authentication and authorization for both regular users and administrators.
+The backend service for LaCiteConnect, built with NestJS and Prisma ORM, providing a robust API for event management and user authentication.
 
-## Architecture
+## 🏗️ Architecture
 
-### Tech Stack
-- **Backend Framework**: NestJS
-- **Database**: PostgreSQL
-- **ORM**: Prisma
-- **Authentication**: JWT + Firebase Auth
-- **API Documentation**: Swagger/OpenAPI
-- **Testing**: Jest
-- **Containerization**: Docker (planned)
+The backend follows a modular architecture with the following key components:
 
-### Design Patterns
-- Repository Pattern (via Prisma)
-- Dependency Injection
-- Strategy Pattern (JWT, Firebase)
-- Guard Pattern (Role-based authorization)
+- **Authentication Service**: Handles user authentication, authorization, and session management
+- **User Service**: Manages user profiles, roles, and preferences
+- **Event Service**: Handles event creation, management, and registration
+- **Database Layer**: PostgreSQL with Prisma ORM for type-safe database operations
 
-## Directory Structure
-
-```
-backend/
-├── src/
-│   ├── auth/                    # Authentication module
-│   │   ├── decorators/          # Decorators
-│   │   │   ├── roles.decorators.ts     # Roles decorators
-│   │   │   ├── index.ts         # Roles decorators
-│   │   ├── dto/                 # Data Transfer Objects
-│   │   │   ├── login.dto.ts     # Login request validation
-│   │   │   ├── register-user.dto.ts # Registration validation
-│   │   │   └── admin-login.dto.ts # Admin login validation
-│   │   ├── guards/              # Authorization guards
-│   │   │   ├── jwt-auth.guard.ts # JWT authentication guard
-│   │   │   └── roles.guard.ts   # Roles guard
-│   │   ├── auth.controller.ts   # API endpoints
-│   │   ├── auth.service.ts      # Business logic
-│   │   └── auth.module.ts       # Module configuration
-│   ├── prisma/                  # Database layer
-│   │   ├── prisma.service.ts    # Prisma service
-│   │   └── prisma.module.ts     # Prisma module
-│   ├── main.ts                  # Application entry point
-│   └── app.module.ts            # Root module
-├── prisma/
-│   └── schema.prisma            # Database schema
-│   └── seed.ts                  # Seed for admin generation
-├── test/                        # Test files
-├── .env                         # Environment variables
-├── jest.config.js              # Jest configuration
-├── package.json                # Dependencies and scripts
-└── tsconfig.json              # TypeScript configuration
-```
-
-## Code Flow and Implementation Order
-
-The implementation follows a bottom-up approach:
-1. First, the database layer is set up with Prisma
-2. Then, the data validation layer (DTOs) is implemented
-3. Next, the authentication strategies and guards are configured
-4. After that, the core business logic is implemented in the service layer
-5. Finally, the API endpoints are exposed through the controller
-
-The authentication service follows a specific implementation order to ensure proper dependency management and functionality. Here's the sequence of how the code is structured and executed:
-
-1. **Database Layer (Prisma)**
-   - `prisma/schema.prisma`: Defines the database schema and models
-   - `src/prisma/prisma.service.ts`: Implements the Prisma client service
-   - `src/prisma/prisma.module.ts`: Configures the global Prisma module
-
-2. **Data Transfer Objects (DTOs)**
-   - `auth/dto/register-user.dto.ts`: Defines user registration validation
-   - `auth/dto/login.dto.ts`: Defines login request validation
-   - `auth/dto/admin-login.dto.ts`: Defines admin login validation with admin secret
-
-3. **Authentication Guards**
-   - `auth/guards/jwt-auth.guard.ts`: Implements JWT token validation
-   - `auth/guards/roles.guard.ts`: Implements role verification
-
-4. **Core Authentication Logic**
-   - `auth/auth.service.ts`: Implements business logic for:
-     - User registration
-     - User authentication
-     - Admin authentication with secret
-     - Token generation with user details
-     - Firebase integration
-     - Password hashing
-     - Admin dashboard statistics
-
-5. **API Layer**
-   - `auth/auth.controller.ts`: Exposes REST endpoints for:
-     - User registration
-     - User login
-     - Admin login
-     - Token validation
-     - Admin dashboard access
-
-6. **Module Configuration**
-   - `auth/auth.module.ts`: Configures the authentication module with:
-     - JWT configuration
-     - Service providers
-     - Guards
-
-7. **Application Setup**
-   - `app.module.ts`: Root module that:
-     - Imports all necessary modules
-     - Configures global settings
-     - Sets up environment variables
-
-8. **Application Entry Point**
-   - `main.ts`: Bootstraps the application with:
-     - CORS configuration
-     - Global validation pipe
-     - Swagger documentation
-     - Server startup
-     - Security headers
-     - Cookie parsing
-     - Structured logging
-
-### Flow of Execution
-
-1. When the application starts, `main.ts` is executed first
-2. The `AppModule` is initialized, which imports:
-   - `PrismaModule` for database access
-   - `AuthModule` for authentication
-   - `ConfigModule` for environment variables
-3. The `AuthModule` initializes:
-   - JWT configuration
-   - Authentication services
-   - Authorization guards
-4. When a request comes in:
-   - The appropriate controller endpoint is called
-   - The request is validated against DTOs
-   - The service layer processes the business logic
-   - Database operations are performed through Prisma
-   - Authentication guards validate tokens and roles
-   - Response is sent back to the client
-
-This architecture ensures:
-- Clear separation of concerns
-- Proper dependency injection
-- Secure authentication flow
-- Scalable and maintainable codebase
-
-## Features
-
-### Implemented
-- ✅ User Registration
-  - Email validation
-  - Password hashing
-  - Firebase integration
-  - PostgreSQL storage
-- ✅ User Authentication
-  - JWT token generation with user details
-  - Firebase token generation
-  - Session management
-- ✅ Admin Authentication
-  - Admin secret verification
-  - Role-based access control
-  - Admin dashboard access
-- ✅ Role-Based Authorization
-  - User, Admin roles
-  - JWT and Admin guards
-- ✅ Database Integration
-  - Prisma ORM
-  - PostgreSQL schema
-  - Migrations
-- ✅ Admin Dashboard
-  - User statistics
-  - System status monitoring
-  - Recent activity tracking
-
-### Planned Features
-- 🔄 Password Reset
-  - Email verification
-  - Token-based reset
-- 🔄 Enhanced Security
-  - Rate limiting
-  - IP blocking
-  - 2FA support
-- 🔄 User Management
-  - Profile updates
-  - Account deletion
-  - Session management
-- 🔄 Analytics
-  - Login attempts
-  - User activity
-- 🔄 API Documentation
-  - Swagger integration
-  - API versioning
-
-## API Endpoints
-
-### Authentication
-- `POST /auth/register` - Register a new user
-- `POST /auth/login` - Login as a regular user
-- `POST /auth/admin/login` - Login as an admin (requires admin secret)
-- `GET /auth/validate` - Validate authentication token
-- `GET /auth/admin/dashboard` - Access admin dashboard (requires admin role)
-- `POST /auth/logout` - User logout (planned)
-- `POST /auth/refresh` - Refresh token (planned)
-- `POST /auth/reset-password` - Password reset (planned)
+## 📦 Database Schema
 
 ### User Management
-- `GET /users/profile` - Get user profile (planned)
-- `PUT /users/profile` - Update profile (planned)
-- `DELETE /users/profile` - Delete account (planned)
+- User profiles with role-based access control
+- Secure password handling with bcrypt
+- Session management with JWT
+- Privacy settings and preferences
 
-## Security Features
+### Event Management
+- Event creation and management
+- Time slot scheduling
+- Registration handling
+- Notification preferences
+- Social sharing capabilities
 
-### Implemented
-- ✅ JWT token authentication with user details
-- ✅ Password hashing with bcrypt
-- ✅ Admin secret verification
-- ✅ Role-based access control
-- ✅ Firebase integration
-- ✅ Input validation
-- ✅ CORS configuration
-- ✅ Security headers
-- ✅ Cookie parsing
-- ✅ Structured logging
-
-## Development
+## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js >= 18.0.0
-- PostgreSQL
-- Firebase project
+- PostgreSQL >= 14
 - npm or yarn
 
-### Setup
-1. Install dependencies:
-```bash
-npm install
+### Installation
 
-# Generate the Prisma client
-npx prisma generate
-```
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-2. Configure environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
+2. **Environment Setup**
+   Create a `.env` file in the root directory:
+   ```env
+   # Database
+   DATABASE_URL="postgresql://username:password@localhost:5432/laciteconnect"
 
-3. Run database migrations:
-```bash
-npx prisma migrate dev
-```
+   # Authentication
+   JWT_SECRET="your-jwt-secret"
+   JWT_EXPIRATION="1d"
 
-4. Start development server:
-```bash
-npm run start:dev
-```
+   # Server
+   PORT=3000
+   NODE_ENV=development
+   ```
+
+3. **Database Setup**
+   ```bash
+   # Run migrations
+   npm run migrate
+
+   # Generate Prisma Client
+   npm run prisma:generate
+   ```
+
+4. **Start the server**
+   ```bash
+   # Development
+   npm run start:dev
+
+   # Production
+   npm run start:prod
+   ```
+
+## 📦 Available Scripts
+
+### Development
+- `npm run start:dev` - Start development server with hot-reload
+- `npm run build` - Build the application
+- `npm run start:prod` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
+
+### Database
+- `npm run migrate` - Run database migrations
+- `npm run migrate:deploy` - Deploy migrations to production
+- `npm run migrate:reset` - Reset database (development only)
+- `npm run prisma:generate` - Generate Prisma Client
+- `npm run prisma:studio` - Open Prisma Studio
+- `npm run prisma:format` - Format schema files
+- `npm run prisma:validate` - Validate schema files
+- `npm run seed` - Seed database with test data
 
 ### Testing
-```bash
-# Run unit tests
-npm test
+- `npm run test` - Run unit tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:cov` - Run tests with coverage
+- `npm run test:debug` - Run tests in debug mode
+- `npm run test:e2e` - Run end-to-end tests
 
-# Run tests with coverage
-npm run test:cov
+## 📁 Project Structure
 
-# Run e2e tests
-npm run test:e2e
+```
+backend/
+├── prisma/
+│   ├── schemas/           # Modular schema files
+│   │   ├── users.prisma   # User-related models
+│   │   └── events.prisma  # Event-related models
+│   └── schema.prisma      # Main schema file
+├── scripts/
+│   ├── migrate-db.js      # Database migration script
+│   └── prisma-command.js  # Prisma command handler
+└── src/
+    ├── auth/              # Authentication module
+    ├── users/             # User management module
+    ├── events/            # Event management module
+    ├── common/            # Shared utilities
+    └── main.ts           # Application entry point
 ```
 
-## Deployment
+## 🔒 Security
 
-### Production Setup
-1. Build the application:
-```bash
-npm run build
-```
+### Authentication
+- JWT-based authentication
+- Password hashing with bcrypt
+- Role-based access control
+- Session management
 
-2. Start production server:
-```bash
-npm run start:prod
-```
+### Data Protection
+- Input validation with class-validator
+- Request rate limiting
+- CORS protection
+- Helmet security headers
 
-### Docker Deployment (planned)
-```bash
-docker build -t laciteconnect-auth .
-docker run -p 3000:3000 laciteconnect-auth
-```
 
-## Environment Variables
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/db
-JWT_SECRET=your_jwt_secret
-ADMIN_SECRET=your_admin_secret
-```
+## 📝 API Documentation
 
-## Admin Authentication
-Admin users are authenticated using a combination of:
-1. Email and password
-2. Admin secret key (configured in environment variables)
+API documentation is available at `/api` when running the server. The documentation is generated using Swagger/OpenAPI.
 
-To create an admin user:
-1. Set the `ADMIN_SECRET` environment variable
-2. Use the admin login endpoint with valid credentials and the admin secret
-3. The user must have the 'admin' role in the database
+## 🔍 Debugging
 
-## Security Considerations
-- All passwords are hashed using bcrypt
-- JWT tokens are signed with a secret key
-- Admin access requires a separate secret key
-- Role-based access control is enforced
-- Input validation is performed on all endpoints
-- Firebase integration for additional security
+1. **Development Mode**
+   ```bash
+   npm run start:debug
+   ```
 
-## Make Commands
-```bash
-make install        # Install dependencies
-make start         # Start development server
-make build         # Build for production
-make test          # Run tests
-make test-coverage # Run tests with coverage
-make clean         # Clean build artifacts
-make lint          # Lint code
-make format        # Format code
-make type-check    # Check TypeScript types
-make dev-setup     # Setup development environment
-make prod-setup    # Setup production environment
-```
-
-## Development
-- Use `make start` for development
-- Use `make test` for running tests
-- Use `make build` for production build
-
-## Testing
-- Unit tests for services and controllers
-- Integration tests for API endpoints
-- E2E tests for authentication flow
-
+2. **VS Code Configuration**
+   Add the following to `.vscode/launch.json`:
+   ```json
+   {
+     "type": "node",
+     "request": "launch",
+     "name": "Debug NestJS",
+     "runtimeExecutable": "npm",
+     "runtimeArgs": ["run", "start:debug"],
+     "sourceMaps": true,
+     "envFile": "${workspaceFolder}/.env"
+   }
+   ```
