@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { EventsModule } from './events/events.module';
 import { LoggerModule } from 'nestjs-pino';
 import { PrismaService } from './database/prisma.service';
 import { DatabaseHealthService } from './database/database.health';
@@ -34,6 +35,7 @@ import { DatabaseHealthService } from './database/database.health';
         // Import feature modules
         AuthModule, // Authentication and authorization module
         PrismaModule, // Database access module
+        EventsModule,
     ],
     providers: [PrismaService, DatabaseHealthService],
 })

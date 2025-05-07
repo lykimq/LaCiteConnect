@@ -138,23 +138,27 @@ backend/
 
 API documentation is available at `/api` when running the server. The documentation is generated using Swagger/OpenAPI.
 
-## 🔍 Debugging
+### Users API
+```
+POST /auth/register - Register user
+POST /auth/login - Login user
+GET  /auth/validate - Validate user
+POST /auth/admin/login - Admin login
+GET /auth/admin/dashboard - Admin dashboard
+POST /auth/logout - Logout
+GET /auth/health
+```
 
-1. **Development Mode**
-   ```bash
-   npm run start:debug
-   ```
-
-2. **VS Code Configuration**
-   Add the following to `.vscode/launch.json`:
-   ```json
-   {
-     "type": "node",
-     "request": "launch",
-     "name": "Debug NestJS",
-     "runtimeExecutable": "npm",
-     "runtimeArgs": ["run", "start:debug"],
-     "sourceMaps": true,
-     "envFile": "${workspaceFolder}/.env"
-   }
-   ```
+### Events API
+```
+   POST /events - Create event
+   GET /events - Get upcoming events
+   GET /events/my-events - Get user's events
+   GET /events/my-registrations - Get user's registrations
+   GET /events/:id - Get specific event
+   PUT /events/:id - Update event
+   DELETE /events/:id - Delete event
+   POST /events/:id/time-slots - Create time slot
+   POST /events/register - Register for event
+   PUT /events/registrations/:id/status - Update registration status
+```
