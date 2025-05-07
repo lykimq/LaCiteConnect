@@ -7,7 +7,6 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { PrismaModule } from '../prisma/prisma.module';
-import { FirebaseModule } from '../firebase/firebase.module';
 
 /**
  * Authentication Module
@@ -22,7 +21,6 @@ import { FirebaseModule } from '../firebase/firebase.module';
     // Import the Prisma module
     imports: [
         PrismaModule, // Import the Prisma module
-        FirebaseModule,
         PassportModule.register({ defaultStrategy: 'jwt' }), // Configure Passport for authentication strategies
         JwtModule.registerAsync({
             imports: [ConfigModule],

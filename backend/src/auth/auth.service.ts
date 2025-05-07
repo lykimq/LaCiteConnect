@@ -6,7 +6,6 @@ import { LoginDto } from './dto/login.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import * as bcrypt from 'bcryptjs';
 import { Logger } from '@nestjs/common';
-import { FirebaseAuthService } from '../firebase/firebase-auth.service';
 
 /**
  * Authentication Service
@@ -15,7 +14,6 @@ import { FirebaseAuthService } from '../firebase/firebase-auth.service';
  * - Password hashing and verification
  * - JWT token generation and validation
  * - Admin authentication and authorization
- * - Firebase integration for additional security
  */
 @Injectable()
 export class AuthService {
@@ -24,7 +22,6 @@ export class AuthService {
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
-        private firebaseAuthService: FirebaseAuthService,
     ) { }
 
     /**
@@ -63,20 +60,6 @@ export class AuthService {
                 role: 'user',
             },
         });
-
-        // Only try to create Firebase user if Firebase is initialized
-        if (this.firebaseAuthService.isInitialized()) {
-            try {
-                await this.firebaseAuthService.createUser(
-                    registerUserDto.email,
-                    registerUserDto.password,
-                    `${registerUserDto.firstName} ${registerUserDto.lastName}`
-                );
-            } catch (error) {
-                this.logger.error('Failed to create Firebase user:', error);
-                // Don't throw error, continue with the registration
-            }
-        }
 
         return {
             id: user.id,
@@ -124,22 +107,8 @@ export class AuthService {
 
             const accessToken = this.jwtService.sign(payload);
 
-            // Only try to get Firebase token if Firebase is initialized
-            let firebaseToken = null;
-            if (this.firebaseAuthService.isInitialized()) {
-                try {
-                    const firebaseUser = await this.firebaseAuthService.getUserByEmail(loginDto.email);
-                    if (firebaseUser) {
-                        firebaseToken = await this.firebaseAuthService.createCustomToken(firebaseUser.uid);
-                    }
-                } catch (error) {
-                    this.logger.warn('Failed to get Firebase token:', error);
-                }
-            }
-
             return {
                 accessToken,
-                firebaseToken,
                 user: {
                     id: user.id,
                     email: user.email,
