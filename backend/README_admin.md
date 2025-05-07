@@ -24,6 +24,16 @@ This document explains the secure management of admin credentials for the LaCite
 - Handles environment-specific credentials
 - Located at: `auth-service/backend/scripts/admin-credentials.sh`
 
+### 4. create-test-user.ts
+- Script for creating test users in the development environment
+- Useful for testing and development purposes
+- Located at: `auth-service/backend/scripts/create-test-user.ts`
+
+### 5. seed.ts
+- Script for seeding the database with initial data
+- Creates admin users and test data
+- Located at: `auth-service/backend/prisma/seed.ts`
+
 ## Usage Guide
 
 ### Initial Setup
@@ -78,6 +88,75 @@ This will:
 - Delete the existing admin user from the database
 - Create a new admin user with the current credentials
 - Useful when you need to reset the admin user without changing credentials
+
+### Creating Test Users
+
+#### Using create-test-user.ts
+To create test users in the development environment:
+
+1. First, ensure you have the required dependencies:
+```bash
+cd auth-service/backend
+npm install
+```
+
+2. Run the script with the desired user type:
+```bash
+npx ts-node scripts/create-test-user.ts {admin|user|guest}
+```
+
+Example:
+```bash
+# Create an admin test user
+npx ts-node scripts/create-test-user.ts admin
+
+# Create a regular user
+npx ts-node scripts/create-test-user.ts user
+
+# Create a guest user
+npx ts-node scripts/create-test-user.ts guest
+```
+
+The script will:
+- Create a new user with the specified role
+- Generate random credentials
+- Display the credentials in the console
+- Save the user to the database
+
+Note: This script is intended for development and testing purposes only. Do not use it in production environments.
+
+### Using seed.ts
+
+The seed.ts script is used to populate the database with initial data. This is particularly useful for:
+- Setting up a new development environment
+- Resetting the database to a known state
+- Creating test data for development
+
+To use the seed script:
+
+1. Ensure you have the required environment variables set:
+```bash
+# Required environment variables
+ADMIN_EMAIL_DEV=admin@example.com
+ADMIN_FIRST_NAME_DEV=Admin
+ADMIN_LAST_NAME_DEV=User
+HAS_ADMIN_PASSWORD_DEV=true
+HAS_ADMIN_SECRET_DEV=true
+```
+
+2. Run the seed script:
+```bash
+cd auth-service/backend
+npx prisma db seed
+```
+
+The script will:
+- Create admin users for each environment (dev, staging, prod)
+- Create test users with different roles
+- Set up initial data for testing
+- Display the created credentials in the console
+
+Note: The seed script is primarily intended for development and testing environments. In production, you should use the admin-credentials.sh script to manage admin users.
 
 ## Security Best Practices
 
@@ -171,6 +250,18 @@ This will:
    - Check database connection
    - Verify schema is up to date
    - Check for existing admin users
+
+5. Test User Creation Issues
+   - Ensure you're in the correct directory
+   - Verify ts-node is installed
+   - Check database connection
+   - Ensure the database schema is up to date
+
+6. Seed Script Issues
+   - Verify all required environment variables are set
+   - Check database connection
+   - Ensure the database schema is up to date
+   - Check for existing data conflicts
 
 ### Getting Help
 - Contact system administrator
