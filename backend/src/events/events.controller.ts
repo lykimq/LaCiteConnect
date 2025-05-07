@@ -7,12 +7,18 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Request as ExpressRequest } from 'express';
 
+/**
+ * Enum representing different user roles
+ */
 export enum RoleType {
     guest = 'guest',
     user = 'user',
     admin = 'admin'
 }
 
+/**
+ * Interface representing a request with a user object
+ */
 interface RequestWithUser extends ExpressRequest {
     user: {
         id: string;
@@ -21,39 +27,48 @@ interface RequestWithUser extends ExpressRequest {
     };
 }
 
+/**
+ * Controller for managing events
+ */
 @Controller('events')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class EventsController {
     constructor(private readonly eventsService: EventsService) { }
 
+    // Create a new event
     @Post()
     @Roles(RoleType.user, RoleType.admin)
     createEvent(@Request() req: RequestWithUser, @Body() dto: CreateEventDto) {
         return this.eventsService.createEvent(req.user.id, dto);
     }
 
+    // Get all upcoming events
     @Get()
     getUpcomingEvents() {
         return this.eventsService.getUpcomingEvents();
     }
 
+    // Get all events created by the user
     @Get('my-events')
     @Roles(RoleType.user, RoleType.admin)
     getUserEvents(@Request() req: RequestWithUser) {
         return this.eventsService.getUserEvents(req.user.id);
     }
 
+    // Get all registrations for the user
     @Get('my-registrations')
     @Roles(RoleType.user, RoleType.admin)
     getUserRegistrations(@Request() req: RequestWithUser) {
         return this.eventsService.getUserRegistrations(req.user.id);
     }
 
+    // Get a specific event by ID
     @Get(':id')
     getEvent(@Param('id') id: string) {
         return this.eventsService.getEvent(id);
     }
 
+    // Update an existing event
     @Put(':id')
     @Roles(RoleType.user, RoleType.admin)
     updateEvent(
@@ -64,12 +79,14 @@ export class EventsController {
         return this.eventsService.updateEvent(id, req.user.id, dto);
     }
 
+    // Delete an existing event
     @Delete(':id')
     @Roles(RoleType.user, RoleType.admin)
     deleteEvent(@Param('id') id: string, @Request() req: RequestWithUser) {
         return this.eventsService.deleteEvent(id, req.user.id);
     }
 
+    // Create a new time slot for an event
     @Post(':id/time-slots')
     @Roles(RoleType.user, RoleType.admin)
     createTimeSlot(
@@ -80,12 +97,14 @@ export class EventsController {
         return this.eventsService.createTimeSlot(eventId, req.user.id, dto);
     }
 
+    // Register for an event
     @Post('register')
     @Roles(RoleType.user, RoleType.admin)
     registerForEvent(@Body() dto: CreateRegistrationDto) {
         return this.eventsService.registerForEvent(dto);
     }
 
+    // Update the status of a registration
     @Put('registrations/:id/status')
     @Roles(RoleType.admin)
     updateRegistrationStatus(

@@ -2,20 +2,35 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { Logger } from 'nestjs-pino';
 
+/**
+ * Service for checking the health of the database
+ */
 @Injectable()
 export class DatabaseHealthService implements OnModuleInit {
     private readonly maxRetries = 3;
     private readonly retryDelay = 5000; // 5 seconds
 
+    /**
+     * Constructor for the DatabaseHealthService
+     * @param prisma - The PrismaService instance
+     * @param logger - The Logger instance
+     */
     constructor(
         private readonly prisma: PrismaService,
         private readonly logger: Logger,
     ) { }
 
+    /**
+     * Initialize the database connection
+     */
     async onModuleInit() {
         await this.checkDatabaseConnection();
     }
 
+    /**
+     * Check if the database connection is healthy
+     * @param retryCount - The number of retries
+     */
     private async checkDatabaseConnection(retryCount = 0): Promise<void> {
         try {
             // Test the database connection
@@ -35,6 +50,10 @@ export class DatabaseHealthService implements OnModuleInit {
         }
     }
 
+    /**
+     * Check if the database is healthy
+     * @returns true if the database is healthy, false otherwise
+     */
     async isHealthy(): Promise<boolean> {
         try {
             await this.prisma.$queryRaw`SELECT 1`;

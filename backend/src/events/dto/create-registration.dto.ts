@@ -1,5 +1,8 @@
 import { IsString, IsOptional, IsNumber, IsEmail, Min, IsUUID } from 'class-validator';
 
+/**
+ * Enum representing different registration statuses
+ */
 export enum RegistrationStatus {
     pending = 'pending',
     confirmed = 'confirmed',
@@ -7,6 +10,9 @@ export enum RegistrationStatus {
     waitlisted = 'waitlisted'
 }
 
+/**
+ * DTO for creating a new registration
+ */
 export class CreateRegistrationDto {
     @IsUUID()
     eventId: string;

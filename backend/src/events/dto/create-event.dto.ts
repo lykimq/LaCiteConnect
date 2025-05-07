@@ -1,6 +1,9 @@
 import { IsString, IsOptional, IsNumber, IsDate, IsEnum, Min, Max, IsLatitude, IsLongitude } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/**
+ * Enum representing different event statuses
+ */
 export enum EventStatus {
     draft = 'draft',
     published = 'published',
@@ -8,6 +11,9 @@ export enum EventStatus {
     completed = 'completed'
 }
 
+/**
+ * DTO for creating a new event
+ */
 export class CreateEventDto {
     @IsString()
     title: string;

@@ -2,9 +2,11 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { CreateRegistrationDto } from './dto/create-registration.dto';
-import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
+/**
+ * Type representing an event
+ */
 type Event = {
     id: string;
     title: string;
@@ -23,6 +25,9 @@ type Event = {
     updatedAt: Date;
 };
 
+/**
+ * Type representing an event time slot
+ */
 type EventTimeSlot = {
     id: string;
     eventId: string;
@@ -35,6 +40,9 @@ type EventTimeSlot = {
     updatedAt: Date;
 };
 
+/**
+ * Type representing an event registration
+ */
 type EventRegistration = {
     id: string;
     eventId: string;
@@ -51,11 +59,19 @@ type EventRegistration = {
     updatedAt: Date;
 };
 
+/**
+ * Service for managing events
+ */
 @Injectable()
 export class EventsService {
     constructor(private prisma: PrismaService) { }
 
-    // Event Management
+    /**
+     * Create a new event
+     * @param userId - The ID of the user creating the event
+     * @param dto - The data for the new event
+     * @returns The created event
+     */
     async createEvent(userId: string, dto: CreateEventDto): Promise<Event> {
         return this.prisma.event.create({
             data: {
@@ -66,6 +82,11 @@ export class EventsService {
         });
     }
 
+    /**
+     * Get an event by ID
+     * @param id - The ID of the event to get
+     * @returns The event with the given ID
+     */
     async getEvent(id: string): Promise<Event & {
         timeSlots: EventTimeSlot[];
         registrations: EventRegistration[];
@@ -85,6 +106,13 @@ export class EventsService {
         return event;
     }
 
+    /**
+     * Update an event
+     * @param id - The ID of the event to update
+     * @param userId - The ID of the user updating the event
+     * @param dto - The data for the updated event
+     * @returns The updated event
+     */
     async updateEvent(id: string, userId: string, dto: Partial<CreateEventDto>): Promise<Event> {
         const event = await this.prisma.event.findUnique({
             where: { id },
@@ -104,6 +132,11 @@ export class EventsService {
         });
     }
 
+    /**
+     * Delete an event
+     * @param id - The ID of the event to delete
+     * @param userId - The ID of the user deleting the event
+     */
     async deleteEvent(id: string, userId: string): Promise<void> {
         const event = await this.prisma.event.findUnique({
             where: { id },
@@ -122,7 +155,13 @@ export class EventsService {
         });
     }
 
-    // Time Slot Management
+    /**
+     * Create a new time slot for an event
+     * @param eventId - The ID of the event to create the time slot for
+     * @param userId - The ID of the user creating the time slot
+     * @param dto - The data for the new time slot
+     * @returns The created time slot
+     */
     async createTimeSlot(eventId: string, userId: string, dto: {
         startTime: Date;
         endTime: Date;
@@ -150,7 +189,11 @@ export class EventsService {
         });
     }
 
-    // Registration Management
+    /**
+     * Register for an event
+     * @param dto - The data for the new registration
+     * @returns The created registration
+     */
     async registerForEvent(dto: CreateRegistrationDto): Promise<EventRegistration> {
         const event = await this.prisma.event.findUnique({
             where: { id: dto.eventId },
@@ -214,6 +257,12 @@ export class EventsService {
         return registration;
     }
 
+    /**
+     * Update the status of a registration
+     * @param registrationId - The ID of the registration to update
+     * @param status - The new status for the registration
+     * @returns The updated registration
+     */
     async updateRegistrationStatus(
         registrationId: string,
         status: 'confirmed' | 'cancelled' | 'waitlisted',
@@ -236,7 +285,10 @@ export class EventsService {
         });
     }
 
-    // Query Methods
+    /**
+     * Get all upcoming events
+     * @returns The upcoming events
+     */
     async getUpcomingEvents(): Promise<Event[]> {
         return this.prisma.event.findMany({
             where: {
@@ -251,6 +303,11 @@ export class EventsService {
         });
     }
 
+    /**
+     * Get all events created by a user
+     * @param userId - The ID of the user to get events for
+     * @returns The events created by the user
+     */
     async getUserEvents(userId: string): Promise<Event[]> {
         return this.prisma.event.findMany({
             where: {
@@ -262,6 +319,11 @@ export class EventsService {
         });
     }
 
+    /**
+     * Get all registrations for a user
+     * @param userId - The ID of the user to get registrations for
+     * @returns The registrations for the user
+     */
     async getUserRegistrations(userId: string): Promise<EventRegistration[]> {
         return this.prisma.eventRegistration.findMany({
             where: {

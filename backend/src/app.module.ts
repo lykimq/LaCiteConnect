@@ -35,7 +35,7 @@ import { DatabaseHealthService } from './database/database.health';
         // Import feature modules
         AuthModule, // Authentication and authorization module
         PrismaModule, // Database access module
-        EventsModule,
+        EventsModule, // Events module
     ],
     providers: [PrismaService, DatabaseHealthService],
 })
