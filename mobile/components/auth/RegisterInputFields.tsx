@@ -1,7 +1,7 @@
-import { authStyles } from '../styles/auth.styles';
+import { authStyles } from '../../styles/auth.styles';
 import { TextInput, Text, View, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
-import { RegisterFormState } from '../types/auth.types';
+import { RegisterFormState } from '../../types/auth.types';
 
 interface InputFieldProps {
     label: string;

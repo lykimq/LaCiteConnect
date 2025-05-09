@@ -1,7 +1,8 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { commonStyles, colors, spacing, typography } from './common.styles';
 
 const { width } = Dimensions.get('window');
-import { authStyles } from './auth.styles';
+const isWeb = Platform.OS === 'web';
 
 export const welcomeStyles = StyleSheet.create({
     safeArea: {
@@ -15,6 +16,7 @@ export const welcomeStyles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
         padding: 20,
+        justifyContent: 'center',
     },
     header: {
         alignItems: 'center',
@@ -31,6 +33,7 @@ export const welcomeStyles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#2C3E50',
         marginBottom: 10,
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 18,
@@ -39,17 +42,25 @@ export const welcomeStyles = StyleSheet.create({
     },
     featuresContainer: {
         marginBottom: 40,
+        gap: 20,
     },
     featureCard: {
         backgroundColor: '#F8F9FA',
         borderRadius: 15,
         padding: 20,
         marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        ...Platform.select({
+            web: {
+                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+            },
+            default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+            },
+        }),
     },
     featureTitle: {
         fontSize: 20,
@@ -63,14 +74,29 @@ export const welcomeStyles = StyleSheet.create({
         lineHeight: 24,
     },
     actionContainer: {
+        width: '100%',
+        maxWidth: 400,
+        alignSelf: 'center',
         marginBottom: 30,
     },
     loginButton: {
-        backgroundColor: '#3498DB',
+        backgroundColor: '#FF9843',
         borderRadius: 10,
         padding: 15,
         alignItems: 'center',
         marginBottom: 15,
+        ...Platform.select({
+            web: {
+                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+            },
+            default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 3,
+            },
+        }),
     },
     loginButtonText: {
         color: '#FFFFFF',
@@ -84,10 +110,10 @@ export const welcomeStyles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 15,
         borderWidth: 2,
-        borderColor: '#3498DB',
+        borderColor: '#FF9843',
     },
     registerButtonText: {
-        color: '#3498DB',
+        color: '#FF9843',
         fontSize: 18,
         fontWeight: '600',
     },
@@ -105,24 +131,38 @@ export const welcomeStyles = StyleSheet.create({
     footer: {
         marginTop: 'auto',
         marginBottom: 20,
+        padding: 20,
+        borderTopWidth: 1,
+        borderTopColor: '#E0E0E0',
     },
     footerText: {
         color: '#95A5A6',
         textAlign: 'center',
         fontSize: 14,
     },
-    // New styles for logged-in view
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
     actionButton: {
-        backgroundColor: '#3498DB',
+        backgroundColor: '#FF9843',
         borderRadius: 8,
         padding: 12,
         alignItems: 'center',
         marginTop: 10,
+        ...Platform.select({
+            web: {
+                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+            },
+            default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 3,
+            },
+        }),
     },
     actionButtonText: {
         color: '#FFFFFF',
@@ -135,6 +175,18 @@ export const welcomeStyles = StyleSheet.create({
         padding: 15,
         alignItems: 'center',
         marginTop: 20,
+        ...Platform.select({
+            web: {
+                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+            },
+            default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 3,
+            },
+        }),
     },
     logoutButtonText: {
         color: '#FFFFFF',

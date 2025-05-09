@@ -1,7 +1,7 @@
 import React from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { authStyles } from '../styles/auth.styles';
+import { authStyles } from '../../styles/auth.styles';
 
 export const ProfileImagePicker = ({
     profileImage,

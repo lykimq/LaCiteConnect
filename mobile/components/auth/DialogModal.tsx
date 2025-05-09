@@ -1,5 +1,5 @@
 import { TouchableOpacity, View, Modal, Text, Platform } from "react-native";
-import { authStyles } from "../styles/auth.styles";
+import { authStyles } from "../../styles/auth.styles";
 import React from 'react'
 
 

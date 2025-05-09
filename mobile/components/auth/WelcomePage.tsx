@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { welcomeStyles } from '../styles/welcome.styles';
+import { RootStackParamList } from '../../types/navigation';
+import { welcomeStyles } from '../../styles/welcome.styles';
 
 type WelcomePageProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
@@ -11,10 +11,14 @@ type WelcomePageProps = {
 export const WelcomePage = ({ navigation }: WelcomePageProps) => {
     return (
         <SafeAreaView style={welcomeStyles.safeArea}>
-            <ScrollView style={welcomeStyles.container} contentContainerStyle={welcomeStyles.scrollContent}>
+            <ScrollView
+                style={welcomeStyles.container}
+                contentContainerStyle={welcomeStyles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={welcomeStyles.header}>
                     <Image
-                        source={require('../assets/church-logo.png')}
+                        source={require('../../assets/church-logo.png')}
                         style={welcomeStyles.logo}
                         resizeMode="contain"
                     />
@@ -47,7 +51,7 @@ export const WelcomePage = ({ navigation }: WelcomePageProps) => {
 
                 <View style={welcomeStyles.actionContainer}>
                     <TouchableOpacity
-                        style={[welcomeStyles.loginButton, { backgroundColor: '#3498DB' }]}
+                        style={welcomeStyles.loginButton}
                         onPress={() => navigation.navigate('Login')}
                     >
                         <Text style={welcomeStyles.loginButtonText}>Sign In</Text>

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { TextInput, TouchableOpacity, View, Text, ActivityIndicator, Image, Alert } from 'react-native';
-import { useLogin } from '../hooks/useLogin';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { authStyles } from '../styles/auth.styles';
+import { useLogin } from '../../hooks/useLogin';
+import { RootStackParamList } from '../../types/navigation';
+import { authStyles } from '../../styles/auth.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { validateLoginFields } from '../utils/formValidation';
+import { validateLoginFields } from '../../utils/formValidation';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type LoginFormProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -158,7 +158,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
 
                 <TouchableOpacity style={authStyles.googleButton}>
                     <Image
-                        source={require('../assets/icons8-google-30.png')}
+                        source={require('../../assets/icons8-google-30.png')}
                         style={authStyles.googleIcon}
                     />
                     <Text style={authStyles.googleButtonText}>Continue with Google</Text>
@@ -174,5 +174,3 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
         </View>
     );
 };
-
-

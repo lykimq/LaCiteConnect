@@ -1,7 +1,7 @@
-import { countryCodes } from '../utils/countries';
+import { countryCodes } from '../../utils/countries';
 import React from 'react'
 import { Platform, TouchableOpacity, Text, Modal, Pressable, View, ScrollView } from 'react-native';
-import { authStyles } from '../styles/auth.styles';
+import { authStyles } from '../../styles/auth.styles';
 
 
 const CountryPicker = ({ selectedCountry, setSelectedCountry, updateFormState }: any) => {

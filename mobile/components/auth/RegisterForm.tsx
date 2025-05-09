@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { TextInput, TouchableOpacity, View, Text, ActivityIndicator, Platform, Image, ScrollView, KeyboardAvoidingView, Alert } from 'react-native';
-import { useRegister } from '../hooks/useRegister';
+import { useRegister } from '../../hooks/useRegister';
 import { useNavigation } from '@react-navigation/native';
-import { authStyles } from '../styles/auth.styles';
-import { countryCodes } from '../utils/countries';
+import { authStyles } from '../../styles/auth.styles';
+import { countryCodes } from '../../utils/countries';
 import { ProfileImagePicker } from './ProfileImagePicker';
 import CountryPicker from './CountryPicker';
 import RegisterInputFields from './RegisterInputFields';
 import DialogModal from './DialogModal';
-import { validateRegisterFields } from '../utils/formValidation';
+import { validateRegisterFields } from '../../utils/formValidation';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { RootStackParamList } from '../../types/navigation';
 
 type RegisterFormNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -171,7 +171,7 @@ const RegisterForm: React.FC = () => {
 
                 <TouchableOpacity style={[authStyles.googleButton, { width: '100%' }]} onPress={handleGoogleSignInPress}>
                     <Image
-                        source={require('../assets/icons8-google-30.png')}
+                        source={require('../../assets/icons8-google-30.png')}
                         style={[authStyles.googleIcon, { tintColor: '#FFFFFF' }]}
                     />
                     <Text style={authStyles.googleButtonText}>Continue with Google</Text>
