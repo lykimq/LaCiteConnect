@@ -92,10 +92,14 @@ export const eventStyles = StyleSheet.create({
     errorContainer: {
         ...commonStyles.error,
         marginBottom: spacing.md,
+        padding: spacing.md,
+        alignItems: 'center',
     },
     errorText: {
         ...typography.body2,
         color: colors.error,
+        textAlign: 'center',
+        marginBottom: spacing.md,
     },
     input: {
         backgroundColor: colors.background,
@@ -108,5 +112,21 @@ export const eventStyles = StyleSheet.create({
     },
     loadingContainer: {
         ...commonStyles.loadingContainer,
+    },
+    actionButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: spacing.md,
+    },
+    actionButton: {
+        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: spacing.sm,
+        marginHorizontal: spacing.sm,
+    },
+    actionButtonText: {
+        ...typography.button,
+        color: colors.white,
     },
 });

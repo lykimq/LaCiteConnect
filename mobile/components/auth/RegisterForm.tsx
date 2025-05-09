@@ -9,10 +9,13 @@ import CountryPicker from './CountryPicker';
 import RegisterInputFields from './RegisterInputFields';
 import DialogModal from './DialogModal';
 import { validateRegisterFields } from '../../utils/formValidation';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+// @ts-ignore
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 
-type RegisterFormNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
+type RegisterFormProps = {
+    navigation: NativeStackScreenProps<RootStackParamList, 'Register'>['navigation'];
+};
 
 const initialFormState = {
     firstName: '',
@@ -27,8 +30,7 @@ const initialFormState = {
     error: null
 };
 
-const RegisterForm: React.FC = () => {
-    const navigation = useNavigation<RegisterFormNavigationProp>();
+const RegisterForm: React.FC<RegisterFormProps> = ({ navigation }) => {
     const {
         formState,
         updateFormState,
@@ -66,7 +68,10 @@ const RegisterForm: React.FC = () => {
                             text: 'OK',
                             onPress: () => {
                                 updateFormState(initialFormState);
-                                navigation.navigate('Login');
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'Login' }],
+                                });
                             }
                         }
                     ]

@@ -25,7 +25,8 @@
     "prisma:validate": "node scripts/prisma-command.js validate",
     "seed": "node scripts/prisma-command.js db seed",
     "type-check": "tsc --noEmit",
-    "create:test-user": "ts-node scripts/create-test-user.ts"
+    "create:test-user": "ts-node scripts/create-test-user.ts",
+    "create:test-events": "ts-node scripts/create-test-events.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

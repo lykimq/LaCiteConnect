@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Event, CreateRegistrationDto } from '../../types/event';
 import { EventRegistrationForm } from './EventRegistrationForm';
@@ -18,6 +18,7 @@ export const EventDetailsPage: React.FC = () => {
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | undefined>();
+    const [registrationError, setRegistrationError] = useState<string | undefined>();
 
     useEffect(() => {
         fetchEventDetails();
@@ -30,7 +31,8 @@ export const EventDetailsPage: React.FC = () => {
             setEvent(data);
             setError(undefined);
         } catch (err) {
-            setError('Failed to load event details. Please try again later.');
+            console.error('Error fetching event details:', err);
+            setError('Failed to load event details. Please ensure you have a working internet connection and the server is available.');
         } finally {
             setLoading(false);
         }
@@ -42,8 +44,20 @@ export const EventDetailsPage: React.FC = () => {
         phone: string;
     }) => {
         try {
+            setRegistrationError(undefined);
+
+            if (!formData.name || !formData.email) {
+                setRegistrationError('Please provide your name and email.');
+                return;
+            }
+
             const [firstName, ...lastNameParts] = formData.name.split(' ');
             const lastName = lastNameParts.join(' ');
+
+            if (!firstName || !lastName) {
+                setRegistrationError('Please provide both first and last name.');
+                return;
+            }
 
             const registrationDto: CreateRegistrationDto = {
                 eventId,
@@ -56,10 +70,41 @@ export const EventDetailsPage: React.FC = () => {
             };
 
             await eventService.registerForEvent(registrationDto);
-            navigation.goBack();
+
+            Alert.alert(
+                'Success',
+                'You have successfully registered for this event!',
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+            );
         } catch (err) {
-            setError('Failed to register for the event. Please try again later.');
+            console.error('Error registering for event:', err);
+            setRegistrationError('Failed to register for the event. Please ensure you have a working internet connection and try again.');
         }
+    };
+
+    const renderErrorWithRetry = () => {
+        return (
+            <View style={eventStyles.errorContainer}>
+                <Text style={eventStyles.errorText}>
+                    {error || 'Event not found'}
+                </Text>
+                <View style={eventStyles.actionButtonsContainer}>
+                    <TouchableOpacity
+                        style={eventStyles.actionButton}
+                        onPress={fetchEventDetails}
+                    >
+                        <Text style={eventStyles.actionButtonText}>Retry</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={eventStyles.actionButton}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Text style={eventStyles.actionButtonText}>Go Back</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
     };
 
     if (loading) {
@@ -71,13 +116,7 @@ export const EventDetailsPage: React.FC = () => {
     }
 
     if (error || !event) {
-        return (
-            <View style={eventStyles.errorContainer}>
-                <Text style={eventStyles.errorText}>
-                    {error || 'Event not found'}
-                </Text>
-            </View>
-        );
+        return renderErrorWithRetry();
     }
 
     return (
@@ -110,7 +149,7 @@ export const EventDetailsPage: React.FC = () => {
                 <EventRegistrationForm
                     event={event}
                     onSubmit={handleRegistration}
-                    error={error}
+                    error={registrationError}
                 />
             </View>
         </ScrollView>

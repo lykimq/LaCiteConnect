@@ -5,6 +5,7 @@ import { RootStackParamList } from '../../types/navigation';
 import { authStyles } from '../../styles/auth.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateLoginFields } from '../../utils/formValidation';
+// @ts-ignore
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type LoginFormProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -33,7 +34,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
             const response = await login(credentials);
 
             if (response) {
-                // Store user data in AsyncStorage
+                // Store user data and token in AsyncStorage
                 await AsyncStorage.setItem('userData', JSON.stringify({
                     id: response.user.id,
                     email: response.user.email,
@@ -42,6 +43,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
                     role: response.user.role
                 }));
 
+                // Ensure token is stored
+                if (response.accessToken) {
+                    await AsyncStorage.setItem('token', response.accessToken);
+                }
+
                 // Clear the form
                 updateFormState({
                     email: '',
@@ -49,8 +55,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
                     isLoading: false
                 });
 
-                // Navigate to Welcome page
-                navigation.navigate('WelcomeUser');
+                // Navigate to Welcome User page
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'WelcomeUser' }],
+                });
             }
         } catch (error) {
             console.error('Login error:', error);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Platform, Alert } from 'react-native';
+// @ts-ignore
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { welcomeStyles } from '../../styles/welcome.styles';
@@ -24,13 +25,16 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
     useEffect(() => {
         const checkUserData = async () => {
             try {
+                setLoading(true);
                 const storedUserData = await AsyncStorage.getItem('userData');
                 const token = await AsyncStorage.getItem('token');
-                if (storedUserData) {
+
+                if (storedUserData && token) {
                     setUserData(JSON.parse(storedUserData));
                 }
             } catch (error) {
                 console.error('Error reading user data:', error);
+                Alert.alert('Error', 'Could not load user data.');
             } finally {
                 setLoading(false);
             }
@@ -46,25 +50,20 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
             await AsyncStorage.removeItem('token');
             setUserData(null);
 
-            // Simply navigate to the Welcome screen
-            // No need for complex reset operations
-            navigation.navigate('Welcome');
+            // Navigate to the Welcome screen
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Welcome' }],
+            });
         } catch (error) {
             console.error('Error during logout:', error);
             Alert.alert('Logout Error', 'Could not complete logout process.');
         }
     };
 
-    const handleViewEvents = async () => {
+    const handleViewEvents = () => {
         try {
-            // Set a temporary token if none exists
-            const token = await AsyncStorage.getItem('token');
-            if (!token) {
-                // Create a temporary token for accessing events
-                await AsyncStorage.setItem('token', 'temp-auth-token');
-            }
-
-            // Simple direct navigation to Events screen
+            // Navigate to the Events screen
             navigation.navigate('Events');
         } catch (error) {
             console.error('Error navigating to Events:', error);
@@ -82,60 +81,20 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
         );
     }
 
-    if (userData) {
+    if (!userData) {
+        // Navigate to Welcome screen after a slight delay
+        setTimeout(() => {
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Welcome' }],
+            });
+        }, 100);
+
         return (
             <SafeAreaView style={welcomeStyles.safeArea}>
-                <ScrollView
-                    style={welcomeStyles.container}
-                    contentContainerStyle={welcomeStyles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View style={welcomeStyles.header}>
-                        <Image
-                            source={require('../../assets/church-logo.png')}
-                            style={welcomeStyles.logo}
-                            resizeMode="contain"
-                        />
-                        <Text style={welcomeStyles.title}>Welcome, {userData.firstName}!</Text>
-                        <Text style={welcomeStyles.subtitle}>You're connected to La Cité</Text>
-                    </View>
-
-                    <View style={welcomeStyles.featuresContainer}>
-                        <View style={welcomeStyles.featureCard}>
-                            <Text style={welcomeStyles.featureTitle}>Your Profile</Text>
-                            <Text style={welcomeStyles.featureText}>
-                                Name: {userData.firstName} {userData.lastName}
-                                {'\n'}Email: {userData.email}
-                                {'\n'}Role: {userData.role}
-                            </Text>
-                        </View>
-
-                        <View style={welcomeStyles.featureCard}>
-                            <Text style={welcomeStyles.featureTitle}>Quick Actions</Text>
-                            <TouchableOpacity
-                                style={welcomeStyles.actionButton}
-                                onPress={() => {/* TODO: Navigate to profile */ }}
-                            >
-                                <Text style={welcomeStyles.actionButtonText}>View Profile</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={welcomeStyles.actionButton}
-                                onPress={handleViewEvents}
-                            >
-                                <Text style={welcomeStyles.actionButtonText}>View Events</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    <View style={welcomeStyles.actionContainer}>
-                        <TouchableOpacity
-                            style={welcomeStyles.logoutButton}
-                            onPress={handleLogout}
-                        >
-                            <Text style={welcomeStyles.logoutButtonText}>Logout</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollView>
+                <View style={welcomeStyles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#FF9843" />
+                </View>
             </SafeAreaView>
         );
     }
@@ -153,60 +112,44 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
                         style={welcomeStyles.logo}
                         resizeMode="contain"
                     />
-                    <Text style={welcomeStyles.title}>La Cité Connect</Text>
-                    <Text style={welcomeStyles.subtitle}>Your Digital Church Community</Text>
+                    <Text style={welcomeStyles.title}>Welcome, {userData.firstName}!</Text>
+                    <Text style={welcomeStyles.subtitle}>You're connected to La Cité</Text>
                 </View>
 
                 <View style={welcomeStyles.featuresContainer}>
                     <View style={welcomeStyles.featureCard}>
-                        <Text style={welcomeStyles.featureTitle}>Stay Connected</Text>
+                        <Text style={welcomeStyles.featureTitle}>Your Profile</Text>
                         <Text style={welcomeStyles.featureText}>
-                            Join our community and stay updated with church events, services, and activities.
+                            Name: {userData.firstName} {userData.lastName}
+                            {'\n'}Email: {userData.email}
+                            {'\n'}Role: {userData.role}
                         </Text>
                     </View>
 
                     <View style={welcomeStyles.featureCard}>
-                        <Text style={welcomeStyles.featureTitle}>Grow Together</Text>
-                        <Text style={welcomeStyles.featureText}>
-                            Access sermons, Bible studies, and prayer groups to strengthen your faith journey.
-                        </Text>
-                    </View>
-
-                    <View style={welcomeStyles.featureCard}>
-                        <Text style={welcomeStyles.featureTitle}>Serve & Share</Text>
-                        <Text style={welcomeStyles.featureText}>
-                            Participate in community service and share your blessings with others.
-                        </Text>
+                        <Text style={welcomeStyles.featureTitle}>Quick Actions</Text>
+                        <TouchableOpacity
+                            style={welcomeStyles.actionButton}
+                            onPress={() => {/* TODO: Navigate to profile */ }}
+                        >
+                            <Text style={welcomeStyles.actionButtonText}>View Profile</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={welcomeStyles.actionButton}
+                            onPress={handleViewEvents}
+                        >
+                            <Text style={welcomeStyles.actionButtonText}>View Events</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
                 <View style={welcomeStyles.actionContainer}>
                     <TouchableOpacity
-                        style={welcomeStyles.loginButton}
-                        onPress={() => navigation.navigate('Login')}
+                        style={welcomeStyles.logoutButton}
+                        onPress={handleLogout}
                     >
-                        <Text style={welcomeStyles.loginButtonText}>Sign In</Text>
+                        <Text style={welcomeStyles.logoutButtonText}>Logout</Text>
                     </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={welcomeStyles.registerButton}
-                        onPress={() => navigation.navigate('Register')}
-                    >
-                        <Text style={welcomeStyles.registerButtonText}>Create Account</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={welcomeStyles.exploreButton}
-                        onPress={() => {/* TODO: Handle guest mode */ }}
-                    >
-                        <Text style={welcomeStyles.exploreButtonText}>Continue as Guest</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={welcomeStyles.footer}>
-                    <Text style={welcomeStyles.footerText}>
-                        By continuing, you agree to our Terms of Service and Privacy Policy
-                    </Text>
                 </View>
             </ScrollView>
         </SafeAreaView>

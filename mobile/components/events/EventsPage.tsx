@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Alert } from 'react-native';
+import { View, Text, Alert, TouchableOpacity } from 'react-native';
+// @ts-ignore
 import { CompositeNavigationProp } from '@react-navigation/native';
+// @ts-ignore
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+// @ts-ignore
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, TabParamList } from '../../types/navigation';
 import { Event } from '../../types/event';
@@ -23,28 +26,29 @@ export const EventsPage: React.FC<EventsPageProps> = ({ navigation }) => {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | undefined>();
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
     useEffect(() => {
         console.log('EventsPage mounted');
-        verifyTokenAndFetchEvents();
+        checkAuthAndFetchEvents();
         return () => {
             console.log('EventsPage unmounted');
         };
     }, []);
 
-    const verifyTokenAndFetchEvents = async () => {
+    const checkAuthAndFetchEvents = async () => {
         try {
-            console.log('Verifying token...');
+            console.log('Checking authentication...');
             const token = await AsyncStorage.getItem('token');
-            if (!token) {
-                console.log('No token found, creating temporary one');
-                // Create a temporary token for guest access
-                await AsyncStorage.setItem('token', 'guest-access-token');
-            }
-            console.log('Token available, fetching events...');
+            const userData = await AsyncStorage.getItem('userData');
+
+            // Check if the user is properly authenticated
+            setIsAuthenticated(!!token && !!userData);
+
+            console.log('Token available:', !!token, 'Fetching events...');
             await fetchEvents();
         } catch (error) {
-            console.error('Error verifying token:', error);
+            console.error('Error checking authentication:', error);
             setError('Authentication error. Please try again.');
         }
     };
@@ -60,10 +64,10 @@ export const EventsPage: React.FC<EventsPageProps> = ({ navigation }) => {
             setError(undefined);
         } catch (err) {
             console.error('Error fetching events:', err);
-            setError('Failed to load events. Please try again later.');
+            setError('Failed to load events. Please ensure you have a working internet connection and the server is available.');
             Alert.alert(
                 'Error',
-                'Failed to load events. Please try again later.',
+                'Failed to load events. Please ensure you have a working internet connection.',
                 [{ text: 'OK' }]
             );
         } finally {
@@ -90,6 +94,33 @@ export const EventsPage: React.FC<EventsPageProps> = ({ navigation }) => {
         }
     };
 
+    const renderErrorWithActions = () => {
+        if (!error) return null;
+
+        return (
+            <View style={eventStyles.errorContainer}>
+                <Text style={eventStyles.errorText}>{error}</Text>
+                <View style={eventStyles.actionButtonsContainer}>
+                    <TouchableOpacity
+                        style={eventStyles.actionButton}
+                        onPress={fetchEvents}
+                    >
+                        <Text style={eventStyles.actionButtonText}>Retry</Text>
+                    </TouchableOpacity>
+
+                    {!isAuthenticated && (
+                        <TouchableOpacity
+                            style={eventStyles.actionButton}
+                            onPress={navigateToLogin}
+                        >
+                            <Text style={eventStyles.actionButtonText}>Login</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+        );
+    };
+
     console.log('Rendering EventsPage, loading:', loading, 'error:', error, 'events count:', events.length);
 
     return (
@@ -97,12 +128,15 @@ export const EventsPage: React.FC<EventsPageProps> = ({ navigation }) => {
             <View style={eventStyles.eventHeader}>
                 <Text style={eventStyles.eventTitle}>Upcoming Events</Text>
             </View>
-            <EventList
-                events={events}
-                onEventPress={handleEventPress}
-                loading={loading}
-                error={error}
-            />
+            {error ? (
+                renderErrorWithActions()
+            ) : (
+                <EventList
+                    events={events}
+                    onEventPress={handleEventPress}
+                    loading={loading}
+                />
+            )}
         </View>
     );
 };

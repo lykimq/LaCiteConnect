@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
+// @ts-ignore
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { welcomeStyles } from '../../styles/welcome.styles';

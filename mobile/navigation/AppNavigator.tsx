@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+// @ts-ignore
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { WelcomePage } from '../components/auth/WelcomePage';
@@ -13,6 +14,7 @@ import { EventDetailsPage } from '../components/events/EventDetailsPage';
 import { EventsPage } from '../components/events/EventsPage';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -23,8 +25,8 @@ const MainTabs = () => {
 
     return (
         <Tab.Navigator
-            screenOptions={({ route }) => ({
-                tabBarIcon: ({ focused, color, size }) => {
+            screenOptions={({ route }: { route: { name: string } }) => ({
+                tabBarIcon: ({ focused, color, size }: { focused: boolean; color: string; size: number }) => {
                     let iconName: keyof typeof Ionicons.glyphMap;
 
                     if (route.name === 'Home') {
@@ -123,6 +125,11 @@ export const AppNavigator: React.FC = () => {
                             options={{ headerShown: false }}
                         />
                         <Stack.Screen
+                            name="WelcomeUser"
+                            component={WelcomeUserPage}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
                             name="EventDetails"
                             component={EventDetailsPage}
                             options={{ title: 'Event Details' }}
@@ -131,6 +138,14 @@ export const AppNavigator: React.FC = () => {
                             name="EventRegistration"
                             component={EventRegistrationPage}
                             options={{ title: 'Register for Event' }}
+                        />
+                        <Stack.Screen
+                            name="Events"
+                            component={EventsPage}
+                            options={{
+                                title: 'Events',
+                                headerShown: true
+                            }}
                         />
                         {/* Access to auth screens for logout flows */}
                         <Stack.Screen
@@ -141,6 +156,11 @@ export const AppNavigator: React.FC = () => {
                         <Stack.Screen
                             name="Login"
                             component={LoginForm}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="Register"
+                            component={RegisterForm}
                             options={{ headerShown: false }}
                         />
                     </>
