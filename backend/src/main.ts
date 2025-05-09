@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
+import * as bodyParser from 'body-parser';
 
 /**
  * Main application bootstrap function
@@ -19,6 +20,10 @@ async function bootstrap() {
 
     // Get configuration service instance
     const configService = app.get(ConfigService);
+
+    // Increase JSON payload size limit to 10MB
+    app.use(bodyParser.json({ limit: '10mb' }));
+    app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
     // Parse CORS origins from environment variable
     const corsOrigins = configService.get('CORS_ORIGINS')?.split(',') || [

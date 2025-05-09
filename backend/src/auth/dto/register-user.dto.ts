@@ -61,4 +61,10 @@ export class RegisterUserDto {
     @IsOptional()
     @IsBoolean()
     biometricEnabled?: boolean;
+
+    // Profile picture URL
+    @ApiProperty({ description: 'Profile picture URL or base64 data', required: false })
+    @IsOptional()
+    @IsString()
+    profilePictureUrl?: string;
 }

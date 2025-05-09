@@ -12,6 +12,7 @@ import { validateRegisterFields } from '../../utils/formValidation';
 // @ts-ignore
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
+import { authService } from '../../services/authService';
 
 type RegisterFormProps = {
     navigation: NativeStackScreenProps<RootStackParamList, 'Register'>['navigation'];
@@ -55,11 +56,34 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigation }) => {
             return;
         }
 
+        // Ensure profile picture is set in formState
+        if (profileImage && !formState.profilePictureUrl) {
+            updateFormState({ profilePictureUrl: profileImage });
+        }
+
         try {
             updateFormState({ isLoading: true, error: null });
             const response = await handleRegister();
 
             if (response) {
+                // If we have a profile image but the API didn't save it (happens with large images)
+                // Only check if response.user exists and has a profilePictureUrl property
+                if (profileImage && response.user && !response.user.profilePictureUrl) {
+                    try {
+                        console.log('Uploading profile picture separately...');
+                        // This will happen in the background, no need to await
+                        authService.updateProfilePicture(profileImage)
+                            .then(() => console.log('Profile picture uploaded successfully'))
+                            .catch(err => console.error('Error uploading profile picture:', err));
+                    } catch (error) {
+                        console.error('Failed to upload profile picture:', error);
+                        // Continue anyway, this is not critical
+                    }
+                } else if (profileImage && !response.user) {
+                    // Handle the case where response.user is undefined
+                    console.log('User registered successfully, but user data is missing in the response');
+                }
+
                 Alert.alert(
                     'Registration Successful',
                     'Your account has been created successfully. You can now log in with your credentials.',

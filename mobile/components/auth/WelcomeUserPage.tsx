@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Platform, Alert } from 'react-native';
+import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Platform, Alert, StyleSheet } from 'react-native';
 // @ts-ignore
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { welcomeStyles } from '../../styles/welcome.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 type WelcomeUserPageProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'WelcomeUser'>;
@@ -16,11 +17,13 @@ type UserData = {
     firstName: string;
     lastName: string;
     role: string;
+    profilePictureUrl?: string;
 };
 
 export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         const checkUserData = async () => {
@@ -71,6 +74,24 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
         }
     };
 
+    const renderProfilePicture = () => {
+        if (userData?.profilePictureUrl && !imageError) {
+            return (
+                <Image
+                    source={{ uri: userData.profilePictureUrl }}
+                    style={styles.profilePicture}
+                    onError={() => setImageError(true)}
+                />
+            );
+        } else {
+            return (
+                <View style={styles.defaultAvatarContainer}>
+                    <Ionicons name="person-circle" size={80} color="#666" />
+                </View>
+            );
+        }
+    };
+
     if (loading) {
         return (
             <SafeAreaView style={welcomeStyles.safeArea}>
@@ -112,7 +133,10 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
                         style={welcomeStyles.logo}
                         resizeMode="contain"
                     />
-                    <Text style={welcomeStyles.title}>Welcome, {userData.firstName}!</Text>
+                    <View style={styles.profileSection}>
+                        {renderProfilePicture()}
+                        <Text style={welcomeStyles.title}>Welcome, {userData.firstName}!</Text>
+                    </View>
                     <Text style={welcomeStyles.subtitle}>You're connected to La Cité</Text>
                 </View>
 
@@ -155,3 +179,29 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    profileSection: {
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    profilePicture: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 10,
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+    },
+    defaultAvatarContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F0F0F0',
+        marginBottom: 10,
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+    },
+});

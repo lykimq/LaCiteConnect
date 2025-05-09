@@ -34,14 +34,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
             const response = await login(credentials);
 
             if (response) {
-                // Store user data and token in AsyncStorage
-                await AsyncStorage.setItem('userData', JSON.stringify({
+                // Prepare user data object
+                const userDataToStore = {
                     id: response.user.id,
                     email: response.user.email,
                     firstName: response.user.firstName,
                     lastName: response.user.lastName,
                     role: response.user.role
-                }));
+                };
+
+                // Add profile picture URL if it exists in the response
+                if ('profilePictureUrl' in response.user) {
+                    // @ts-ignore
+                    userDataToStore.profilePictureUrl = response.user.profilePictureUrl;
+                }
+
+                // Store user data in AsyncStorage
+                await AsyncStorage.setItem('userData', JSON.stringify(userDataToStore));
 
                 // Ensure token is stored
                 if (response.accessToken) {

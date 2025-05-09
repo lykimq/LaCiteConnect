@@ -18,6 +18,7 @@ export interface AuthResponse {
         firstName: string;
         lastName: string;
         role: string;
+        profilePictureUrl?: string;
     };
 }
 
@@ -39,6 +40,7 @@ export interface RegisterCredentials {
     phoneRegion?: string;
     sessionType?: SessionType;
     biometricEnabled?: boolean;
+    profilePictureUrl?: string;
 }
 
 export interface RegisterFormState {

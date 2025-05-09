@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Res, Req, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Res, Req, Logger, UnauthorizedException, BadRequestException, Put } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -9,6 +9,11 @@ import { Response, Request } from 'express';
 import { RolesGuard } from './guards/roles.guard';
 import { RoleType } from '@prisma/client';
 import { Roles } from './decorators';
+
+// Create a DTO for profile picture update
+class UpdateProfilePictureDto {
+    profilePictureUrl: string;
+}
 
 /**
  * Authentication Controller
@@ -175,6 +180,37 @@ export class AuthController {
             const result = await this.authService.logout();
             return res.status(HttpStatus.OK).json(result);
         } catch (error) {
+            return res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
+                message: error.message || 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Update user profile picture
+     * @param req Request object containing the user data from JWT token
+     * @param updateProfilePictureDto DTO containing the profile picture URL
+     * @param res Express response object
+     * @returns Updated user information
+     */
+    @Put('profile-picture')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Update user profile picture' })
+    @ApiResponse({ status: 200, description: 'Profile picture updated successfully' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async updateProfilePicture(
+        @Req() req: any,
+        @Body() updateProfilePictureDto: UpdateProfilePictureDto,
+        @Res() res: Response
+    ) {
+        this.logger.debug('Update profile picture request');
+        try {
+            const userId = req.user.id; // Extract user ID from JWT token
+            const result = await this.authService.updateProfilePicture(userId, updateProfilePictureDto.profilePictureUrl);
+            return res.status(HttpStatus.OK).json(result);
+        } catch (error) {
+            this.logger.error('Error updating profile picture:', error);
             return res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
                 message: error.message || 'Internal server error'
             });

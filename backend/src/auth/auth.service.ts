@@ -40,6 +40,24 @@ export class AuthService {
             throw new ConflictException('Email already exists');
         }
 
+        // Handle profile picture (if provided)
+        let profilePictureUrl = null;
+        if (registerUserDto.profilePictureUrl) {
+            try {
+                // For now, we'll just store the base64 data as-is
+                // In a production environment, you might want to:
+                // 1. Upload the image to a storage service like AWS S3
+                // 2. Store the URL in the database
+                profilePictureUrl = registerUserDto.profilePictureUrl;
+
+                // Remove the profilePictureUrl from the DTO to prevent type errors
+                delete registerUserDto.profilePictureUrl;
+            } catch (error) {
+                this.logger.error('Error processing profile picture:', error);
+                // Continue with registration even if image processing fails
+            }
+        }
+
         // Generate secure password hash and salt
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(registerUserDto.password, salt);
@@ -57,15 +75,31 @@ export class AuthService {
                 phoneRegion: registerUserDto.phoneRegion,
                 sessionType: registerUserDto.sessionType,
                 biometricEnabled: registerUserDto.biometricEnabled,
+                profilePictureUrl: profilePictureUrl,
                 role: 'user',
             },
         });
 
-        return {
-            id: user.id,
+        // Generate JWT token with user claims
+        const payload = {
+            sub: user.id,
             email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            role: user.role,
+        };
+
+        const accessToken = this.jwtService.sign(payload);
+
+        // Return the same structure as login for consistency
+        return {
+            accessToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                profilePictureUrl: user.profilePictureUrl,
+            }
         };
     }
 
@@ -115,6 +149,7 @@ export class AuthService {
                     firstName: user.firstName,
                     lastName: user.lastName,
                     role: user.role,
+                    profilePictureUrl: user.profilePictureUrl,
                 },
             };
         } catch (error) {
@@ -298,5 +333,36 @@ export class AuthService {
         // Note: In a stateless JWT system, the token is invalidated client-side
         // If you need server-side token invalidation, implement it here
         return { message: 'Successfully logged out' };
+    }
+
+    /**
+     * Update user profile picture
+     * @param userId User ID
+     * @param profilePictureUrl URL or base64 data of the profile picture
+     * @returns Updated user information
+     */
+    async updateProfilePicture(userId: string, profilePictureUrl: string) {
+        try {
+            // Update user with new profile picture URL
+            const user = await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    profilePictureUrl,
+                    updatedAt: new Date()
+                },
+            });
+
+            // Return user information without sensitive data
+            return {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                profilePictureUrl: user.profilePictureUrl
+            };
+        } catch (error) {
+            this.logger.error('Error updating profile picture:', error);
+            throw new Error('Failed to update profile picture');
+        }
     }
 }

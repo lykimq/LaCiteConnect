@@ -76,22 +76,34 @@ export const useRegister = () => {
                 phoneNumber: formattedPhoneNumber || undefined,
                 phoneRegion: formState.phoneRegion,
                 sessionType: formState.sessionType,
-                biometricEnabled: formState.biometricEnabled
+                biometricEnabled: formState.biometricEnabled,
+                profilePictureUrl: formState.profilePictureUrl || undefined,
             };
 
             console.log('Sending registration data:', userData);
             const response = await authService.register(userData);
-            console.log('Registration successful');
+            console.log('Registration successful', response);
 
-            // Store user data
-            if (response.user) {
-                await AsyncStorage.setItem('userData', JSON.stringify({
-                    id: response.user.id,
-                    email: response.user.email,
-                    firstName: response.user.firstName,
-                    lastName: response.user.lastName,
-                    role: response.user.role
-                }));
+            // Store user data and access token
+            if (response) {
+                if (response.accessToken) {
+                    await AsyncStorage.setItem('token', response.accessToken);
+                }
+
+                if (response.user) {
+                    await AsyncStorage.setItem('userData', JSON.stringify({
+                        id: response.user.id,
+                        email: response.user.email,
+                        firstName: response.user.firstName,
+                        lastName: response.user.lastName,
+                        role: response.user.role,
+                        profilePictureUrl: response.user.profilePictureUrl
+                    }));
+                } else {
+                    console.warn('Warning: User data missing in registration response');
+                }
+            } else {
+                console.warn('Warning: Empty response from registration API');
             }
 
             return response;
