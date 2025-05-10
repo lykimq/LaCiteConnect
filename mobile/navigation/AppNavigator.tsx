@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { WelcomePage } from '../components/auth/WelcomePage';
 import { LoginForm } from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
-import { WelcomeUserPage } from '../components/auth/WelcomeUserPage';
 import { RootStackParamList } from '../types/navigation';
 import { useTheme } from '../hooks/useTheme';
 import { EventRegistrationPage } from '../components/events/EventRegistrationPage';

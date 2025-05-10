@@ -1,9 +1,9 @@
 import { RouteProp, NavigatorScreenParams } from '@react-navigation/native';
-import { WelcomeUserPage } from '../components/auth/WelcomeUserPage';
 
 export type MainTabParamList = {
     Home: undefined;
     WhoWeAre: undefined;
+    GetConnected: undefined;
     Events: undefined;
     Profile: undefined;
 };
@@ -11,6 +11,7 @@ export type MainTabParamList = {
 export type GuestTabParamList = {
     Home: undefined;
     WhoWeAre: undefined;
+    GetConnected: undefined;
     Events: undefined;
     SignIn: undefined;
 };

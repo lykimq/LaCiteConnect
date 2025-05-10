@@ -9,7 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProfileImagePicker } from './ProfileImagePicker';
 import { useRoute } from '@react-navigation/native';
 import { HomeContent } from '../home/HomeContent';
-import { WhoWeAreContent } from '../home/WhoWeAre';
+
+
 type WelcomeUserPageNavigationProp = CompositeNavigationProp<
     BottomTabNavigationProp<MainTabParamList, 'Home'>,
     NativeStackNavigationProp<RootStackParamList>

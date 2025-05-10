@@ -8,6 +8,7 @@ import { GuestTabParamList } from '../types/navigation';
 import { useTheme } from '../hooks/useTheme';
 import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
 import { WhoWeAreContent } from '../components/home/WhoWeAre';
+import { GetConnectedContent } from 'components/home/GetConnectedContent';
 
 const Tab = createBottomTabNavigator<GuestTabParamList>();
 
@@ -40,6 +41,16 @@ export const GuestNavigator = () => {
                         <Ionicons name="information-circle" size={24} color={color} />
                     ),
                     title: 'Who We Are',
+                }}
+            />
+            <Tab.Screen
+                name="GetConnected"
+                component={GetConnectedContent}
+                options={{
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="people" size={24} color={color} />
+                    ),
+                    title: 'Get Connected',
                 }}
             />
             <Tab.Screen

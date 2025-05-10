@@ -22,6 +22,8 @@ export const MainTabs = () => {
                         iconName = focused ? 'calendar' : 'calendar-outline';
                     } else if (route.name === 'WhoWeAre') {
                         iconName = 'information-circle';
+                    } else if (route.name === 'GetConnected') {
+                        iconName = 'people';
                     } else {
                         iconName = focused ? 'person' : 'person-outline';
                     }
