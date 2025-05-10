@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { WelcomeUserPage } from '../components/auth/WelcomeUserPage';
 import { EventsPage } from '../components/events/EventsPage';
 import { MainTabParamList } from '../types/navigation';
+import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -24,15 +25,9 @@ export const MainTabs = () => {
 
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: '#FF9843',
-                tabBarInactiveTintColor: '#7F8C8D',
-                tabBarStyle: {
-                    backgroundColor: '#FFFFFF',
-                    borderTopWidth: 1,
-                    borderTopColor: '#E0E0E0',
-                    paddingBottom: 5,
-                    paddingTop: 5,
-                },
+                tabBarActiveTintColor: tabBarColors.active,
+                tabBarInactiveTintColor: tabBarColors.inactive,
+                tabBarStyle: navigationStyles.tabBar,
                 headerShown: false,
             })}
         >

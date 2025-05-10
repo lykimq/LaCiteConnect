@@ -6,6 +6,7 @@ import { EventsPage } from '../components/events/EventsPage';
 import { LoginForm } from '../components/auth/LoginForm';
 import { GuestTabParamList } from '../types/navigation';
 import { useTheme } from '../hooks/useTheme';
+import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
 
 const Tab = createBottomTabNavigator<GuestTabParamList>();
 
@@ -15,12 +16,9 @@ export const GuestNavigator = () => {
     return (
         <Tab.Navigator
             screenOptions={{
-                tabBarActiveTintColor: colors.primary,
-                tabBarInactiveTintColor: colors.text,
-                tabBarStyle: {
-                    backgroundColor: colors.background,
-                    borderTopColor: colors.border,
-                },
+                tabBarActiveTintColor: tabBarColors.active,
+                tabBarInactiveTintColor: tabBarColors.inactive,
+                tabBarStyle: navigationStyles.tabBar,
                 headerShown: false,
             }}
         >

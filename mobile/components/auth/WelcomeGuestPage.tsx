@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { GuestTabParamList } from '../../types/navigation';
+import { welcomeStyles } from '../../styles/welcome.styles';
 
 type WelcomeGuestPageProps = {
     navigation: NativeStackNavigationProp<GuestTabParamList, 'Home'>;
@@ -12,77 +13,36 @@ export const WelcomeGuestPage = ({ navigation }: WelcomeGuestPageProps) => {
     const { colors } = useTheme();
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={welcomeStyles.safeArea}>
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={welcomeStyles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.header}>
-                    <Text style={[styles.title, { color: colors.text }]}>
+                <View style={welcomeStyles.header}>
+                    <Text style={[welcomeStyles.title, { color: colors.text }]}>
                         Welcome to La Cité Connect
                     </Text>
-                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                    <Text style={[welcomeStyles.subtitle, { color: colors.textSecondary }]}>
                         Join our community and stay connected with church events and activities
                     </Text>
                 </View>
 
-                <View style={styles.content}>
+                <View style={welcomeStyles.actionContainer}>
                     <TouchableOpacity
-                        style={[styles.button, { backgroundColor: colors.primary }]}
+                        style={welcomeStyles.actionButton}
                         onPress={() => navigation.navigate('Events')}
                     >
-                        <Text style={styles.buttonText}>View Events</Text>
+                        <Text style={welcomeStyles.actionButtonText}>View Events</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.button, { backgroundColor: colors.card }]}
+                        style={welcomeStyles.registerButton}
                         onPress={() => navigation.navigate('SignIn')}
                     >
-                        <Text style={[styles.buttonText, { color: colors.primary }]}>Sign In</Text>
+                        <Text style={welcomeStyles.registerButtonText}>Sign In</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
-        padding: 20,
-    },
-    header: {
-        alignItems: 'center',
-        marginTop: 40,
-        marginBottom: 40,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 10,
-    },
-    subtitle: {
-        fontSize: 16,
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    content: {
-        flex: 1,
-        justifyContent: 'center',
-        gap: 15,
-    },
-    button: {
-        padding: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    buttonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-});
