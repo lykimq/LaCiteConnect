@@ -6,6 +6,7 @@ import { EventsPage } from '../components/events/EventsPage';
 import { MainTabParamList } from '../types/navigation';
 import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
 import { WhoWeAreContent } from '../components/home/WhoWeAre';
+import { GetConnectedContent } from 'components/home/GetConnectedContent';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -48,6 +49,13 @@ export const MainTabs = () => {
                 component={WhoWeAreContent}
                 options={{
                     title: 'Who We Are',
+                }}
+            />
+            <Tab.Screen
+                name="GetConnected"
+                component={GetConnectedContent}
+                options={{
+                    title: 'Get Connected',
                 }}
             />
             <Tab.Screen
