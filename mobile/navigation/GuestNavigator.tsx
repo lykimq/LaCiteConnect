@@ -7,6 +7,7 @@ import { LoginForm } from '../components/auth/LoginForm';
 import { GuestTabParamList } from '../types/navigation';
 import { useTheme } from '../hooks/useTheme';
 import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
+import { WhoWeAreContent } from '../components/home/WhoWeAre';
 
 const Tab = createBottomTabNavigator<GuestTabParamList>();
 
@@ -26,13 +27,19 @@ export const GuestNavigator = () => {
                 name="Home"
                 component={WelcomeGuestPage}
                 options={{
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <Ionicons
-                            name={focused ? 'home' : 'home-outline'}
-                            size={size}
-                            color={color}
-                        />
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="home" size={24} color={color} />
                     ),
+                }}
+            />
+            <Tab.Screen
+                name="WhoWeAre"
+                component={WhoWeAreContent}
+                options={{
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="information-circle" size={24} color={color} />
+                    ),
+                    title: 'Who We Are',
                 }}
             />
             <Tab.Screen

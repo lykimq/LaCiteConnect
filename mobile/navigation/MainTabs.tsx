@@ -5,6 +5,7 @@ import { WelcomeUserPage } from '../components/auth/WelcomeUserPage';
 import { EventsPage } from '../components/events/EventsPage';
 import { MainTabParamList } from '../types/navigation';
 import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
+import { WhoWeAreContent } from '../components/home/WhoWeAre';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -19,6 +20,8 @@ export const MainTabs = () => {
                         iconName = focused ? 'home' : 'home-outline';
                     } else if (route.name === 'Events') {
                         iconName = focused ? 'calendar' : 'calendar-outline';
+                    } else if (route.name === 'WhoWeAre') {
+                        iconName = 'information-circle';
                     } else {
                         iconName = focused ? 'person' : 'person-outline';
                     }
@@ -36,6 +39,13 @@ export const MainTabs = () => {
                 component={WelcomeUserPage}
                 options={{
                     title: 'Home',
+                }}
+            />
+            <Tab.Screen
+                name="WhoWeAre"
+                component={WhoWeAreContent}
+                options={{
+                    title: 'Who We Are',
                 }}
             />
             <Tab.Screen
