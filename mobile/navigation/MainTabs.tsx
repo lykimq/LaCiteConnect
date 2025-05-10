@@ -8,6 +8,7 @@ import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
 import { WhoWeAreContent } from '../components/home/WhoWeAre';
 import { GetConnectedContent } from 'components/home/GetConnectedContent';
 import { DonationContent } from 'components/home/DonationContent';
+import { EventsContent } from 'components/home/EventsContent';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -22,7 +23,11 @@ export const MainTabs = () => {
                         iconName = focused ? 'home' : 'home-outline';
                     } else if (route.name === 'Events') {
                         iconName = focused ? 'calendar' : 'calendar-outline';
-                    } else if (route.name === 'WhoWeAre') {
+                    }
+                    else if (route.name === 'EventsWebsite') {
+                        iconName = focused ? 'earth' : 'earth-outline';
+                    }
+                    else if (route.name === 'WhoWeAre') {
                         iconName = 'information-circle';
                     } else if (route.name === 'GetConnected') {
                         iconName = 'people';
@@ -59,6 +64,13 @@ export const MainTabs = () => {
                 component={GetConnectedContent}
                 options={{
                     title: 'Get Connected',
+                }}
+            />
+            <Tab.Screen
+                name="EventsWebsite"
+                component={EventsContent}
+                options={{
+                    title: 'Events',
                 }}
             />
             <Tab.Screen

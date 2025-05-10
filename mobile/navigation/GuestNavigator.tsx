@@ -10,6 +10,7 @@ import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
 import { WhoWeAreContent } from '../components/home/WhoWeAre';
 import { GetConnectedContent } from 'components/home/GetConnectedContent';
 import { DonationContent } from 'components/home/DonationContent';
+import { EventsContent } from 'components/home/EventsContent';
 
 const Tab = createBottomTabNavigator<GuestTabParamList>();
 
@@ -52,6 +53,17 @@ export const GuestNavigator = () => {
                         <Ionicons name="people" size={24} color={color} />
                     ),
                     title: 'Get Connected',
+                }}
+            />
+
+            <Tab.Screen
+                name="EventsWebsite"
+                component={EventsContent}
+                options={{
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="earth" size={24} color={color} />
+                    ),
+                    title: 'Events',
                 }}
             />
             <Tab.Screen

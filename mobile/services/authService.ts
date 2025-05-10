@@ -2,6 +2,10 @@ import { LoginCredentials, RegisterCredentials, AuthResponse } from '../types/au
 import { API_BASE_URL } from '../config/api';
 import { uploadService } from './uploadService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GOOGLE_CONFIG } from '../config/google';
+
+const TOKEN_KEY = '@auth_token';
+const REFRESH_TOKEN_KEY = '@refresh_token';
 
 export const authService = {
 
@@ -151,5 +155,75 @@ export const authService = {
             console.error('Error updating profile picture:', error);
             throw error;
         }
-    }
+    },
+
+    async storeTokens(accessToken: string, refreshToken: string) {
+        try {
+            await AsyncStorage.setItem(TOKEN_KEY, accessToken);
+            await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+        } catch (error) {
+            console.error('Error storing tokens:', error);
+            throw error;
+        }
+    },
+
+    async getAccessToken(): Promise<string | null> {
+        try {
+            return await AsyncStorage.getItem(TOKEN_KEY);
+        } catch (error) {
+            console.error('Error getting access token:', error);
+            return null;
+        }
+    },
+
+    async getRefreshToken(): Promise<string | null> {
+        try {
+            return await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+        } catch (error) {
+            console.error('Error getting refresh token:', error);
+            return null;
+        }
+    },
+
+    async refreshAccessToken(): Promise<string | null> {
+        try {
+            const refreshToken = await this.getRefreshToken();
+            if (!refreshToken) {
+                return null;
+            }
+
+            const response = await fetch('https://oauth2.googleapis.com/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    client_id: GOOGLE_CONFIG.clientId,
+                    client_secret: GOOGLE_CONFIG.clientSecret,
+                    refresh_token: refreshToken,
+                    grant_type: 'refresh_token',
+                }),
+            });
+
+            const data = await response.json();
+            if (data.access_token) {
+                await AsyncStorage.setItem(TOKEN_KEY, data.access_token);
+                return data.access_token;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+            return null;
+        }
+    },
+
+    async clearTokens() {
+        try {
+            await AsyncStorage.removeItem(TOKEN_KEY);
+            await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+        } catch (error) {
+            console.error('Error clearing tokens:', error);
+            throw error;
+        }
+    },
 }
