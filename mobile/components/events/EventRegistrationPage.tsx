@@ -4,7 +4,7 @@ import { useTheme } from 'hooks/useTheme';
 import { EventRegistrationForm } from './EventRegistrationForm';
 import { eventService } from 'services/eventService';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { CreateRegistrationDto, Event } from '../../types/event';
+import { CreateRegistrationDto, Event } from '../../types/event.types';
 import { EventRegistrationRouteProp } from '../../types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eventStyles } from '../../styles/event.styles';

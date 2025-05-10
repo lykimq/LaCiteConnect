@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { Event } from '../../types/event';
+import { Event } from '../../types/event.types';
 import { eventStyles } from '../../styles/event.styles';
 
 interface UserData {

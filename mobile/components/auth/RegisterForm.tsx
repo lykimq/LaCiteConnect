@@ -13,6 +13,7 @@ import { validateRegisterFields } from '../../utils/formValidation';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { authService } from '../../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RegisterFormProps = {
     navigation: NativeStackScreenProps<RootStackParamList, 'Register'>['navigation'];
@@ -43,6 +44,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigation }) => {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [dialogMessage, setDialogMessage] = useState<{ title: string; message: string }>({ title: '', message: '' });
     const [dialogVisible, setDialogVisible] = useState(false);
+    const [isUpdatingProfilePicture, setIsUpdatingProfilePicture] = useState(false);
 
     React.useEffect(() => {
         updateFormState(initialFormState);
@@ -67,44 +69,45 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigation }) => {
 
             if (response) {
                 // If we have a profile image but the API didn't save it (happens with large images)
-                // Only check if response.user exists and has a profilePictureUrl property
                 if (profileImage && response.user && !response.user.profilePictureUrl) {
                     try {
+                        setIsUpdatingProfilePicture(true);
                         console.log('Uploading profile picture separately...');
-                        // This will happen in the background, no need to await
-                        authService.updateProfilePicture(profileImage)
-                            .then(() => console.log('Profile picture uploaded successfully'))
-                            .catch(err => console.error('Error uploading profile picture:', err));
+                        await authService.updateProfilePicture(profileImage);
+                        console.log('Profile picture uploaded successfully');
+
+                        // Update the stored user data with the new profile picture
+                        const userData = await AsyncStorage.getItem('userData');
+                        if (userData) {
+                            const parsedUserData = JSON.parse(userData);
+                            parsedUserData.profilePictureUrl = profileImage;
+                            await AsyncStorage.setItem('userData', JSON.stringify(parsedUserData));
+                        }
                     } catch (error) {
                         console.error('Failed to upload profile picture:', error);
-                        // Continue anyway, this is not critical
+                        setDialogMessage({
+                            title: 'Profile Picture Update',
+                            message: 'Your account was created successfully, but we couldn\'t upload your profile picture. You can update it later in your profile settings.'
+                        });
+                        setDialogVisible(true);
+                    } finally {
+                        setIsUpdatingProfilePicture(false);
                     }
-                } else if (profileImage && !response.user) {
-                    // Handle the case where response.user is undefined
-                    console.log('User registered successfully, but user data is missing in the response');
                 }
 
-                Alert.alert(
-                    'Registration Successful',
-                    'Your account has been created successfully. You can now log in with your credentials.',
-                    [
-                        {
-                            text: 'OK',
-                            onPress: () => {
-                                updateFormState(initialFormState);
-                                navigation.reset({
-                                    index: 0,
-                                    routes: [{ name: 'Login' }],
-                                });
-                            }
-                        }
-                    ]
-                );
+                // Navigate to Welcome User page
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'WelcomeUser' }],
+                });
             }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
+            console.error('Registration error:', error);
+            let errorMessage = 'An error occurred during registration';
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            }
             setError(errorMessage);
-            Alert.alert('Registration Failed', errorMessage);
         } finally {
             updateFormState({ isLoading: false });
         }

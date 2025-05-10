@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Event } from '../../types/event';
+import { Event } from '../../types/event.types';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { eventStyles } from '../../styles/event.styles';
 

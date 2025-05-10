@@ -1,4 +1,4 @@
-import { Event, EventRegistration, CreateRegistrationDto } from '../types/event';
+import { Event, EventRegistration, CreateRegistrationDto } from '../types/event.types';
 import { API_BASE_URL } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

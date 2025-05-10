@@ -82,9 +82,18 @@ export const authService = {
                         await AsyncStorage.setItem('token', result.accessToken);
                     }
 
-                    // We can implement a separate API endpoint to update the profile picture later
-                    // This is just a placeholder, implement in a future update
-                    console.log('User registered successfully. Profile picture will be updated separately.');
+                    // Update profile picture separately if we have one
+                    if (originalProfilePicUrl) {
+                        try {
+                            console.log('Updating profile picture separately after registration...');
+                            await this.updateProfilePicture(originalProfilePicUrl);
+                            console.log('Profile picture updated successfully');
+                        } catch (error) {
+                            console.error('Failed to update profile picture after registration:', error);
+                            // Don't throw the error since registration was successful
+                            // The user can update their profile picture later
+                        }
+                    }
 
                     return result;
                 } else {
@@ -112,9 +121,6 @@ export const authService = {
                 throw new Error('Not authenticated');
             }
 
-            // Convert image to base64
-            const base64Image = await uploadService.imageToBase64(imageUri);
-
             // Send request to update profile picture
             const response = await fetch(`${API_BASE_URL}/auth/profile-picture`, {
                 method: 'PUT',
@@ -122,7 +128,7 @@ export const authService = {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ profilePictureUrl: base64Image })
+                body: JSON.stringify({ profilePictureUrl: imageUri })
             });
 
             if (!response.ok) {

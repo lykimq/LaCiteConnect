@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { Event, CreateRegistrationDto } from '../../types/event';
+import { Event, CreateRegistrationDto } from '../../types/event.types';
 import { EventRegistrationForm } from './EventRegistrationForm';
 import { eventStyles } from '../../styles/event.styles';
 import { formatDate, formatTime } from '../../utils/dateUtils';

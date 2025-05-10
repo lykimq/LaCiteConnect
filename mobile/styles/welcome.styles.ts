@@ -1,5 +1,4 @@
 import { StyleSheet, Platform, Dimensions } from 'react-native';
-import { commonStyles, colors, spacing, typography } from './common.styles';
 
 const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
