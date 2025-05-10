@@ -102,7 +102,6 @@ export const AppNavigator: React.FC = () => {
         return null;
     }
 
-    // Use a single Stack Navigator with conditional rendering for auth/main screens
     return (
         <NavigationContainer>
             <Stack.Navigator
@@ -116,17 +115,49 @@ export const AppNavigator: React.FC = () => {
                     },
                 }}
             >
-                {isAuthenticated ? (
+                {!isAuthenticated ? (
+                    // Unauthenticated Routes - Show Welcome page first
+                    <>
+                        <Stack.Screen
+                            name="Welcome"
+                            component={WelcomePage}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="Login"
+                            component={LoginForm}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="Register"
+                            component={RegisterForm}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="Events"
+                            component={EventsPage}
+                            options={{
+                                title: 'Events',
+                                headerShown: true
+                            }}
+                        />
+                        <Stack.Screen
+                            name="EventDetails"
+                            component={EventDetailsPage}
+                            options={{ title: 'Event Details' }}
+                        />
+                        <Stack.Screen
+                            name="EventRegistration"
+                            component={EventRegistrationPage}
+                            options={{ title: 'Register for Event' }}
+                        />
+                    </>
+                ) : (
                     // Authenticated Routes
                     <>
                         <Stack.Screen
                             name="MainTabs"
                             component={MainTabs}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="WelcomeUser"
-                            component={WelcomeUserPage}
                             options={{ headerShown: false }}
                         />
                         <Stack.Screen
@@ -162,48 +193,6 @@ export const AppNavigator: React.FC = () => {
                             name="Register"
                             component={RegisterForm}
                             options={{ headerShown: false }}
-                        />
-                    </>
-                ) : (
-                    // Unauthenticated Routes
-                    <>
-                        <Stack.Screen
-                            name="Welcome"
-                            component={WelcomePage}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="Login"
-                            component={LoginForm}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="Register"
-                            component={RegisterForm}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="WelcomeUser"
-                            component={WelcomeUserPage}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="Events"
-                            component={EventsPage}
-                            options={{
-                                title: 'Events',
-                                headerShown: true
-                            }}
-                        />
-                        <Stack.Screen
-                            name="EventDetails"
-                            component={EventDetailsPage}
-                            options={{ title: 'Event Details' }}
-                        />
-                        <Stack.Screen
-                            name="EventRegistration"
-                            component={EventRegistrationPage}
-                            options={{ title: 'Register for Event' }}
                         />
                     </>
                 )}

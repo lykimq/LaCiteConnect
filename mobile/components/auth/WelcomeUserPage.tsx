@@ -6,6 +6,7 @@ import { RootStackParamList } from '../../types/navigation';
 import { welcomeStyles } from '../../styles/welcome.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProfileImagePicker } from './ProfileImagePicker';
+import { useRoute } from '@react-navigation/native';
 
 type WelcomeUserPageProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'WelcomeUser'>;
@@ -15,6 +16,8 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
     const [userData, setUserData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [profileImage, setProfileImage] = useState<string | null>(null);
+    const route = useRoute();
+    const isProfileTab = route.name === 'Profile';
 
     useEffect(() => {
         loadUserData();
@@ -38,6 +41,19 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
     const handleImageUpdate = () => {
         // Reload user data to get the updated profile picture
         loadUserData();
+    };
+
+    const handleLogout = async () => {
+        try {
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('userData');
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Welcome' }],
+            });
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
     };
 
     if (loading) {
@@ -70,23 +86,67 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
 
     return (
         <SafeAreaView style={welcomeStyles.safeArea}>
-            <ScrollView
-                style={welcomeStyles.container}
-                contentContainerStyle={welcomeStyles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                <View style={welcomeStyles.header}>
-                    <View style={styles.profileSection}>
-                        <ProfileImagePicker
-                            profileImage={profileImage}
-                            setProfileImage={setProfileImage}
-                            onImageUpdate={handleImageUpdate}
-                            size={100}
-                        />
-                        <Text style={welcomeStyles.title}>Welcome, {userData.firstName}!</Text>
-                    </View>
-                    <Text style={welcomeStyles.subtitle}>You're connected to La Cité</Text>
-                </View>
+            <ScrollView contentContainerStyle={welcomeStyles.scrollContent}>
+                {isProfileTab ? (
+                    // Profile View
+                    <>
+                        <View style={welcomeStyles.profileHeader}>
+                            <ProfileImagePicker
+                                profileImage={profileImage}
+                                setProfileImage={setProfileImage}
+                                onImageUpdate={handleImageUpdate}
+                            />
+                            <Text style={welcomeStyles.welcomeText}>
+                                {userData.firstName} {userData.lastName}
+                            </Text>
+                            <Text style={welcomeStyles.emailText}>{userData.email}</Text>
+                        </View>
+
+                        <View style={welcomeStyles.profileSection}>
+                            <Text style={welcomeStyles.sectionTitle}>Account Information</Text>
+                            <View style={welcomeStyles.infoItem}>
+                                <Text style={welcomeStyles.infoLabel}>Name</Text>
+                                <Text style={welcomeStyles.infoValue}>
+                                    {userData.firstName} {userData.lastName}
+                                </Text>
+                            </View>
+                            <View style={welcomeStyles.infoItem}>
+                                <Text style={welcomeStyles.infoLabel}>Email</Text>
+                                <Text style={welcomeStyles.infoValue}>{userData.email}</Text>
+                            </View>
+                            <View style={welcomeStyles.infoItem}>
+                                <Text style={welcomeStyles.infoLabel}>Role</Text>
+                                <Text style={welcomeStyles.infoValue}>{userData.role}</Text>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity
+                            style={welcomeStyles.logoutButton}
+                            onPress={handleLogout}
+                        >
+                            <Text style={welcomeStyles.logoutButtonText}>Logout</Text>
+                        </TouchableOpacity>
+                    </>
+                ) : (
+                    // Home View
+                    <>
+                        <Text style={welcomeStyles.welcomeText}>
+                            Welcome back, {userData.firstName}!
+                        </Text>
+                        <Text style={welcomeStyles.subtitleText}>
+                            What would you like to do today?
+                        </Text>
+
+                        <View style={welcomeStyles.actionContainer}>
+                            <TouchableOpacity
+                                style={welcomeStyles.actionButton}
+                                onPress={() => navigation.navigate('MainTabs', { screen: 'Events' })}
+                            >
+                                <Text style={welcomeStyles.actionButtonText}>View Events</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
             </ScrollView>
         </SafeAreaView>
     );

@@ -95,10 +95,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigation }) => {
                     }
                 }
 
-                // Navigate to Welcome User page
+                // Navigate to MainTabs instead of WelcomeUser
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'WelcomeUser' }],
+                    routes: [{ name: 'MainTabs' }],
                 });
             }
         } catch (error) {
@@ -146,14 +146,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ navigation }) => {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={[authStyles.title, { marginBottom: 24, textAlign: 'left' }]}>Create Account</Text>
+                <Text style={[authStyles.title, { marginBottom: 24, textAlign: 'center' }]}>Create Account</Text>
                 {error && <Text style={authStyles.error}>{error}</Text>}
 
-                <ProfileImagePicker
-                    profileImage={profileImage}
-                    setProfileImage={setProfileImage}
-                    updateFormState={updateFormState}
-                />
+                <View style={{ alignItems: 'center', marginBottom: 24 }}>
+                    <ProfileImagePicker
+                        profileImage={profileImage}
+                        setProfileImage={setProfileImage}
+                        updateFormState={updateFormState}
+                    />
+                </View>
 
                 <RegisterInputFields
                     formState={formState}

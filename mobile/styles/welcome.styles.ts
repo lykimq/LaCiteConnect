@@ -6,11 +6,11 @@ const isWeb = Platform.OS === 'web';
 export const welcomeStyles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#fff',
     },
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#fff',
     },
     scrollContent: {
         flexGrow: 1,
@@ -19,8 +19,7 @@ export const welcomeStyles = StyleSheet.create({
     },
     header: {
         alignItems: 'center',
-        marginTop: 40,
-        marginBottom: 40,
+        marginBottom: 30,
     },
     logo: {
         width: 120,
@@ -28,15 +27,14 @@ export const welcomeStyles = StyleSheet.create({
         marginBottom: 20,
     },
     title: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
-        color: '#2C3E50',
+        color: '#333',
         marginBottom: 10,
-        textAlign: 'center',
     },
     subtitle: {
-        fontSize: 18,
-        color: '#7F8C8D',
+        fontSize: 16,
+        color: '#666',
         textAlign: 'center',
     },
     featuresContainer: {
@@ -73,10 +71,7 @@ export const welcomeStyles = StyleSheet.create({
         lineHeight: 24,
     },
     actionContainer: {
-        width: '100%',
-        maxWidth: 400,
-        alignSelf: 'center',
-        marginBottom: 30,
+        marginTop: 20,
     },
     loginButton: {
         backgroundColor: '#FF9843',
@@ -146,10 +141,10 @@ export const welcomeStyles = StyleSheet.create({
     },
     actionButton: {
         backgroundColor: '#FF9843',
-        borderRadius: 8,
-        padding: 12,
+        borderRadius: 10,
+        padding: 15,
         alignItems: 'center',
-        marginTop: 10,
+        marginBottom: 15,
         ...Platform.select({
             web: {
                 boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
@@ -165,31 +160,68 @@ export const welcomeStyles = StyleSheet.create({
     },
     actionButtonText: {
         color: '#FFFFFF',
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '600',
     },
     logoutButton: {
-        backgroundColor: '#E74C3C',
+        backgroundColor: '#ff3b30',
         borderRadius: 10,
         padding: 15,
         alignItems: 'center',
         marginTop: 20,
-        ...Platform.select({
-            web: {
-                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
-            },
-            default: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-                elevation: 3,
-            },
-        }),
     },
     logoutButtonText: {
         color: '#FFFFFF',
         fontSize: 18,
         fontWeight: '600',
+    },
+    subtitleText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    // Profile styles
+    profileHeader: {
+        alignItems: 'center',
+        marginBottom: 30,
+        paddingTop: 20,
+    },
+    welcomeText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#333',
+        marginTop: 15,
+        marginBottom: 5,
+    },
+    emailText: {
+        fontSize: 16,
+        color: '#666',
+        marginBottom: 20,
+    },
+    profileSection: {
+        backgroundColor: '#f8f8f8',
+        borderRadius: 10,
+        padding: 20,
+        marginBottom: 20,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 15,
+    },
+    infoItem: {
+        marginBottom: 15,
+    },
+    infoLabel: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 5,
+    },
+    infoValue: {
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
     },
 });

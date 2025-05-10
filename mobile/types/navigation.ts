@@ -9,7 +9,9 @@ export type RootStackParamList = {
     WelcomeUser: undefined;
 
     // Main Stack
-    MainTabs: undefined;
+    MainTabs: {
+        screen?: 'Home' | 'Events' | 'Profile';
+    };
     EventDetails: { eventId: string };
     EventRegistration: { eventId: string };
 };

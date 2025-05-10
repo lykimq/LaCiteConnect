@@ -64,10 +64,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
                     isLoading: false
                 });
 
-                // Navigate to Welcome User page
+                // Navigate to MainTabs instead of WelcomeUser
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'WelcomeUser' }],
+                    routes: [{ name: 'MainTabs' }],
                 });
             }
         } catch (error) {
