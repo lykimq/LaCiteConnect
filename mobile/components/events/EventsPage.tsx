@@ -6,7 +6,7 @@ import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 // @ts-ignore
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, TabParamList } from '../../types/navigation';
+import { RootStackParamList, MainTabParamList } from '../../types/navigation';
 import { Event } from '../../types/event.types';
 import { EventList } from './EventList';
 import { eventStyles } from '../../styles/event.styles';
@@ -14,7 +14,7 @@ import { eventService } from 'services/eventService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type EventsPageNavigationProp = CompositeNavigationProp<
-    BottomTabNavigationProp<TabParamList, 'Events'>,
+    BottomTabNavigationProp<MainTabParamList, 'Events'>,
     NativeStackNavigationProp<RootStackParamList>
 >;
 

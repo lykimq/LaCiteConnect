@@ -5,10 +5,12 @@ import { RootStackParamList } from '../../types/navigation';
 import { authStyles } from '../../styles/auth.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateLoginFields } from '../../utils/formValidation';
-// @ts-ignore
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-type LoginFormProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
+type LoginFormProps = {
+    navigation: NativeStackNavigationProp<RootStackParamList>;
+};
 
 export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
     const { formState, updateFormState, login } = useLogin();
@@ -67,7 +69,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ navigation }) => {
                 // Navigate to MainTabs instead of WelcomeUser
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'MainTabs' }],
+                    routes: [{ name: 'MainTabs', params: { screen: 'Home' } }],
                 });
             }
         } catch (error) {

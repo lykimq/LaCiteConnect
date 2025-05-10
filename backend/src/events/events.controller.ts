@@ -31,18 +31,18 @@ interface RequestWithUser extends ExpressRequest {
  * Controller for managing events
  */
 @Controller('events')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class EventsController {
     constructor(private readonly eventsService: EventsService) { }
 
     // Create a new event
     @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RoleType.user, RoleType.admin)
     createEvent(@Request() req: RequestWithUser, @Body() dto: CreateEventDto) {
         return this.eventsService.createEvent(req.user.id, dto);
     }
 
-    // Get all upcoming events
+    // Get all upcoming events - Public access
     @Get()
     getUpcomingEvents() {
         return this.eventsService.getUpcomingEvents();
@@ -50,6 +50,7 @@ export class EventsController {
 
     // Get all events created by the user
     @Get('my-events')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RoleType.user, RoleType.admin)
     getUserEvents(@Request() req: RequestWithUser) {
         return this.eventsService.getUserEvents(req.user.id);
@@ -57,12 +58,13 @@ export class EventsController {
 
     // Get all registrations for the user
     @Get('my-registrations')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RoleType.user, RoleType.admin)
     getUserRegistrations(@Request() req: RequestWithUser) {
         return this.eventsService.getUserRegistrations(req.user.id);
     }
 
-    // Get a specific event by ID
+    // Get a specific event by ID - Public access
     @Get(':id')
     getEvent(@Param('id') id: string) {
         return this.eventsService.getEvent(id);
@@ -70,6 +72,7 @@ export class EventsController {
 
     // Update an existing event
     @Put(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RoleType.user, RoleType.admin)
     updateEvent(
         @Param('id') id: string,
@@ -81,6 +84,7 @@ export class EventsController {
 
     // Delete an existing event
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RoleType.user, RoleType.admin)
     deleteEvent(@Param('id') id: string, @Request() req: RequestWithUser) {
         return this.eventsService.deleteEvent(id, req.user.id);
@@ -88,6 +92,7 @@ export class EventsController {
 
     // Create a new time slot for an event
     @Post(':id/time-slots')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RoleType.user, RoleType.admin)
     createTimeSlot(
         @Param('id') eventId: string,
@@ -99,6 +104,7 @@ export class EventsController {
 
     // Register for an event
     @Post('register')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RoleType.user, RoleType.admin)
     registerForEvent(@Body() dto: CreateRegistrationDto) {
         return this.eventsService.registerForEvent(dto);
@@ -106,6 +112,7 @@ export class EventsController {
 
     // Update the status of a registration
     @Put('registrations/:id/status')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RoleType.admin)
     updateRegistrationStatus(
         @Param('id') registrationId: string,

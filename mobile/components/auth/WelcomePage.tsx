@@ -1,12 +1,11 @@
 import React from 'react';
 import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, Platform, Linking } from 'react-native';
-// @ts-ignore
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { welcomeStyles } from '../../styles/welcome.styles';
 
 type WelcomePageProps = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
+    navigation: NativeStackNavigationProp<RootStackParamList>;
 };
 
 export const WelcomePage = ({ navigation }: WelcomePageProps) => {
@@ -88,7 +87,13 @@ export const WelcomePage = ({ navigation }: WelcomePageProps) => {
 
                     <TouchableOpacity
                         style={welcomeStyles.exploreButton}
-                        onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+                        onPress={() => {
+                            // Reset the navigation state to GuestTabs
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'GuestTabs' }],
+                            });
+                        }}
                     >
                         <Text style={welcomeStyles.exploreButtonText}>Continue as Guest</Text>
                     </TouchableOpacity>

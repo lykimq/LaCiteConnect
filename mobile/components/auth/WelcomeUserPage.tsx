@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Platform, StyleSheet } from 'react-native';
-// @ts-ignore
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types/navigation';
+import { RootStackParamList, MainTabParamList } from '../../types/navigation';
 import { welcomeStyles } from '../../styles/welcome.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProfileImagePicker } from './ProfileImagePicker';
 import { useRoute } from '@react-navigation/native';
 
+type WelcomeUserPageNavigationProp = CompositeNavigationProp<
+    BottomTabNavigationProp<MainTabParamList, 'Home'>,
+    NativeStackNavigationProp<RootStackParamList>
+>;
+
 type WelcomeUserPageProps = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'WelcomeUser'>;
+    navigation: WelcomeUserPageNavigationProp;
 };
 
 export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
@@ -47,10 +53,12 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
         try {
             await AsyncStorage.removeItem('token');
             await AsyncStorage.removeItem('userData');
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'Welcome' }],
-            });
+            if (navigation.getParent()) {
+                navigation.getParent()?.reset({
+                    index: 0,
+                    routes: [{ name: 'Welcome' }],
+                });
+            }
         } catch (error) {
             console.error('Error during logout:', error);
         }
@@ -69,10 +77,12 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
     if (!userData) {
         // Navigate to Welcome screen after a slight delay
         setTimeout(() => {
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'Welcome' }],
-            });
+            if (navigation.getParent()) {
+                navigation.getParent()?.reset({
+                    index: 0,
+                    routes: [{ name: 'Welcome' }],
+                });
+            }
         }, 100);
 
         return (
@@ -150,11 +160,10 @@ export const WelcomeUserPage = ({ navigation }: WelcomeUserPageProps) => {
             </ScrollView>
         </SafeAreaView>
     );
-};
-
-const styles = StyleSheet.create({
+}; const styles = StyleSheet.create({
     profileSection: {
         alignItems: 'center',
         marginBottom: 10,
     },
 });
+

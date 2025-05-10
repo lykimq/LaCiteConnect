@@ -25,6 +25,7 @@ export const eventService = {
             const response = await fetch(url, {
                 method: 'GET',
                 headers,
+                credentials: 'include' // Include credentials for cross-origin requests
             });
 
             console.log('Response status:', response.status);
