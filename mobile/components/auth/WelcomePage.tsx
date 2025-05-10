@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
+import { Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, Platform, Linking } from 'react-native';
 // @ts-ignore
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
@@ -10,6 +10,10 @@ type WelcomePageProps = {
 };
 
 export const WelcomePage = ({ navigation }: WelcomePageProps) => {
+    const handleFindUs = () => {
+        Linking.openURL('https://maps.google.com/?q=24+Rue+Antoine-Julien+Hénard+75012+Paris');
+    };
+
     return (
         <SafeAreaView style={welcomeStyles.safeArea}>
             <ScrollView
@@ -24,28 +28,45 @@ export const WelcomePage = ({ navigation }: WelcomePageProps) => {
                         resizeMode="contain"
                     />
                     <Text style={welcomeStyles.title}>La Cité Connect</Text>
-                    <Text style={welcomeStyles.subtitle}>Your Digital Church Community</Text>
+                    <Text style={welcomeStyles.subtitle}>To know Jesus and make Him known in Paris</Text>
                 </View>
 
                 <View style={welcomeStyles.featuresContainer}>
                     <View style={welcomeStyles.featureCard}>
-                        <Text style={welcomeStyles.featureTitle}>Stay Connected</Text>
+                        <Text style={welcomeStyles.featureTitle}>Join Us</Text>
                         <Text style={welcomeStyles.featureText}>
-                            Join our community and stay updated with church events, services, and activities.
+                            Every Sunday at 10:30 AM{'\n'}
+                            Bilingual Service (English & French)
+                        </Text>
+                        <TouchableOpacity
+                            style={welcomeStyles.locationButton}
+                            onPress={handleFindUs}
+                        >
+                            <Text style={welcomeStyles.locationButtonText}>
+                                24 Rue Antoine-Julien Hénard{'\n'}
+                                75012, Paris
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={welcomeStyles.featureCard}>
+                        <Text style={welcomeStyles.featureTitle}>Our Sundays</Text>
+                        <Text style={welcomeStyles.featureText}>
+                            We gather every Sunday morning for worship, teaching, and fellowship. Join us in person or online for a time of spiritual growth and community.
                         </Text>
                     </View>
 
                     <View style={welcomeStyles.featureCard}>
-                        <Text style={welcomeStyles.featureTitle}>Grow Together</Text>
+                        <Text style={welcomeStyles.featureTitle}>Chez Nous</Text>
                         <Text style={welcomeStyles.featureText}>
-                            Access sermons, Bible studies, and prayer groups to strengthen your faith journey.
+                            Our small groups meet throughout the week in different locations across Paris. Connect with others and grow in your faith journey.
                         </Text>
                     </View>
 
                     <View style={welcomeStyles.featureCard}>
-                        <Text style={welcomeStyles.featureTitle}>Serve & Share</Text>
+                        <Text style={welcomeStyles.featureTitle}>Ensemble</Text>
                         <Text style={welcomeStyles.featureText}>
-                            Participate in community service and share your blessings with others.
+                            Join our monthly prayer meeting on the fourth Thursday at 19:45. Prayer is a core value of our church community.
                         </Text>
                     </View>
                 </View>
@@ -67,7 +88,7 @@ export const WelcomePage = ({ navigation }: WelcomePageProps) => {
 
                     <TouchableOpacity
                         style={welcomeStyles.exploreButton}
-                        onPress={() => {/* TODO: Handle guest mode */ }}
+                        onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
                     >
                         <Text style={welcomeStyles.exploreButtonText}>Continue as Guest</Text>
                     </TouchableOpacity>

@@ -163,6 +163,21 @@ export const welcomeStyles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
     },
+    locationButton: {
+        backgroundColor: '#F8F9FA',
+        borderRadius: 10,
+        padding: 15,
+        alignItems: 'center',
+        marginTop: 10,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    locationButtonText: {
+        color: '#666',
+        fontSize: 16,
+        textAlign: 'center',
+        lineHeight: 22,
+    },
     logoutButton: {
         backgroundColor: '#ff3b30',
         borderRadius: 10,
