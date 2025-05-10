@@ -9,6 +9,7 @@ import { useTheme } from '../hooks/useTheme';
 import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
 import { WhoWeAreContent } from '../components/home/WhoWeAre';
 import { GetConnectedContent } from 'components/home/GetConnectedContent';
+import { DonationContent } from 'components/home/DonationContent';
 
 const Tab = createBottomTabNavigator<GuestTabParamList>();
 
@@ -64,6 +65,16 @@ export const GuestNavigator = () => {
                             color={color}
                         />
                     ),
+                }}
+            />
+            <Tab.Screen
+                name="Donations"
+                component={DonationContent}
+                options={{
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="cash-outline" size={24} color={color} />
+                    ),
+                    title: 'Donations',
                 }}
             />
             <Tab.Screen

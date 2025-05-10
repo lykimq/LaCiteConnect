@@ -7,6 +7,7 @@ import { MainTabParamList } from '../types/navigation';
 import { navigationStyles, tabBarColors } from '../styles/navigation.styles';
 import { WhoWeAreContent } from '../components/home/WhoWeAre';
 import { GetConnectedContent } from 'components/home/GetConnectedContent';
+import { DonationContent } from 'components/home/DonationContent';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -25,6 +26,8 @@ export const MainTabs = () => {
                         iconName = 'information-circle';
                     } else if (route.name === 'GetConnected') {
                         iconName = 'people';
+                    } else if (route.name === 'Donations') {
+                        iconName = 'cash-outline';
                     } else {
                         iconName = focused ? 'person' : 'person-outline';
                     }
@@ -63,6 +66,13 @@ export const MainTabs = () => {
                 component={EventsPage}
                 options={{
                     title: 'Events',
+                }}
+            />
+            <Tab.Screen
+                name="Donations"
+                component={DonationContent}
+                options={{
+                    title: 'Donations',
                 }}
             />
             <Tab.Screen

@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, Dimensio
 import { welcomeStyles } from '../../styles/welcome.styles';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
-import { WebView } from 'react-native-webview';
+import WebView from 'react-native-webview';
 
 const { width } = Dimensions.get('window');
 
@@ -31,29 +31,23 @@ export const HomeContent = ({ showProfileSection, userData }: HomeContentProps) 
             contentContainerStyle={welcomeStyles.scrollContent}
             showsVerticalScrollIndicator={false}
         >
-            {showProfileSection && userData ? (
-                <View style={[welcomeStyles.header, { marginTop: 40 }]}>
-                    <Text style={[welcomeStyles.title, { color: colors.text }]}>
-                        Welcome to La Cité Connect
-                    </Text>
-                    <Text style={[welcomeStyles.subtitle, { color: colors.textSecondary }]}>
-                        To know Jesus and make Him known in Paris
-                    </Text>
-                </View>
-            ) : (
-                <View style={[welcomeStyles.header, { marginTop: 40 }]}>
-                    <Text style={[welcomeStyles.title, { color: colors.text }]}>
-                        Our Sundays
-                    </Text>
-                    <Text style={[welcomeStyles.subtitle, { color: colors.textSecondary }]}>
-                        Join us for worship and fellowship
-                    </Text>
-                </View>
-            )}
+            <View style={[welcomeStyles.header, { marginTop: 40 }]}>
+                <Text style={[welcomeStyles.title, { color: colors.text }]}>
+                    {showProfileSection && userData ? 'Welcome to La Cité Connect' : 'Our Sundays'}
+                </Text>
+                <Text style={[welcomeStyles.subtitle, { color: colors.textSecondary }]}>
+                    {showProfileSection && userData
+                        ? 'To know Jesus and make Him known in Paris'
+                        : 'Join us for worship and fellowship'}
+                </Text>
+            </View>
 
             <View style={welcomeStyles.featuresContainer}>
                 <View style={welcomeStyles.featureCard}>
-                    <Text style={welcomeStyles.featureTitle}>Our Sunday Service</Text>
+                    <View style={styles.cardHeader}>
+                        <Ionicons name="videocam" size={24} color="#FF9843" style={styles.cardIcon} />
+                        <Text style={welcomeStyles.featureTitle}>Our Sunday Service</Text>
+                    </View>
                     <Text style={welcomeStyles.featureText}>
                         Take a look into one of our Sundays to see what to expect when you join us!
                     </Text>
@@ -64,56 +58,101 @@ export const HomeContent = ({ showProfileSection, userData }: HomeContentProps) 
                             allowsFullscreenVideo={true}
                             javaScriptEnabled={true}
                             domStorageEnabled={true}
+                            androidLayerType="hardware"
+                            androidHardwareAccelerationDisabled={false}
                         />
                     </View>
                 </View>
 
                 <View style={welcomeStyles.featureCard}>
-                    <Text style={welcomeStyles.featureTitle}>Join Us</Text>
+                    <View style={styles.cardHeader}>
+                        <Ionicons name="location" size={24} color="#FF9843" style={styles.cardIcon} />
+                        <Text style={welcomeStyles.featureTitle}>Join Us</Text>
+                    </View>
                     <Text style={welcomeStyles.featureText}>
                         Every Sunday at 10:30 AM{'\n'}
                         Bilingual Service (English & French)
                     </Text>
                     <TouchableOpacity
-                        style={styles.locationButton}
+                        style={styles.actionButton}
                         onPress={handleFindUs}
                     >
-                        <Text style={styles.locationButtonText}>
+                        <Ionicons name="map" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+                        <Text style={styles.actionButtonText}>
                             24 Rue Antoine-Julien Hénard, 75012 Paris
                         </Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style={welcomeStyles.featureCard}>
-                    <Text style={welcomeStyles.featureTitle}>Join Us Online</Text>
+                    <View style={styles.cardHeader}>
+                        <Ionicons name="globe" size={24} color="#FF9843" style={styles.cardIcon} />
+                        <Text style={welcomeStyles.featureTitle}>Join Us Online</Text>
+                    </View>
                     <Text style={welcomeStyles.featureText}>
                         Can't make it in person? Join us online for our live stream service.
                     </Text>
                     <TouchableOpacity
-                        style={styles.onlineButton}
+                        style={styles.actionButton}
                         onPress={handleWatchOnline}
                     >
-                        <Ionicons name="videocam" size={24} color="#FFFFFF" style={styles.videoIcon} />
-                        <Text style={styles.onlineButtonText}>Watch Live Stream</Text>
+                        <Ionicons name="videocam" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+                        <Text style={styles.actionButtonText}>Watch Live Stream</Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style={welcomeStyles.featureCard}>
-                    <Text style={welcomeStyles.featureTitle}>THINGS YOU MAY WANT TO KNOW</Text>
-                    <Text style={welcomeStyles.featureText}>
-                        Our services are in English and French.
-                        {'\n\n'}• We meet in person and online.
-                        {'\n'}• Everyone is invited and welcome!
-                        {'\n'}• Come as you are!
+                    <View style={styles.cardHeader}>
+                        <Ionicons name="information-circle" size={24} color="#FF9843" style={styles.cardIcon} />
+                        <Text style={welcomeStyles.featureTitle}>Things You May Want to Know</Text>
+                    </View>
+                    <View style={styles.infoContainer}>
+                        <View style={styles.infoSection}>
+                            <Text style={styles.infoTitle}>Service Details</Text>
+                            <View style={styles.infoItem}>
+                                <Ionicons name="checkmark-circle" size={20} color="#FF9843" style={styles.infoIcon} />
+                                <Text style={styles.infoText}>Our services are in English and French</Text>
+                            </View>
+                            <View style={styles.infoItem}>
+                                <Ionicons name="checkmark-circle" size={20} color="#FF9843" style={styles.infoIcon} />
+                                <Text style={styles.infoText}>We meet in person and online</Text>
+                            </View>
+                            <View style={styles.infoItem}>
+                                <Ionicons name="checkmark-circle" size={20} color="#FF9843" style={styles.infoIcon} />
+                                <Text style={styles.infoText}>Everyone is invited and welcome!</Text>
+                            </View>
+                            <View style={styles.infoItem}>
+                                <Ionicons name="checkmark-circle" size={20} color="#FF9843" style={styles.infoIcon} />
+                                <Text style={styles.infoText}>Come as you are!</Text>
+                            </View>
+                        </View>
 
-                        {'\n\n'}We love children! We have a Parents' room for babies and a Sunday school program for kids (they are also welcome to stay in the main room with their parents).
+                        <View style={styles.infoSection}>
+                            <Text style={styles.infoTitle}>Children's Ministry</Text>
+                            <Text style={styles.infoText}>
+                                We love children! We have a Parents' room for babies and a Sunday school program for kids (they are also welcome to stay in the main room with their parents).
+                            </Text>
+                        </View>
 
-                        {'\n\n'}Our services start at 10:30am and finish around 12pm and are composed of:
-
-                        {'\n\n'}• A time of worship and prayer
-                        {'\n'}• A time of teaching/preaching
-                        {'\n'}• A time of connection/fellowship
-                    </Text>
+                        <View style={styles.infoSection}>
+                            <Text style={styles.infoTitle}>Service Schedule</Text>
+                            <Text style={styles.infoText}>
+                                Our services start at 10:30am and finish around 12pm and are composed of:
+                            </Text>
+                            <View style={styles.infoItem}>
+                                <Ionicons name="musical-notes" size={20} color="#FF9843" style={styles.infoIcon} />
+                                <Text style={styles.infoText}>A time of worship and prayer</Text>
+                            </View>
+                            <View style={styles.infoItem}>
+                                <Ionicons name="book" size={20} color="#FF9843" style={styles.infoIcon} />
+                                <Text style={styles.infoText}>A time of teaching/preaching</Text>
+                            </View>
+                            <View style={styles.infoItem}>
+                                <Ionicons name="people" size={20} color="#FF9843" style={styles.infoIcon} />
+                                <Text style={styles.infoText}>A time of connection/fellowship</Text>
+                            </View>
+                        </View>
+                    </View>
                 </View>
             </View>
         </ScrollView>
@@ -121,24 +160,18 @@ export const HomeContent = ({ showProfileSection, userData }: HomeContentProps) 
 };
 
 const styles = StyleSheet.create({
-    locationButton: {
-        backgroundColor: '#FF9843',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        marginTop: 15,
-        alignSelf: 'center',
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
     },
-    locationButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-        textAlign: 'center',
+    cardIcon: {
+        marginRight: 10,
     },
     videoContainer: {
         marginTop: 15,
         width: '100%',
-        height: 200, // Fixed height that fits well in the card
+        height: 200,
         borderRadius: 8,
         overflow: 'hidden',
         backgroundColor: '#000',
@@ -147,23 +180,49 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#000',
     },
-    onlineButton: {
+    actionButton: {
         backgroundColor: '#FF9843',
         paddingVertical: 12,
-        paddingHorizontal: 20,
+        paddingHorizontal: 15,
         borderRadius: 8,
         marginTop: 15,
-        alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
     },
-    onlineButtonText: {
+    actionButtonText: {
         color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    buttonIcon: {
+        marginRight: 8,
+    },
+    infoContainer: {
+        marginTop: 10,
+    },
+    infoSection: {
+        marginBottom: 20,
+    },
+    infoTitle: {
         fontSize: 16,
         fontWeight: '600',
-        marginLeft: 8,
+        color: '#2C3E50',
+        marginBottom: 10,
     },
-    videoIcon: {
-        marginRight: 8,
+    infoItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    infoIcon: {
+        marginRight: 10,
+    },
+    infoText: {
+        fontSize: 14,
+        color: '#2C3E50',
+        flex: 1,
     },
 });

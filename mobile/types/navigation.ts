@@ -4,6 +4,7 @@ export type MainTabParamList = {
     Home: undefined;
     WhoWeAre: undefined;
     GetConnected: undefined;
+    Donations: undefined;
     Events: undefined;
     Profile: undefined;
 };
@@ -12,6 +13,7 @@ export type GuestTabParamList = {
     Home: undefined;
     WhoWeAre: undefined;
     GetConnected: undefined;
+    Donations: undefined;
     Events: undefined;
     SignIn: undefined;
 };
