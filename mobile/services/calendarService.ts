@@ -1,8 +1,7 @@
 /**
  * Calendar Service
- * Handles fetching events from a personal Google Calendar
+ * Handles fetching events from a personal Google Calendar using iCal
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 
 interface CalendarEvent {
@@ -66,11 +65,13 @@ export const calendarService = {
     parseICalData(icalData: string): CalendarEvent[] {
         try {
             const events: CalendarEvent[] = [];
-            const now = new Date();
+            // Calculate date 24 months from now instead of just 12
+            const twoYearsFromNow = new Date();
+            twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
 
-            // Calculate date 12 months from now instead of just one year
-            const futureDate = new Date();
-            futureDate.setMonth(futureDate.getMonth() + 12);
+            // Get events from 1 year ago (to include past events)
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
             // Simple regex-based parsing for iCal format
             const eventBlocks = icalData.split('BEGIN:VEVENT');
@@ -94,12 +95,12 @@ export const calendarService = {
                 const dtstart = this.extractICalProperty(eventData, 'DTSTART');
                 const dtend = this.extractICalProperty(eventData, 'DTEND');
 
-                // Skip past events
+                // Skip events that are too far in the future (more than 2 years) or too far in the past (more than 1 year)
                 const startDate = this.parseICalDate(dtstart);
-                if (startDate && startDate < now) continue;
-
-                // Skip events too far in the future (more than 12 months)
-                if (startDate && startDate > futureDate) continue;
+                if (startDate) {
+                    if (startDate > twoYearsFromNow) continue;
+                    if (startDate < oneYearAgo) continue;
+                }
 
                 const event: CalendarEvent = {
                     id: uid || `event-${i}`,
@@ -140,6 +141,7 @@ export const calendarService = {
                 return dateA.getTime() - dateB.getTime();
             });
 
+            console.log(`Parsed ${events.length} calendar events in total`);
             return events;
         } catch (error) {
             console.error('Error parsing iCal data:', error);
@@ -177,9 +179,18 @@ export const calendarService = {
             const year = parseInt(cleaned.substring(0, 4));
             const month = parseInt(cleaned.substring(4, 6)) - 1;
             const day = parseInt(cleaned.substring(6, 8));
-            const hour = parseInt(cleaned.substring(9, 11));
-            const minute = parseInt(cleaned.substring(11, 13));
-            const second = parseInt(cleaned.substring(13, 15));
+
+            // Check if there's enough characters for time
+            let hour = 0, minute = 0, second = 0;
+            if (cleaned.length >= 11) {
+                hour = parseInt(cleaned.substring(9, 11));
+                if (cleaned.length >= 13) {
+                    minute = parseInt(cleaned.substring(11, 13));
+                    if (cleaned.length >= 15) {
+                        second = parseInt(cleaned.substring(13, 15));
+                    }
+                }
+            }
 
             // Check if it's UTC time (ends with Z)
             if (cleaned.endsWith('Z')) {
@@ -205,9 +216,18 @@ export const calendarService = {
             const year = parseInt(cleaned.substring(0, 4));
             const month = parseInt(cleaned.substring(4, 6)) - 1;
             const day = parseInt(cleaned.substring(6, 8));
-            const hour = parseInt(cleaned.substring(9, 11));
-            const minute = parseInt(cleaned.substring(11, 13));
-            const second = parseInt(cleaned.substring(13, 15));
+
+            // Check if there's enough characters for time
+            let hour = 0, minute = 0, second = 0;
+            if (cleaned.length >= 11) {
+                hour = parseInt(cleaned.substring(9, 11));
+                if (cleaned.length >= 13) {
+                    minute = parseInt(cleaned.substring(11, 13));
+                    if (cleaned.length >= 15) {
+                        second = parseInt(cleaned.substring(13, 15));
+                    }
+                }
+            }
 
             // Check if it's UTC time (ends with Z)
             let date;

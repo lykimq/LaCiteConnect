@@ -25,16 +25,13 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.laciteconnect.app",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.laciteconnect.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "scheme": "com.laciteconnect",
-    "plugins": [
-      "expo-router"
-    ],
+    "plugins": [],
     "extra": {
       "eas": {
         "projectId": "la-cite-connect"

@@ -1,91 +1,98 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { WelcomePage } from '../components/auth/WelcomePage';
-import { LoginForm } from '../components/auth/LoginForm';
-import RegisterForm from '../components/auth/RegisterForm';
-import { RootStackParamList } from '../types/navigation';
-import { useTheme } from '../hooks/useTheme';
-import { EventRegistrationPage } from '../components/events/EventRegistrationPage';
-import { EventDetailsPage } from '../components/events/EventDetailsPage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MainTabs } from './MainTabs';
-import { GuestNavigator } from './GuestNavigator';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import { WhoWeAreContent } from '../components/WhoWeAre';
+import { GetConnectedContent } from '../components/GetConnectedContent';
+import { DonationContent } from '../components/DonationContent';
+import { EventsContent } from '../components/EventsContent';
+import { HomeContent } from '../components/HomeContent';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+// Define the tab navigator param list
+type TabParamList = {
+    Home: undefined;
+    WhoWeAre: undefined;
+    GetConnected: undefined;
+    Events: undefined;
+    Donations: undefined;
+};
+
+const Tab = createBottomTabNavigator<TabParamList>();
 
 export const AppNavigator = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-    const { colors } = useTheme();
-
-    useEffect(() => {
-        checkAuthStatus();
-    }, []);
-
-    const checkAuthStatus = async () => {
-        try {
-            const token = await AsyncStorage.getItem('token');
-            setIsAuthenticated(!!token);
-        } catch (error) {
-            console.error('Error checking auth status:', error);
-            setIsAuthenticated(false);
-        }
-    };
-
-    if (isAuthenticated === null) {
-        return null; // Or a loading screen
-    }
-
     return (
         <NavigationContainer>
-            <Stack.Navigator
-                screenOptions={{
-                    headerStyle: {
-                        backgroundColor: colors.background,
+            <Tab.Navigator
+                screenOptions={({ route }) => ({
+                    tabBarIcon: ({ focused, color, size }) => {
+                        let iconName: keyof typeof Ionicons.glyphMap;
+
+                        if (route.name === 'Home') {
+                            iconName = focused ? 'home' : 'home-outline';
+                        } else if (route.name === 'Events') {
+                            iconName = focused ? 'calendar' : 'calendar-outline';
+                        } else if (route.name === 'WhoWeAre') {
+                            iconName = 'information-circle';
+                        } else if (route.name === 'GetConnected') {
+                            iconName = 'people';
+                        } else if (route.name === 'Donations') {
+                            iconName = 'cash-outline';
+                        } else {
+                            iconName = 'help-circle';
+                        }
+
+                        return <Ionicons name={iconName} size={size} color={color} />;
                     },
-                    headerTintColor: colors.text,
-                    headerTitleStyle: {
-                        fontWeight: 'bold',
+                    tabBarActiveTintColor: '#FF9843',
+                    tabBarInactiveTintColor: '#999',
+                    tabBarStyle: {
+                        backgroundColor: '#ffffff',
+                        borderTopWidth: 0,
+                        elevation: 10,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: -3 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
                     },
-                }}
-                initialRouteName="Welcome"
+                    headerShown: false,
+                })}
             >
-                <Stack.Screen
-                    name="Welcome"
-                    component={WelcomePage}
-                    options={{ headerShown: false }}
+                <Tab.Screen
+                    name="Home"
+                    component={HomeContent}
+                    options={{
+                        title: 'Home',
+                    }}
                 />
-                <Stack.Screen
-                    name="Login"
-                    component={LoginForm}
-                    options={{ headerShown: false }}
+                <Tab.Screen
+                    name="WhoWeAre"
+                    component={WhoWeAreContent}
+                    options={{
+                        title: 'Who We Are',
+                    }}
                 />
-                <Stack.Screen
-                    name="Register"
-                    component={RegisterForm}
-                    options={{ headerShown: false }}
+                <Tab.Screen
+                    name="GetConnected"
+                    component={GetConnectedContent}
+                    options={{
+                        title: 'Get Connected',
+                    }}
                 />
-                <Stack.Screen
-                    name="GuestTabs"
-                    component={GuestNavigator}
-                    options={{ headerShown: false }}
+                <Tab.Screen
+                    name="Events"
+                    component={EventsContent}
+                    options={{
+                        title: 'Events',
+                    }}
                 />
-                <Stack.Screen
-                    name="MainTabs"
-                    component={MainTabs}
-                    options={{ headerShown: false }}
+                <Tab.Screen
+                    name="Donations"
+                    component={DonationContent}
+                    options={{
+                        title: 'Donations',
+                    }}
                 />
-                <Stack.Screen
-                    name="EventDetails"
-                    component={EventDetailsPage}
-                    options={{ title: 'Event Details' }}
-                />
-                <Stack.Screen
-                    name="EventRegistration"
-                    component={EventRegistrationPage}
-                    options={{ title: 'Register for Event' }}
-                />
-            </Stack.Navigator>
+            </Tab.Navigator>
         </NavigationContainer>
     );
 };
