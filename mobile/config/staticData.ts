@@ -9,9 +9,17 @@ export const APP_INFO = {
     description: 'Connect with La Cité Church in Paris'
 };
 
+// Church information
+export const CHURCH_INFO = {
+    address: '24 Rue Antoine-Julien Hénard 75012 Paris',
+    email: 'salut@egliselacite.com',
+    phone: '+33 1 23 45 67 89' // Replace with actual phone if available
+};
+
 // Static data URLs for external resources
 export const STATIC_URLS = {
     youtube: 'https://www.youtube.com/embed/SmPZrx7W1Eo',
+    youtubeDirectLink: 'https://youtu.be/SmPZrx7W1Eo',
     location: 'https://maps.google.com/?q=24+Rue+Antoine-Julien+Hénard+75012+Paris',
     website: 'https://www.egliselacite.com',
     subscribe: 'https://egliselacite.us15.list-manage.com/subscribe?u=b7c8a90c7c939a0dbcc276d14&id=03e223e5ce',

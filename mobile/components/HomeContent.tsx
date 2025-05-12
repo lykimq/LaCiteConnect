@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking, Dimensions, ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import WebView from 'react-native-webview';
-import { STATIC_URLS } from '../config/staticData';
+import { STATIC_URLS, CHURCH_INFO } from '../config/staticData';
 import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -129,7 +129,7 @@ export const HomeContent = () => {
     };
 
     const handleWatchOnline = () => {
-        Linking.openURL(STATIC_URLS.youtube);
+        Linking.openURL(STATIC_URLS.youtubeDirectLink);
     };
 
     // Display skeleton loading UI
@@ -207,6 +207,49 @@ export const HomeContent = () => {
         section => section.id !== 'findUs' && section.id !== 'watchOnline'
     );
 
+    // Helper function to render address with clickable link
+    const renderAddressWithLink = (text: string) => {
+        if (text.includes('24 Rue Antoine-Julien Hénard')) {
+            const addressText = CHURCH_INFO.address;
+            const parts = text.split(addressText);
+
+            if (parts.length === 1) {
+                // Try with just the street name in case the full address isn't in the text
+                const streetPart = '24 Rue Antoine-Julien Hénard';
+                const streetParts = text.split(streetPart);
+
+                if (streetParts.length > 1) {
+                    return (
+                        <>
+                            {streetParts[0]}
+                            <Text
+                                style={[styles.infoText, { color: themeColors.primary, textDecorationLine: 'underline' }]}
+                                onPress={handleFindUs}
+                            >
+                                {addressText}
+                            </Text>
+                            {streetParts[1]}
+                        </>
+                    );
+                }
+            }
+
+            return (
+                <>
+                    {parts[0]}
+                    <Text
+                        style={[styles.infoText, { color: themeColors.primary, textDecorationLine: 'underline' }]}
+                        onPress={handleFindUs}
+                    >
+                        {addressText}
+                    </Text>
+                    {parts.length > 1 ? parts[1] : ''}
+                </>
+            );
+        }
+        return text;
+    };
+
     return (
         <View style={styles.container}>
             <ScrollView
@@ -260,7 +303,11 @@ export const HomeContent = () => {
                                 <Text style={styles.infoText}>
                                     {section.content}
                                 </Text>
-                                <View style={styles.videoContainer}>
+                                <TouchableOpacity
+                                    style={styles.videoContainer}
+                                    onPress={handleWatchOnline}
+                                    activeOpacity={0.9}
+                                >
                                     <WebView
                                         source={{ uri: STATIC_URLS.youtube }}
                                         style={styles.videoWebView}
@@ -268,7 +315,81 @@ export const HomeContent = () => {
                                         javaScriptEnabled={true}
                                         domStorageEnabled={true}
                                     />
+                                </TouchableOpacity>
+                            </View>
+                        );
+                    }
+
+                    if (section.id === 'joinUs') {
+                        return (
+                            <View key={section.id} style={styles.cardContainer}>
+                                <View style={styles.sectionHeaderRow}>
+                                    <Ionicons
+                                        name={section.icon as any}
+                                        size={24}
+                                        color={themeColors.primary}
+                                        style={styles.sectionHeaderIcon}
+                                    />
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
                                 </View>
+                                <Text style={styles.infoText}>
+                                    {renderAddressWithLink(section.content)}
+                                </Text>
+
+                                <TouchableOpacity
+                                    style={styles.button}
+                                    onPress={handleFindUs}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Ionicons
+                                            name={(section.buttonIcon || 'map') as any}
+                                            size={20}
+                                            color="#FFFFFF"
+                                            style={{ marginRight: 8 }}
+                                        />
+                                        <Text style={styles.buttonText}>
+                                            {CHURCH_INFO.address}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        );
+                    }
+
+                    if (section.id === 'joinOnline') {
+                        return (
+                            <View key={section.id} style={styles.cardContainer}>
+                                <View style={styles.sectionHeaderRow}>
+                                    <Ionicons
+                                        name={section.icon as any}
+                                        size={24}
+                                        color={themeColors.primary}
+                                        style={styles.sectionHeaderIcon}
+                                    />
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                <Text style={styles.infoText}>
+                                    {section.content}
+                                </Text>
+
+                                <TouchableOpacity
+                                    style={styles.button}
+                                    onPress={handleWatchOnline}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Ionicons
+                                            name={(section.buttonIcon || 'videocam') as any}
+                                            size={20}
+                                            color="#FFFFFF"
+                                            style={{ marginRight: 8 }}
+                                        />
+                                        <Text style={styles.buttonText}>
+                                            {section.buttonText || "Watch Live Stream"}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
                             </View>
                         );
                     }
@@ -293,7 +414,7 @@ export const HomeContent = () => {
                                             </Text>
                                             {subsection.text && (
                                                 <Text style={styles.infoText}>
-                                                    {subsection.text}
+                                                    {renderAddressWithLink(subsection.text)}
                                                 </Text>
                                             )}
                                             {subsection.items && subsection.items.map((item, itemIndex) => (
@@ -304,7 +425,9 @@ export const HomeContent = () => {
                                                         color={themeColors.primary}
                                                         style={styles.itemIcon}
                                                     />
-                                                    <Text style={[styles.infoText, { marginBottom: 0, flex: 1 }]}>{item}</Text>
+                                                    <Text style={[styles.infoText, { marginBottom: 0, flex: 1 }]}>
+                                                        {renderAddressWithLink(item)}
+                                                    </Text>
                                                 </View>
                                             ))}
                                         </View>
@@ -325,7 +448,29 @@ export const HomeContent = () => {
                                     />
                                     <Text style={styles.sectionTitle}>{section.title}</Text>
                                 </View>
-                                <Text style={styles.infoText}>{section.content}</Text>
+                                <Text style={styles.infoText}>
+                                    {renderAddressWithLink(section.content)}
+                                </Text>
+
+                                {section.buttonText && (
+                                    <TouchableOpacity
+                                        style={styles.button}
+                                        onPress={section.id === 'findUs' ? handleFindUs : section.id === 'watchOnline' ? handleWatchOnline : undefined}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                            {section.buttonIcon && (
+                                                <Ionicons
+                                                    name={section.buttonIcon as any}
+                                                    size={20}
+                                                    color="#FFFFFF"
+                                                    style={{ marginRight: 8 }}
+                                                />
+                                            )}
+                                            <Text style={styles.buttonText}>{section.buttonText}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         );
                     }
