@@ -1,0 +1,91 @@
+{
+  "header": {
+    "title": "Restez Connectés",
+    "subtitle": "Rejoignez-nous dans la communion et le service"
+  },
+  "sections": [
+    {
+      "id": "stayUpdated",
+      "icon": "mail",
+      "title": "Restez Informés",
+      "content": "Rejoignez notre liste de diffusion pour recevoir des mises à jour sur nos services, événements et nouvelles de la communauté.",
+      "button": {
+        "text": "S'abonner Maintenant",
+        "icon": "paper-plane"
+      }
+    },
+    {
+      "id": "socialMedia",
+      "icon": "share-social",
+      "title": "Connectez-vous sur les Réseaux Sociaux",
+      "content": "Suivez-nous sur les réseaux sociaux pour rester connecté avec la communauté La Cité et voir les mises à jour régulières.",
+      "contact": [
+        {
+          "type": "email",
+          "value": "salut@egliselacite.com",
+          "icon": "mail-outline"
+        },
+        {
+          "type": "instagram",
+          "value": "@laciteparis",
+          "icon": "logo-instagram",
+          "url": "https://www.instagram.com/laciteparis/"
+        },
+        {
+          "type": "facebook",
+          "value": "La Cité Paris",
+          "icon": "logo-facebook",
+          "url": "https://www.facebook.com/laciteparis/"
+        },
+        {
+          "type": "youtube",
+          "value": "Eglise La Cité",
+          "icon": "logo-youtube",
+          "url": "https://www.youtube.com/channel/UC-0imDK8zeP8lEBTEjiCx2A"
+        },
+        {
+          "type": "soundcloud",
+          "value": "Soundcloud",
+          "icon": "cloud",
+          "url": "https://soundcloud.com/egliselacite/tracks"
+        }
+      ]
+    },
+    {
+      "id": "getInvolved",
+      "icon": "people",
+      "title": "Impliquez-vous",
+      "content": "Vous voulez vous impliquer dans l'église, vous connecter avec d'autres et servir Dieu avec nous ? Devenez bénévole dans l'une de nos équipes !",
+      "button": {
+        "text": "Devenir Bénévole",
+        "icon": "hand-left"
+      }
+    },
+    {
+      "id": "chezNous",
+      "icon": "home",
+      "title": "Rejoindre un Chez Nous",
+      "content": "Tout comme l'église primitive se réunissait dans les maisons, nos Chez Nous sont des petits groupes généralement de 4 à 12 personnes qui se réunissent 2 ou 3 fois par mois dans des foyers dans différents quartiers de Paris.\n\nCes groupes partagent un temps de communion autour d'un repas, ouvrent la Parole de Dieu et prient ensemble.\n\nAvec Jésus au centre de ces groupes, nos Chez Nous nous permettent de grandir ensemble dans notre foi, d'avoir un sentiment d'appartenance et de prendre soin les uns des autres.",
+      "buttons": [
+        {
+          "text": "Rejoindre un Groupe",
+          "icon": "add-circle"
+        },
+        {
+          "text": "Voir les Détails",
+          "icon": "information-circle"
+        }
+      ]
+    },
+    {
+      "id": "prayerRequest",
+      "icon": "heart",
+      "title": "Demande de Prière",
+      "content": "Avez-vous quelque chose pour lequel vous aimeriez que nous priions ? Soumettez une demande de prière et notre équipe priera pour vous.",
+      "button": {
+        "text": "Soumettre une Demande de Prière",
+        "icon": "chatbubbles"
+      }
+    }
+  ]
+}

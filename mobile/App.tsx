@@ -4,6 +4,7 @@ import { StyleSheet, View, ActivityIndicator, Platform } from 'react-native';
 import { AppNavigator } from './navigation/AppNavigator';
 import { initializeApp, preloadContent } from './services/appInitService';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // Main app content that has access to theme context
 const AppContent = () => {
@@ -65,7 +66,9 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <AppContent />
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

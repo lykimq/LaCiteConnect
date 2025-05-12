@@ -1,12 +1,33 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LanguageSelector } from './LanguageSelector';
 import { ThemeSelector } from './ThemeSelector';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLocalizedContent } from '../hooks/useLocalizedContent';
+
+interface SettingsContentData {
+    header: {
+        title: string;
+        subtitle: string;
+    };
+    sections: Array<{
+        id: string;
+        icon: string;
+        title: string;
+        description?: string;
+        items?: Array<{
+            id: string;
+            label: string;
+            value?: string;
+            type: string;
+        }>;
+    }>;
+}
 
 export const SettingsContent = () => {
     const { themeColors } = useTheme();
+    const { content, isLoading, error } = useLocalizedContent<SettingsContentData>('settings');
 
     const styles = StyleSheet.create({
         container: {
@@ -85,7 +106,40 @@ export const SettingsContent = () => {
             color: themeColors.text,
             opacity: 0.6,
         },
+        loadingContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        errorText: {
+            color: 'red',
+            textAlign: 'center',
+            margin: 20,
+        },
     });
+
+    if (isLoading) {
+        return (
+            <View style={[styles.container, styles.loadingContainer]}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
+            </View>
+        );
+    }
+
+    if (error || !content) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>
+                    Failed to load settings. Please try again later.
+                </Text>
+            </View>
+        );
+    }
+
+    // Get the icon component for a given icon name
+    const getIconComponent = (iconName: string) => {
+        return <Ionicons name={iconName as keyof typeof Ionicons.glyphMap} size={22} color={themeColors.primary} />;
+    };
 
     return (
         <View style={styles.container}>
@@ -94,57 +148,78 @@ export const SettingsContent = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.header}>
-                    <Text style={styles.title}>Settings</Text>
-                    <Text style={styles.subtitle}>Customize your experience</Text>
+                    <Text style={styles.title}>{content.header.title}</Text>
+                    <Text style={styles.subtitle}>{content.header.subtitle}</Text>
                 </View>
 
                 {/* Language Settings */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Ionicons name="language" size={22} color={themeColors.primary} />
-                        <Text style={styles.sectionTitle}>Language</Text>
-                    </View>
-                    <Text style={styles.description}>
-                        Choose your preferred language for the app
-                    </Text>
-                    <View style={styles.settingItem}>
-                        <LanguageSelector />
-                    </View>
-                </View>
+                {content.sections.map((section) => {
+                    if (section.id === 'language') {
+                        return (
+                            <View key={section.id} style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    {getIconComponent(section.icon)}
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                {section.description && (
+                                    <Text style={styles.description}>
+                                        {section.description}
+                                    </Text>
+                                )}
+                                <View style={styles.settingItem}>
+                                    <LanguageSelector />
+                                </View>
+                            </View>
+                        );
+                    }
 
-                {/* Theme Settings */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Ionicons name="color-palette" size={22} color={themeColors.primary} />
-                        <Text style={styles.sectionTitle}>Theme</Text>
-                    </View>
-                    <Text style={styles.description}>
-                        Change the appearance of the app
-                    </Text>
-                    <View style={styles.settingItem}>
-                        <ThemeSelector />
-                    </View>
-                </View>
+                    if (section.id === 'theme') {
+                        return (
+                            <View key={section.id} style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    {getIconComponent(section.icon)}
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                {section.description && (
+                                    <Text style={styles.description}>
+                                        {section.description}
+                                    </Text>
+                                )}
+                                <View style={styles.settingItem}>
+                                    <ThemeSelector />
+                                </View>
+                            </View>
+                        );
+                    }
 
-                {/* App Info */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Ionicons name="information-circle" size={22} color={themeColors.primary} />
-                        <Text style={styles.sectionTitle}>About</Text>
-                    </View>
-                    <TouchableOpacity style={styles.infoItem}>
-                        <Text style={styles.infoLabel}>Version</Text>
-                        <Text style={styles.infoValue}>1.0.0</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.infoItem}>
-                        <Text style={styles.infoLabel}>Terms of Service</Text>
-                        <Ionicons name="chevron-forward" size={18} color={themeColors.text} style={{ opacity: 0.6 }} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.infoItem}>
-                        <Text style={styles.infoLabel}>Privacy Policy</Text>
-                        <Ionicons name="chevron-forward" size={18} color={themeColors.text} style={{ opacity: 0.6 }} />
-                    </TouchableOpacity>
-                </View>
+                    if (section.id === 'about' && section.items) {
+                        return (
+                            <View key={section.id} style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    {getIconComponent(section.icon)}
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                {section.items.map((item) => (
+                                    <TouchableOpacity key={item.id} style={styles.infoItem}>
+                                        <Text style={styles.infoLabel}>{item.label}</Text>
+                                        {item.type === 'text' && item.value ? (
+                                            <Text style={styles.infoValue}>{item.value}</Text>
+                                        ) : (
+                                            <Ionicons
+                                                name="chevron-forward"
+                                                size={18}
+                                                color={themeColors.text}
+                                                style={{ opacity: 0.6 }}
+                                            />
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        );
+                    }
+
+                    return null;
+                })}
             </ScrollView>
         </View>
     );

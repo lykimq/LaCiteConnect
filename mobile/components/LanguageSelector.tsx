@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { availableLanguages, getLanguage, getLanguageMetadata, setLanguage } from '../services/languageService';
-import { contentService } from '../services/contentService';
+import { availableLanguages, getLanguageMetadata } from '../services/languageService';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface LanguageSelectorProps {
     compact?: boolean;
@@ -11,31 +11,33 @@ interface LanguageSelectorProps {
 }
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = false, onLanguageChange }) => {
-    const [currentLanguage, setCurrentLanguage] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
     const { themeColors } = useTheme();
 
-    useEffect(() => {
-        // Load current language when component mounts
-        const loadLanguage = async () => {
-            const lang = await getLanguage();
-            setCurrentLanguage(lang);
-        };
-
-        loadLanguage();
-    }, []);
+    // Use the language context
+    const { currentLanguage, setAppLanguage, isLoading, languageName } = useLanguage();
 
     const handleLanguageSelect = async (languageCode: string) => {
         try {
-            // Update language in services
-            await setLanguage(languageCode);
-            await contentService.setLanguage(languageCode);
+            if (languageCode === currentLanguage) {
+                // If same language selected, just close modal
+                setModalVisible(false);
+                return;
+            }
 
-            // Update local state
-            setCurrentLanguage(languageCode);
+            setModalVisible(false); // Close modal first for better UX
 
-            // Close modal
-            setModalVisible(false);
+            // Change language via context
+            await setAppLanguage(languageCode);
+
+            // Show confirmation toast
+            const langMetadata = getLanguageMetadata(languageCode);
+            Alert.alert(
+                languageCode === 'en' ? 'Language Changed' : 'Langue Modifiée',
+                languageCode === 'en'
+                    ? `The language has been changed to ${langMetadata.nativeName}`
+                    : `La langue a été changée en ${langMetadata.nativeName}`
+            );
 
             // Notify parent component if needed
             if (onLanguageChange) {
@@ -43,13 +45,12 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
             }
         } catch (error) {
             console.error('Error changing language:', error);
+            Alert.alert(
+                'Error',
+                'Failed to change language. Please try again.'
+            );
         }
     };
-
-    // If no language loaded yet
-    if (!currentLanguage) {
-        return null;
-    }
 
     // Current language metadata
     const currentLangMetadata = getLanguageMetadata(currentLanguage);
@@ -135,7 +136,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
             borderBottomColor: themeColors.border,
         },
         selectedLanguageItem: {
-            backgroundColor: themeColors.accent,
+            backgroundColor: themeColors.accent + '33', // Add transparency
         },
         languageItemText: {
             fontSize: 16,
@@ -145,15 +146,28 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
             color: themeColors.primary,
             fontWeight: '500',
         },
+        loadingOverlay: {
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+        },
     });
 
     if (compact) {
         // Compact version (just an icon button)
         return (
             <View style={styles.compactContainer}>
+                {isLoading && (
+                    <View style={styles.loadingOverlay}>
+                        <ActivityIndicator size="small" color={themeColors.primary} />
+                    </View>
+                )}
                 <TouchableOpacity
                     style={styles.compactButton}
                     onPress={() => setModalVisible(true)}
+                    disabled={isLoading}
                 >
                     <Text style={styles.languageCode}>{currentLanguage.toUpperCase()}</Text>
                 </TouchableOpacity>
@@ -167,7 +181,9 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                     <View style={styles.modalContainer}>
                         <View style={styles.modalContent}>
                             <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Select Language</Text>
+                                <Text style={styles.modalTitle}>
+                                    {currentLanguage === 'fr' ? 'Choisir la Langue' : 'Select Language'}
+                                </Text>
                                 <TouchableOpacity onPress={() => setModalVisible(false)}>
                                     <Ionicons name="close" size={24} color={themeColors.text} />
                                 </TouchableOpacity>
@@ -187,6 +203,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                                                 isSelected && styles.selectedLanguageItem
                                             ]}
                                             onPress={() => handleLanguageSelect(item)}
+                                            disabled={isLoading}
                                         >
                                             <Text style={[
                                                 styles.languageItemText,
@@ -211,10 +228,18 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
     // Full version (dropdown selector)
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>Language:</Text>
+            {isLoading && (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="small" color={themeColors.primary} />
+                </View>
+            )}
+            <Text style={styles.label}>
+                {currentLanguage === 'fr' ? 'Langue :' : 'Language:'}
+            </Text>
             <TouchableOpacity
                 style={styles.selectorButton}
                 onPress={() => setModalVisible(true)}
+                disabled={isLoading}
             >
                 <Text style={styles.selectedLanguage}>{currentLangMetadata.nativeName}</Text>
                 <Ionicons name="chevron-down" size={18} color={themeColors.text} />
@@ -229,7 +254,9 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Select Language</Text>
+                            <Text style={styles.modalTitle}>
+                                {currentLanguage === 'fr' ? 'Choisir la Langue' : 'Select Language'}
+                            </Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
                                 <Ionicons name="close" size={24} color={themeColors.text} />
                             </TouchableOpacity>
@@ -249,6 +276,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                                             isSelected && styles.selectedLanguageItem
                                         ]}
                                         onPress={() => handleLanguageSelect(item)}
+                                        disabled={isLoading}
                                     >
                                         <Text style={[
                                             styles.languageItemText,

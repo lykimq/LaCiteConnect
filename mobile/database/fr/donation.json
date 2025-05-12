@@ -1,0 +1,72 @@
+{
+  "header": {
+    "title": "Donner",
+    "subtitle": "Donnez généreusement et avec joie (2 Cor 9 : 7)"
+  },
+  "sections": [
+    {
+      "id": "quickDonation",
+      "title": "Liens de Don Rapide",
+      "buttons": [
+        {
+          "text": "Donner pour la Mission",
+          "icon": "heart"
+        },
+        {
+          "text": "Fonds de Construction",
+          "icon": "home"
+        }
+      ]
+    },
+    {
+      "id": "missionFund",
+      "title": "Coordonnées Bancaires - Fonds de Mission",
+      "description": "Association cultuelle 1905 - autorisée à délivrer des reçus fiscaux",
+      "details": {
+        "accountName": "La Cité Eglise Chrétienne",
+        "iban": "FR76 3000 3032 9100 0372 7230 583",
+        "bic": "SOGEFRPP"
+      },
+      "labels": {
+        "accountName": "Nom du Compte :",
+        "iban": "IBAN :",
+        "bic": "BIC/SWIFT :"
+      }
+    },
+    {
+      "id": "buildingFund",
+      "title": "Coordonnées Bancaires - Fonds de Construction",
+      "description": "Pour notre projet de lieu permanent",
+      "details": {
+        "accountName": "La Cité Eglise Chrétienne",
+        "iban": "FR76 3000 3032 9100 0372 7264 436",
+        "bic": "SOGEFRPP"
+      },
+      "labels": {
+        "accountName": "Nom du Compte :",
+        "iban": "IBAN :",
+        "bic": "BIC/SWIFT :"
+      }
+    },
+    {
+      "id": "lesMainsTendues",
+      "title": "Les Mains Tendues De La Cité",
+      "description": "Association 1901 - NON autorisée à délivrer des reçus fiscaux. Pour prendre soin des pauvres et autres activités bibliques",
+      "details": {
+        "accountName": "Les Mains Tendues De La Cité",
+        "iban": "FR76 3000 3032 9100 0372 7277 628",
+        "bic": "SOGEFRPP"
+      },
+      "labels": {
+        "accountName": "Nom du Compte :",
+        "iban": "IBAN :",
+        "bic": "BIC/SWIFT :"
+      }
+    },
+    {
+      "id": "thankYou",
+      "title": "Merci",
+      "content": "Merci pour votre obéissance à Dieu et pour votre générosité de cœur."
+    }
+  ]
+}

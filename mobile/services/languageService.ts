@@ -70,6 +70,15 @@ export const setLanguage = async (languageCode: string): Promise<void> => {
         const metadata = languageMetadata[languageCode];
         if (metadata) {
             I18nManager.forceRTL(metadata.direction === 'rtl');
+
+            // Check if RTL setting changed and requires a reload
+            const needsRTLChange = (metadata.direction === 'rtl' && !I18nManager.isRTL) ||
+                (metadata.direction === 'ltr' && I18nManager.isRTL);
+
+            if (needsRTLChange) {
+                // Reload is handled by React Navigation or the parent component
+                console.log('RTL direction changed, app may need to reload');
+            }
         }
 
         console.log(`Language set to: ${languageCode}`);
@@ -94,10 +103,17 @@ export const initializeLanguage = async (): Promise<void> => {
     const currentLanguage = await getLanguage();
     const metadata = getLanguageMetadata(currentLanguage);
 
+    console.log(`Initializing language: ${currentLanguage}`);
+
     // Set RTL direction if needed
-    if (metadata.direction === 'rtl' && !I18nManager.isRTL) {
-        I18nManager.forceRTL(true);
-    } else if (metadata.direction === 'ltr' && I18nManager.isRTL) {
-        I18nManager.forceRTL(false);
+    const currentRTL = I18nManager.isRTL;
+    const shouldBeRTL = metadata.direction === 'rtl';
+
+    if (shouldBeRTL !== currentRTL) {
+        console.log(`Updating RTL setting from ${currentRTL} to ${shouldBeRTL}`);
+        I18nManager.forceRTL(shouldBeRTL);
     }
+
+    // Ensure language is saved to storage
+    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage);
 };

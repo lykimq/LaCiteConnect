@@ -1,7 +1,7 @@
 import { defaultLanguage, getLanguage, setLanguage } from './languageService';
 
 // Define content types
-export type ContentType = 'home' | 'whoWeAre' | 'events' | 'donation' | 'getConnected';
+export type ContentType = 'home' | 'whoWeAre' | 'events' | 'donation' | 'getConnected' | 'settings';
 
 // Interface for content API response
 export interface ContentResponse<T> {
@@ -17,23 +17,15 @@ import enWhoWeAre from '../database/en/whoWeAre.json';
 import enEvents from '../database/en/events.json';
 import enDonation from '../database/en/donation.json';
 import enGetConnected from '../database/en/getConnected.json';
+import enSettings from '../database/en/settings.json';
 
-// Try to import French content where available
-let frHome;
-let frEvents;
-try {
-    frHome = require('../database/fr/home.json');
-} catch (e) {
-    console.log('French home content not available, will fall back to English');
-    frHome = null;
-}
-
-try {
-    frEvents = require('../database/fr/events.json');
-} catch (e) {
-    console.log('French events content not available, will fall back to English');
-    frEvents = null;
-}
+// Import French content
+import frHome from '../database/fr/home.json';
+import frWhoWeAre from '../database/fr/whoWeAre.json';
+import frEvents from '../database/fr/events.json';
+import frDonation from '../database/fr/donation.json';
+import frGetConnected from '../database/fr/getConnected.json';
+import frSettings from '../database/fr/settings.json';
 
 // Content map interface for type safety
 interface ContentMap {
@@ -49,12 +41,16 @@ const contentMap: ContentMap = {
         whoWeAre: enWhoWeAre,
         events: enEvents,
         donation: enDonation,
-        getConnected: enGetConnected
+        getConnected: enGetConnected,
+        settings: enSettings
     },
     fr: {
         home: frHome,
-        events: frEvents
-        // Other French content will be added as files are created
+        whoWeAre: frWhoWeAre,
+        events: frEvents,
+        donation: frDonation,
+        getConnected: frGetConnected,
+        settings: frSettings
     }
 };
 
@@ -153,8 +149,7 @@ class ContentService {
         try {
             // Try to get content for current language
             if (contentMap[this.currentLanguage] &&
-                contentMap[this.currentLanguage][contentType] &&
-                contentMap[this.currentLanguage][contentType] !== null) {
+                contentMap[this.currentLanguage][contentType]) {
                 return contentMap[this.currentLanguage][contentType] as T;
             }
 

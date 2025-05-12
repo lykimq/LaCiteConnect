@@ -1,4 +1,4 @@
-import { initializeLanguage } from './languageService';
+import { initializeLanguage, getLanguage } from './languageService';
 import { initializeTheme } from './themeService';
 import { contentService } from './contentService';
 
@@ -13,13 +13,17 @@ export const initializeApp = async (): Promise<void> => {
         // Initialize language settings
         await initializeLanguage();
 
+        // Get current language for content
+        const currentLanguage = await getLanguage();
+
         // Initialize theme settings
         await initializeTheme();
 
-        // Initialize content service
+        // Initialize content service with current language
         await contentService.initialize();
+        await contentService.setLanguage(currentLanguage);
 
-        console.log('App services initialized successfully');
+        console.log(`App services initialized successfully. Language set to: ${currentLanguage}`);
     } catch (error) {
         console.error('Error initializing app services:', error);
     }
@@ -33,13 +37,18 @@ export const preloadContent = async (): Promise<void> => {
     try {
         console.log('Preloading content...');
 
+        // Get current language
+        const currentLanguage = await getLanguage();
+        console.log(`Preloading content for language: ${currentLanguage}`);
+
         // Preload common content types
         await Promise.all([
             contentService.getContent('home'),
             contentService.getContent('whoWeAre'),
             contentService.getContent('events'),
             contentService.getContent('donation'),
-            contentService.getContent('getConnected')
+            contentService.getContent('getConnected'),
+            contentService.getContent('settings')
         ]);
 
         console.log('Content preloaded successfully');

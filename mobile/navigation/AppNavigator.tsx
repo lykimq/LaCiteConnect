@@ -10,6 +10,8 @@ import { HomeContent } from '../components/HomeContent';
 import { SettingsContent } from '../components/SettingsContent';
 import { useTheme } from '../contexts/ThemeContext';
 import { withTheming } from '../components/withTheming';
+import { useLanguage } from '../contexts/LanguageContext';
+import { LanguageAwareScreen } from '../components/LanguageAwareScreen';
 
 // Define the tab navigator param list
 type TabParamList = {
@@ -23,16 +25,73 @@ type TabParamList = {
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
-// Apply theming to all screens
-const ThemedHomeContent = withTheming(HomeContent);
-const ThemedWhoWeAreContent = withTheming(WhoWeAreContent);
-const ThemedGetConnectedContent = withTheming(GetConnectedContent);
-const ThemedEventsContent = withTheming(EventsContent);
-const ThemedDonationContent = withTheming(DonationContent);
-const ThemedSettingsContent = withTheming(SettingsContent);
+// Apply theming to all screens and make them language-aware
+const ThemedHomeContent = withTheming((props) => (
+    <LanguageAwareScreen>
+        <HomeContent {...props} />
+    </LanguageAwareScreen>
+));
+
+const ThemedWhoWeAreContent = withTheming((props) => (
+    <LanguageAwareScreen>
+        <WhoWeAreContent {...props} />
+    </LanguageAwareScreen>
+));
+
+const ThemedGetConnectedContent = withTheming((props) => (
+    <LanguageAwareScreen>
+        <GetConnectedContent {...props} />
+    </LanguageAwareScreen>
+));
+
+const ThemedEventsContent = withTheming((props) => (
+    <LanguageAwareScreen>
+        <EventsContent {...props} />
+    </LanguageAwareScreen>
+));
+
+const ThemedDonationContent = withTheming((props) => (
+    <LanguageAwareScreen>
+        <DonationContent {...props} />
+    </LanguageAwareScreen>
+));
+
+const ThemedSettingsContent = withTheming((props) => (
+    <LanguageAwareScreen>
+        <SettingsContent {...props} />
+    </LanguageAwareScreen>
+));
+
+// Localized tab titles
+const getLocalizedTabTitles = (language: string) => {
+    if (language === 'fr') {
+        return {
+            home: 'Accueil',
+            whoWeAre: 'Qui Sommes-Nous',
+            getConnected: 'Restez Connectés',
+            events: 'Événements',
+            donations: 'Dons',
+            settings: 'Paramètres'
+        };
+    }
+
+    // Default English
+    return {
+        home: 'Home',
+        whoWeAre: 'Who We Are',
+        getConnected: 'Get Connected',
+        events: 'Events',
+        donations: 'Donations',
+        settings: 'Settings'
+    };
+};
 
 export const AppNavigator = () => {
     const { themeColors } = useTheme();
+    const { currentLanguage } = useLanguage();
+
+    // Get localized tab titles
+    const tabTitles = getLocalizedTabTitles(currentLanguage);
 
     return (
         <NavigationContainer>
@@ -78,42 +137,42 @@ export const AppNavigator = () => {
                     name="Home"
                     component={ThemedHomeContent}
                     options={{
-                        title: 'Home',
+                        title: tabTitles.home,
                     }}
                 />
                 <Tab.Screen
                     name="WhoWeAre"
                     component={ThemedWhoWeAreContent}
                     options={{
-                        title: 'Who We Are',
+                        title: tabTitles.whoWeAre,
                     }}
                 />
                 <Tab.Screen
                     name="GetConnected"
                     component={ThemedGetConnectedContent}
                     options={{
-                        title: 'Get Connected',
+                        title: tabTitles.getConnected,
                     }}
                 />
                 <Tab.Screen
                     name="Events"
                     component={ThemedEventsContent}
                     options={{
-                        title: 'Events',
+                        title: tabTitles.events,
                     }}
                 />
                 <Tab.Screen
                     name="Donations"
                     component={ThemedDonationContent}
                     options={{
-                        title: 'Donations',
+                        title: tabTitles.donations,
                     }}
                 />
                 <Tab.Screen
                     name="Settings"
                     component={ThemedSettingsContent}
                     options={{
-                        title: 'Settings',
+                        title: tabTitles.settings,
                     }}
                 />
             </Tab.Navigator>

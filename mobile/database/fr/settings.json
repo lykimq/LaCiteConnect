@@ -1,0 +1,43 @@
+{
+    "header": {
+        "title": "Paramètres",
+        "subtitle": "Personnalisez votre expérience"
+    },
+    "sections": [
+        {
+            "id": "language",
+            "icon": "language",
+            "title": "Langue",
+            "description": "Choisissez votre langue préférée pour l'application"
+        },
+        {
+            "id": "theme",
+            "icon": "color-palette",
+            "title": "Thème",
+            "description": "Modifier l'apparence de l'application"
+        },
+        {
+            "id": "about",
+            "icon": "information-circle",
+            "title": "À propos",
+            "items": [
+                {
+                    "id": "version",
+                    "label": "Version",
+                    "value": "1.0.0",
+                    "type": "text"
+                },
+                {
+                    "id": "termsOfService",
+                    "label": "Conditions d'utilisation",
+                    "type": "link"
+                },
+                {
+                    "id": "privacyPolicy",
+                    "label": "Politique de confidentialité",
+                    "type": "link"
+                }
+            ]
+        }
+    ]
+}
