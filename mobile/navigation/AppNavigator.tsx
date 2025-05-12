@@ -7,6 +7,9 @@ import { GetConnectedContent } from '../components/GetConnectedContent';
 import { DonationContent } from '../components/DonationContent';
 import { EventsContent } from '../components/EventsContent';
 import { HomeContent } from '../components/HomeContent';
+import { SettingsContent } from '../components/SettingsContent';
+import { useTheme } from '../contexts/ThemeContext';
+import { withTheming } from '../components/withTheming';
 
 // Define the tab navigator param list
 type TabParamList = {
@@ -15,11 +18,22 @@ type TabParamList = {
     GetConnected: undefined;
     Events: undefined;
     Donations: undefined;
+    Settings: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
+// Apply theming to all screens
+const ThemedHomeContent = withTheming(HomeContent);
+const ThemedWhoWeAreContent = withTheming(WhoWeAreContent);
+const ThemedGetConnectedContent = withTheming(GetConnectedContent);
+const ThemedEventsContent = withTheming(EventsContent);
+const ThemedDonationContent = withTheming(DonationContent);
+const ThemedSettingsContent = withTheming(SettingsContent);
+
 export const AppNavigator = () => {
+    const { themeColors } = useTheme();
+
     return (
         <NavigationContainer>
             <Tab.Navigator
@@ -37,59 +51,69 @@ export const AppNavigator = () => {
                             iconName = 'people';
                         } else if (route.name === 'Donations') {
                             iconName = 'cash-outline';
+                        } else if (route.name === 'Settings') {
+                            iconName = focused ? 'settings' : 'settings-outline';
                         } else {
                             iconName = 'help-circle';
                         }
 
                         return <Ionicons name={iconName} size={size} color={color} />;
                     },
-                    tabBarActiveTintColor: '#FF9843',
-                    tabBarInactiveTintColor: '#999',
+                    tabBarActiveTintColor: themeColors.primary,
+                    tabBarInactiveTintColor: themeColors.text,
                     tabBarStyle: {
-                        backgroundColor: '#ffffff',
+                        backgroundColor: themeColors.card,
                         borderTopWidth: 0,
                         elevation: 10,
                         shadowColor: '#000',
                         shadowOffset: { width: 0, height: -3 },
                         shadowOpacity: 0.1,
                         shadowRadius: 4,
+                        borderTopColor: themeColors.border,
                     },
                     headerShown: false,
                 })}
             >
                 <Tab.Screen
                     name="Home"
-                    component={HomeContent}
+                    component={ThemedHomeContent}
                     options={{
                         title: 'Home',
                     }}
                 />
                 <Tab.Screen
                     name="WhoWeAre"
-                    component={WhoWeAreContent}
+                    component={ThemedWhoWeAreContent}
                     options={{
                         title: 'Who We Are',
                     }}
                 />
                 <Tab.Screen
                     name="GetConnected"
-                    component={GetConnectedContent}
+                    component={ThemedGetConnectedContent}
                     options={{
                         title: 'Get Connected',
                     }}
                 />
                 <Tab.Screen
                     name="Events"
-                    component={EventsContent}
+                    component={ThemedEventsContent}
                     options={{
                         title: 'Events',
                     }}
                 />
                 <Tab.Screen
                     name="Donations"
-                    component={DonationContent}
+                    component={ThemedDonationContent}
                     options={{
                         title: 'Donations',
+                    }}
+                />
+                <Tab.Screen
+                    name="Settings"
+                    component={ThemedSettingsContent}
+                    options={{
+                        title: 'Settings',
                     }}
                 />
             </Tab.Navigator>

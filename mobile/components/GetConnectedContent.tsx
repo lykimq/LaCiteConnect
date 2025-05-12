@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
-import { getConnectedStyles } from '../styles/GetConnectedContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS } from '../config/staticData';
 import { contentService } from '../services/contentService';
+import { useTheme } from '../contexts/ThemeContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { createGetConnectedStyles } from '../styles/ThemedStyles';
 
 // Define the get connected content interface
 interface GetConnectedContent {
@@ -37,6 +39,8 @@ export const GetConnectedContent = () => {
     const [content, setContent] = useState<GetConnectedContent | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const { themeColors } = useTheme();
+    const styles = useThemedStyles(createGetConnectedStyles);
 
     useEffect(() => {
         loadContent();
@@ -90,21 +94,21 @@ export const GetConnectedContent = () => {
 
     if (loading) {
         return (
-            <View style={[getConnectedStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color="#FF9843" />
+            <View style={[styles.container, styles.loadingContainer]}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
             </View>
         );
     }
 
     if (error || !content) {
         return (
-            <View style={[getConnectedStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 16, color: '#FF3B30' }}>{error || 'Content not available'}</Text>
+            <View style={[styles.container, styles.loadingContainer]}>
+                <Text style={styles.errorText}>{error || 'Content not available'}</Text>
                 <TouchableOpacity
-                    style={{ marginTop: 20, padding: 10, backgroundColor: '#FF9843', borderRadius: 8 }}
+                    style={styles.retryButton}
                     onPress={loadContent}
                 >
-                    <Text style={{ color: '#FFFFFF' }}>Retry</Text>
+                    <Text style={styles.retryButtonText}>Retry</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -135,38 +139,38 @@ export const GetConnectedContent = () => {
     };
 
     return (
-        <View style={getConnectedStyles.container}>
+        <View style={styles.container}>
             <ScrollView
-                style={getConnectedStyles.scrollView}
+                style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={getConnectedStyles.header}>
-                    <Text style={getConnectedStyles.title}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>
                         {content.header.title}
                     </Text>
-                    <Text style={getConnectedStyles.subtitle}>
+                    <Text style={styles.subtitle}>
                         {content.header.subtitle}
                     </Text>
                 </View>
 
                 {content.sections.map((section, index) => (
-                    <View key={section.id} style={getConnectedStyles.cardContainer}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                            <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                            <Text style={getConnectedStyles.sectionTitle}>{section.title}</Text>
+                    <View key={section.id} style={styles.cardContainer}>
+                        <View style={styles.sectionHeader}>
+                            <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
+                            <Text style={styles.sectionTitle}>{section.title}</Text>
                         </View>
-                        <Text style={getConnectedStyles.paragraph}>
+                        <Text style={styles.paragraph}>
                             {section.content}
                         </Text>
 
                         {section.button && (
                             <TouchableOpacity
-                                style={getConnectedStyles.contactButton}
+                                style={styles.contactButton}
                                 onPress={handleButtonAction(section.id)}
                             >
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <Ionicons name={section.button.icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                                    <Text style={getConnectedStyles.buttonText}>
+                                    <Text style={styles.buttonText}>
                                         {section.button.text}
                                     </Text>
                                 </View>
@@ -177,12 +181,12 @@ export const GetConnectedContent = () => {
                             <React.Fragment key={`contact-${contactIndex}`}>
                                 {contactIndex > 0 && <View style={{ marginTop: 10 }} />}
                                 <TouchableOpacity
-                                    style={getConnectedStyles.contactButton}
+                                    style={styles.contactButton}
                                     onPress={handleContactAction(contactItem.type, contactItem.url)}
                                 >
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <Ionicons name={contactItem.icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                                        <Text style={getConnectedStyles.buttonText}>
+                                        <Text style={styles.buttonText}>
                                             {contactItem.value}
                                         </Text>
                                     </View>
@@ -193,23 +197,23 @@ export const GetConnectedContent = () => {
                         {section.id === 'chezNous' && section.buttons && (
                             <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
                                 <TouchableOpacity
-                                    style={[getConnectedStyles.contactButton, { flex: 1, marginRight: 5 }]}
+                                    style={[styles.contactButton, { flex: 1, marginRight: 5 }]}
                                     onPress={handleChezNous}
                                 >
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <Ionicons name={section.buttons[0].icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                                        <Text style={getConnectedStyles.buttonText}>
+                                        <Text style={styles.buttonText}>
                                             {section.buttons[0].text}
                                         </Text>
                                     </View>
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={[getConnectedStyles.contactButton, { flex: 1, marginLeft: 5 }]}
+                                    style={[styles.contactButton, { flex: 1, marginLeft: 5 }]}
                                     onPress={handleChezNousDetails}
                                 >
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <Ionicons name={section.buttons[1].icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                                        <Text style={getConnectedStyles.buttonText}>
+                                        <Text style={styles.buttonText}>
                                             {section.buttons[1].text}
                                         </Text>
                                     </View>

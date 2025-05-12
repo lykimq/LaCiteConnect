@@ -1,4 +1,5 @@
 import { initializeLanguage } from './languageService';
+import { initializeTheme } from './themeService';
 import { contentService } from './contentService';
 
 /**
@@ -11,6 +12,9 @@ export const initializeApp = async (): Promise<void> => {
 
         // Initialize language settings
         await initializeLanguage();
+
+        // Initialize theme settings
+        await initializeTheme();
 
         // Initialize content service
         await contentService.initialize();

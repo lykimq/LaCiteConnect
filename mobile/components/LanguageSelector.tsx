@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { availableLanguages, getLanguage, getLanguageMetadata, setLanguage } from '../services/languageService';
 import { contentService } from '../services/contentService';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface LanguageSelectorProps {
     compact?: boolean;
@@ -12,6 +13,7 @@ interface LanguageSelectorProps {
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = false, onLanguageChange }) => {
     const [currentLanguage, setCurrentLanguage] = useState<string>('');
     const [modalVisible, setModalVisible] = useState(false);
+    const { themeColors } = useTheme();
 
     useEffect(() => {
         // Load current language when component mounts
@@ -52,6 +54,99 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
     // Current language metadata
     const currentLangMetadata = getLanguageMetadata(currentLanguage);
 
+    const styles = StyleSheet.create({
+        container: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 10,
+        },
+        compactContainer: {
+            padding: 4,
+        },
+        label: {
+            fontSize: 16,
+            color: themeColors.text,
+            marginRight: 10,
+        },
+        selectorButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: themeColors.card,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+        },
+        compactButton: {
+            backgroundColor: themeColors.card,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 4,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+        },
+        selectedLanguage: {
+            fontSize: 16,
+            color: themeColors.text,
+            marginRight: 8,
+        },
+        languageCode: {
+            fontSize: 12,
+            fontWeight: 'bold',
+            color: themeColors.text,
+        },
+        modalContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        },
+        modalContent: {
+            width: '80%',
+            backgroundColor: themeColors.background,
+            borderRadius: 10,
+            padding: 20,
+            maxHeight: '70%',
+            borderWidth: 1,
+            borderColor: themeColors.border,
+        },
+        modalHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 15,
+            paddingBottom: 10,
+            borderBottomWidth: 1,
+            borderBottomColor: themeColors.border,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: themeColors.text,
+        },
+        languageItem: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: themeColors.border,
+        },
+        selectedLanguageItem: {
+            backgroundColor: themeColors.accent,
+        },
+        languageItemText: {
+            fontSize: 16,
+            color: themeColors.text,
+        },
+        selectedLanguageItemText: {
+            color: themeColors.primary,
+            fontWeight: '500',
+        },
+    });
+
     if (compact) {
         // Compact version (just an icon button)
         return (
@@ -74,7 +169,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                             <View style={styles.modalHeader}>
                                 <Text style={styles.modalTitle}>Select Language</Text>
                                 <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                    <Ionicons name="close" size={24} color="#333" />
+                                    <Ionicons name="close" size={24} color={themeColors.text} />
                                 </TouchableOpacity>
                             </View>
 
@@ -100,7 +195,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                                                 {metadata.nativeName}
                                             </Text>
                                             {isSelected && (
-                                                <Ionicons name="checkmark" size={18} color="#FF9843" />
+                                                <Ionicons name="checkmark" size={18} color={themeColors.primary} />
                                             )}
                                         </TouchableOpacity>
                                     );
@@ -122,7 +217,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                 onPress={() => setModalVisible(true)}
             >
                 <Text style={styles.selectedLanguage}>{currentLangMetadata.nativeName}</Text>
-                <Ionicons name="chevron-down" size={18} color="#666" />
+                <Ionicons name="chevron-down" size={18} color={themeColors.text} />
             </TouchableOpacity>
 
             <Modal
@@ -136,7 +231,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Select Language</Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Ionicons name="close" size={24} color="#333" />
+                                <Ionicons name="close" size={24} color={themeColors.text} />
                             </TouchableOpacity>
                         </View>
 
@@ -162,7 +257,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
                                             {metadata.nativeName}
                                         </Text>
                                         {isSelected && (
-                                            <Ionicons name="checkmark" size={18} color="#FF9843" />
+                                            <Ionicons name="checkmark" size={18} color={themeColors.primary} />
                                         )}
                                     </TouchableOpacity>
                                 );
@@ -174,94 +269,3 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-    },
-    compactContainer: {
-        padding: 4,
-    },
-    label: {
-        fontSize: 16,
-        color: '#333',
-        marginRight: 10,
-    },
-    selectorButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#ddd',
-    },
-    compactButton: {
-        backgroundColor: '#f5f5f5',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 4,
-        borderWidth: 1,
-        borderColor: '#ddd',
-    },
-    selectedLanguage: {
-        fontSize: 16,
-        color: '#333',
-        marginRight: 8,
-    },
-    languageCode: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContent: {
-        width: '80%',
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 20,
-        maxHeight: '70%',
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 15,
-        paddingBottom: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    languageItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
-    },
-    selectedLanguageItem: {
-        backgroundColor: '#FFF8F0',
-    },
-    languageItemText: {
-        fontSize: 16,
-        color: '#333',
-    },
-    selectedLanguageItemText: {
-        color: '#FF9843',
-        fontWeight: '500',
-    },
-});

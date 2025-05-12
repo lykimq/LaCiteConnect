@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
-import { eventsStyles } from '../styles/EventsContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime, isPastEvent } from '../utils/dateUtils';
 import { calendarService } from '../services/calendarService';
 import { contentService } from '../services/contentService';
 import WebView from 'react-native-webview';
+import { useTheme } from '../contexts/ThemeContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { createEventsStyles } from '../styles/ThemedStyles';
 
 // Get screen dimensions for WebView sizing
 const { width } = Dimensions.get('window');
@@ -70,7 +72,6 @@ interface EventsContent {
         viewFilesText: string;
         viewDetailsText: string;
         closeText: string;
-        setReminderText: string;
         eventAddedText: string;
         refreshEventsText: string;
         refreshHolidaysText: string;
@@ -95,6 +96,8 @@ export const EventsContent = () => {
     const [error, setError] = useState<string | null>(null);
     const [holidaysError, setHolidaysError] = useState<string | null>(null);
     const [calendarError, setCalendarError] = useState<string | null>(null);
+    const { themeColors } = useTheme();
+    const styles = useThemedStyles(createEventsStyles);
 
     // Content state for UI strings
     const [content, setContent] = useState<EventsContent | null>(null);
@@ -342,19 +345,19 @@ export const EventsContent = () => {
         ];
 
         return (
-            <View style={eventsStyles.monthPicker}>
+            <View style={styles.monthPicker}>
                 {months.map((month, index) => (
                     <TouchableOpacity
                         key={month}
                         style={[
-                            eventsStyles.monthPickerItem,
-                            currentMonth === index && eventsStyles.monthPickerItemActive
+                            styles.monthPickerItem,
+                            currentMonth === index && styles.monthPickerItemActive
                         ]}
                         onPress={() => selectMonth(index)}
                     >
                         <Text style={[
-                            eventsStyles.monthPickerText,
-                            currentMonth === index && eventsStyles.monthPickerTextActive
+                            styles.monthPickerText,
+                            currentMonth === index && styles.monthPickerTextActive
                         ]}>
                             {month}
                         </Text>
@@ -372,19 +375,19 @@ export const EventsContent = () => {
         ];
 
         return (
-            <View style={eventsStyles.monthPicker}>
+            <View style={styles.monthPicker}>
                 {months.map((month, index) => (
                     <TouchableOpacity
                         key={month}
                         style={[
-                            eventsStyles.monthPickerItem,
-                            holidayMonth === index && eventsStyles.monthPickerItemActive
+                            styles.monthPickerItem,
+                            holidayMonth === index && styles.monthPickerItemActive
                         ]}
                         onPress={() => selectHolidayMonth(index)}
                     >
                         <Text style={[
-                            eventsStyles.monthPickerText,
-                            holidayMonth === index && eventsStyles.monthPickerTextActive
+                            styles.monthPickerText,
+                            holidayMonth === index && styles.monthPickerTextActive
                         ]}>
                             {month}
                         </Text>
@@ -398,23 +401,62 @@ export const EventsContent = () => {
     const renderCurrentMonthEvents = () => {
         if (loading) {
             return (
-                <View style={eventsStyles.noEventsContainer}>
-                    <ActivityIndicator size="large" color="#FF9843" />
-                    <Text style={eventsStyles.noEventsText}>{content?.ui.loadingText || 'Loading events...'}</Text>
+                <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 20,
+                    backgroundColor: themeColors.card,
+                    borderRadius: 8,
+                    marginVertical: 10
+                }}>
+                    <ActivityIndicator size="large" color={themeColors.primary} />
+                    <Text style={{
+                        fontSize: 16,
+                        color: themeColors.text,
+                        opacity: 0.7,
+                        textAlign: 'center',
+                        marginVertical: 15
+                    }}>
+                        {content?.ui.loadingText || 'Loading events...'}
+                    </Text>
                 </View>
             );
         }
 
         if (error) {
             return (
-                <View style={eventsStyles.noEventsContainer}>
+                <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 20,
+                    backgroundColor: themeColors.card,
+                    borderRadius: 8,
+                    marginVertical: 10
+                }}>
                     <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
-                    <Text style={eventsStyles.noEventsText}>{error}</Text>
+                    <Text style={{
+                        fontSize: 16,
+                        color: themeColors.text,
+                        opacity: 0.7,
+                        textAlign: 'center',
+                        marginVertical: 15
+                    }}>
+                        {error}
+                    </Text>
                     <TouchableOpacity
-                        style={eventsStyles.detailsButton}
+                        style={{
+                            backgroundColor: themeColors.primary,
+                            paddingVertical: 10,
+                            paddingHorizontal: 15,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
                         onPress={() => fetchEvents(currentYear, currentMonth)}
                     >
-                        <Text style={eventsStyles.buttonText}>{content?.ui.tryAgainText || 'Try Again'}</Text>
+                        <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>
+                            {content?.ui.tryAgainText || 'Try Again'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             );
@@ -428,9 +470,22 @@ export const EventsContent = () => {
             );
         }).length === 0) {
             return (
-                <View style={eventsStyles.noEventsContainer}>
+                <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 20,
+                    backgroundColor: themeColors.card,
+                    borderRadius: 8,
+                    marginVertical: 10
+                }}>
                     <Ionicons name="calendar-outline" size={40} color="#ccc" />
-                    <Text style={eventsStyles.noEventsText}>
+                    <Text style={{
+                        fontSize: 16,
+                        color: themeColors.text,
+                        opacity: 0.7,
+                        textAlign: 'center',
+                        marginVertical: 15
+                    }}>
                         {content?.ui.noEventsText || 'No events found for'} {getCurrentMonthYearString()}
                     </Text>
                 </View>
@@ -450,23 +505,62 @@ export const EventsContent = () => {
     const renderCurrentMonthHolidays = () => {
         if (holidaysLoading) {
             return (
-                <View style={eventsStyles.noEventsContainer}>
-                    <ActivityIndicator size="large" color="#FF9843" />
-                    <Text style={eventsStyles.noEventsText}>{content?.ui.loadingText || 'Loading holidays...'}</Text>
+                <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 20,
+                    backgroundColor: themeColors.card,
+                    borderRadius: 8,
+                    marginVertical: 10
+                }}>
+                    <ActivityIndicator size="large" color={themeColors.primary} />
+                    <Text style={{
+                        fontSize: 16,
+                        color: themeColors.text,
+                        opacity: 0.7,
+                        textAlign: 'center',
+                        marginVertical: 15
+                    }}>
+                        {content?.ui.loadingText || 'Loading holidays...'}
+                    </Text>
                 </View>
             );
         }
 
         if (holidaysError) {
             return (
-                <View style={eventsStyles.noEventsContainer}>
+                <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 20,
+                    backgroundColor: themeColors.card,
+                    borderRadius: 8,
+                    marginVertical: 10
+                }}>
                     <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
-                    <Text style={eventsStyles.noEventsText}>{holidaysError}</Text>
+                    <Text style={{
+                        fontSize: 16,
+                        color: themeColors.text,
+                        opacity: 0.7,
+                        textAlign: 'center',
+                        marginVertical: 15
+                    }}>
+                        {holidaysError}
+                    </Text>
                     <TouchableOpacity
-                        style={eventsStyles.detailsButton}
+                        style={{
+                            backgroundColor: themeColors.primary,
+                            paddingVertical: 10,
+                            paddingHorizontal: 15,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
                         onPress={() => fetchHolidays(holidayYear, holidayMonth)}
                     >
-                        <Text style={eventsStyles.buttonText}>{content?.ui.tryAgainText || 'Try Again'}</Text>
+                        <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>
+                            {content?.ui.tryAgainText || 'Try Again'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             );
@@ -480,9 +574,22 @@ export const EventsContent = () => {
             );
         }).length === 0) {
             return (
-                <View style={eventsStyles.noEventsContainer}>
+                <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 20,
+                    backgroundColor: themeColors.card,
+                    borderRadius: 8,
+                    marginVertical: 10
+                }}>
                     <Ionicons name="calendar-outline" size={40} color="#ccc" />
-                    <Text style={eventsStyles.noEventsText}>
+                    <Text style={{
+                        fontSize: 16,
+                        color: themeColors.text,
+                        opacity: 0.7,
+                        textAlign: 'center',
+                        marginVertical: 15
+                    }}>
                         {content?.ui.noHolidaysText || 'No holidays found for'} {getHolidayMonthYearString()}
                     </Text>
                 </View>
@@ -511,17 +618,17 @@ export const EventsContent = () => {
         );
 
         return (
-            <View key={event.id} style={eventsStyles.eventCard}>
-                <View style={eventsStyles.eventHeader}>
-                    <Text style={eventsStyles.eventTitle}>
+            <View key={event.id} style={styles.eventCard}>
+                <View style={styles.eventHeader}>
+                    <Text style={styles.eventTitle}>
                         {event.summary}
-                        {event.recurrence && <Text style={eventsStyles.recurringTag}> (Recurring)</Text>}
+                        {event.recurrence && <Text style={styles.recurringTag}> (Recurring)</Text>}
                         {event.reminderSet && (
-                            <Ionicons name="notifications" size={16} color="#FF9843" style={{ marginLeft: 5 }} />
+                            <Ionicons name="notifications" size={16} color={themeColors.primary} style={{ marginLeft: 5 }} />
                         )}
                     </Text>
-                    <View style={eventsStyles.dateContainer}>
-                        <Text style={eventsStyles.dateText}>
+                    <View style={styles.dateContainer}>
+                        <Text style={styles.dateText}>
                             {event.start.dateTime
                                 ? new Date(event.start.dateTime).getDate()
                                 : event.start.date
@@ -531,20 +638,20 @@ export const EventsContent = () => {
                     </View>
                 </View>
 
-                <Text style={eventsStyles.eventDate}>
+                <Text style={styles.eventDate}>
                     {formatEventDate(event)}
                 </Text>
 
                 {/* Display location with improved formatting */}
                 {event.formattedLocation && (
                     <TouchableOpacity
-                        style={eventsStyles.eventLocation}
+                        style={styles.eventLocation}
                         onPress={() => event.formattedLocation?.mapUrl
                             ? Linking.openURL(event.formattedLocation.mapUrl)
                             : handleOpenMap(event.location || '')}
                     >
                         <Ionicons name="location-outline" size={14} color="#666" />
-                        <Text style={eventsStyles.eventLocationText}>
+                        <Text style={styles.eventLocationText}>
                             {event.formattedLocation.address}
                         </Text>
                     </TouchableOpacity>
@@ -552,8 +659,8 @@ export const EventsContent = () => {
 
                 {/* Display formatted description with better styling */}
                 {event.formattedDescription && (
-                    <View style={eventsStyles.descriptionContainer}>
-                        <Text style={eventsStyles.eventDescription}>
+                    <View style={styles.descriptionContainer}>
+                        <Text style={styles.eventDescription}>
                             {event.formattedDescription.length > 150
                                 ? `${event.formattedDescription.substring(0, 150)}...`
                                 : event.formattedDescription}
@@ -561,10 +668,10 @@ export const EventsContent = () => {
 
                         {event.formattedDescription.length > 150 && (
                             <TouchableOpacity
-                                style={eventsStyles.readMoreButton}
+                                style={styles.readMoreButton}
                                 onPress={() => handleViewFullDescription(event)}
                             >
-                                <Text style={eventsStyles.readMoreText}>{content?.ui.readMoreText || 'Read More'}</Text>
+                                <Text style={styles.readMoreText}>{content?.ui.readMoreText || 'Read More'}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -572,12 +679,12 @@ export const EventsContent = () => {
 
                 {/* Display attachments if available */}
                 {event.attachments && event.attachments.length > 0 && (
-                    <View style={eventsStyles.attachmentsContainer}>
-                        <Text style={eventsStyles.attachmentsTitle}>{content?.ui.viewAttachmentText || 'Attachments:'}:</Text>
+                    <View style={styles.attachmentsContainer}>
+                        <Text style={styles.attachmentsTitle}>{content?.ui.viewAttachmentText || 'Attachments:'}:</Text>
                         {event.attachments.map((attachment, index) => (
                             <TouchableOpacity
                                 key={index}
-                                style={eventsStyles.attachmentItem}
+                                style={styles.attachmentItem}
                                 onPress={() => Linking.openURL(attachment.url)}
                             >
                                 <Ionicons
@@ -589,7 +696,7 @@ export const EventsContent = () => {
                                     size={14}
                                     color="#666"
                                 />
-                                <Text style={eventsStyles.attachmentText}>
+                                <Text style={styles.attachmentText}>
                                     {attachment.title}
                                 </Text>
                             </TouchableOpacity>
@@ -597,49 +704,49 @@ export const EventsContent = () => {
                     </View>
                 )}
 
-                <View style={eventsStyles.buttonContainer}>
+                <View style={styles.buttonContainer}>
                     {event.location && (
                         <TouchableOpacity
-                            style={eventsStyles.detailsButton}
+                            style={styles.detailsButton}
                             onPress={() => handleOpenMap(event.location || '')}
                         >
-                            <Text style={eventsStyles.buttonText}>{content?.ui.viewLocationText || 'View Location'}</Text>
+                            <Text style={styles.buttonText}>{content?.ui.viewLocationText || 'View Location'}</Text>
                         </TouchableOpacity>
                     )}
 
                     <TouchableOpacity
-                        style={eventsStyles.registerButton}
+                        style={styles.registerButton}
                         onPress={() => handleAddToCalendar(event)}
                     >
-                        <Text style={eventsStyles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
+                        <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Additional action buttons */}
-                <View style={eventsStyles.additionalButtonsContainer}>
+                <View style={styles.additionalButtonsContainer}>
                     <TouchableOpacity
-                        style={eventsStyles.secondaryButton}
-                        onPress={() => handleAddReminder(event)}
+                        style={styles.secondaryButton}
+                        onPress={() => handleSetReminder(event)}
                     >
-                        <Ionicons name="notifications-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                        <Text style={eventsStyles.secondaryButtonText}>{content?.ui.setReminderText || 'Set Reminder'}</Text>
+                        <Ionicons name="notifications-outline" size={14} color={themeColors.primary} style={{ marginRight: 5 }} />
+                        <Text style={styles.secondaryButtonText}>{content?.ui.setReminderText || 'Set Reminder'}</Text>
                     </TouchableOpacity>
 
                     {driveAttachment ? (
                         <TouchableOpacity
-                            style={eventsStyles.secondaryButton}
+                            style={styles.secondaryButton}
                             onPress={() => handleViewAttachment(driveAttachment.url)}
                         >
-                            <Ionicons name="document-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                            <Text style={eventsStyles.secondaryButtonText}>{content?.ui.viewFilesText || 'View Files'}</Text>
+                            <Ionicons name="document-outline" size={14} color={themeColors.primary} style={{ marginRight: 5 }} />
+                            <Text style={styles.secondaryButtonText}>{content?.ui.viewFilesText || 'View Files'}</Text>
                         </TouchableOpacity>
                     ) : (
                         <TouchableOpacity
-                            style={eventsStyles.secondaryButton}
+                            style={styles.secondaryButton}
                             onPress={() => Linking.openURL('https://fr.egliselacite.com/events2')}
                         >
-                            <Ionicons name="open-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                            <Text style={eventsStyles.secondaryButtonText}>{content?.ui.viewDetailsText || 'View Details'}</Text>
+                            <Ionicons name="open-outline" size={14} color={themeColors.primary} style={{ marginRight: 5 }} />
+                            <Text style={styles.secondaryButtonText}>{content?.ui.viewDetailsText || 'View Details'}</Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -649,31 +756,31 @@ export const EventsContent = () => {
 
     // Render holiday card
     const renderHolidayCard = (holiday: CalendarEvent) => (
-        <View key={holiday.id} style={eventsStyles.holidayCard}>
-            <View style={eventsStyles.eventHeader}>
-                <Text style={eventsStyles.holidayTitle}>{holiday.summary}</Text>
-                <View style={eventsStyles.dateContainer}>
-                    <Text style={eventsStyles.dateText}>
+        <View key={holiday.id} style={styles.holidayCard}>
+            <View style={styles.eventHeader}>
+                <Text style={styles.holidayTitle}>{holiday.summary}</Text>
+                <View style={styles.dateContainer}>
+                    <Text style={styles.dateText}>
                         {holiday.start.date
                             ? new Date(holiday.start.date).getDate()
                             : ''}
                     </Text>
                 </View>
             </View>
-            <View style={eventsStyles.holidayTag}>
-                <Text style={eventsStyles.holidayTagText}>{content?.ui.publicHolidayText || 'Public Holiday'}</Text>
+            <View style={styles.holidayTag}>
+                <Text style={styles.holidayTagText}>{content?.ui.publicHolidayText || 'Public Holiday'}</Text>
             </View>
-            <Text style={eventsStyles.holidayDate}>
+            <Text style={styles.holidayDate}>
                 {holiday.start.date ? formatDate(new Date(holiday.start.date)) : ''}
             </Text>
             {holiday.description && (
-                <Text style={eventsStyles.eventDescription}>{holiday.description}</Text>
+                <Text style={styles.eventDescription}>{holiday.description}</Text>
             )}
             <TouchableOpacity
-                style={eventsStyles.registerButton}
+                style={styles.registerButton}
                 onPress={() => handleAddToCalendar(holiday)}
             >
-                <Text style={eventsStyles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
+                <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -681,8 +788,8 @@ export const EventsContent = () => {
     // Handle loading and error states for content
     if (contentLoading) {
         return (
-            <View style={[eventsStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color="#FF9843" />
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
             </View>
         );
     }
@@ -690,10 +797,10 @@ export const EventsContent = () => {
     // If there's an error loading content, show an error message
     if (contentError || !content) {
         return (
-            <View style={[eventsStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                 <Text style={{ fontSize: 16, color: '#FF3B30' }}>{contentError || 'Content not available'}</Text>
                 <TouchableOpacity
-                    style={{ marginTop: 20, padding: 10, backgroundColor: '#FF9843', borderRadius: 8 }}
+                    style={{ marginTop: 20, padding: 10, backgroundColor: themeColors.primary, borderRadius: 8 }}
                     onPress={loadContent}
                 >
                     <Text style={{ color: '#FFFFFF' }}>Retry</Text>
@@ -702,33 +809,52 @@ export const EventsContent = () => {
         );
     }
 
+    // Add this function before the return statement
+    const handleSetReminder = (event: CalendarEvent) => {
+        // Here you would implement actual reminder functionality
+        // This is just a placeholder implementation
+
+        // Update the event in state to show it has a reminder set
+        const updatedEvents = events.map(e => {
+            if (e.id === event.id) {
+                return { ...e, reminderSet: true };
+            }
+            return e;
+        });
+
+        setEvents(updatedEvents);
+
+        // Show feedback to user (in a real app, you'd use a proper notification system)
+        alert(content?.ui.reminderSetText || 'Reminder set for this event');
+    };
+
     return (
-        <View style={eventsStyles.container}>
+        <View style={styles.container}>
             <ScrollView
-                style={eventsStyles.scrollView}
+                style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        colors={['#FF9843']}
+                        colors={[themeColors.primary]}
                     />
                 }
             >
-                <View style={eventsStyles.header}>
-                    <Text style={eventsStyles.title}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>
                         {content?.header.title || 'Events'}
                     </Text>
-                    <Text style={eventsStyles.subtitle}>
+                    <Text style={styles.subtitle}>
                         {content?.header.subtitle || 'Join us for upcoming church events'}
                     </Text>
                 </View>
 
                 {/* Calendar View - Always visible */}
-                <View style={eventsStyles.calendarContainer}>
+                <View style={styles.calendarContainer}>
                     <WebView
                         source={{ uri: calendarService.getCalendarEmbedUrl() }}
-                        style={eventsStyles.calendar}
+                        style={styles.calendar}
                         javaScriptEnabled={true}
                         domStorageEnabled={true}
                         onError={(e) => {
@@ -737,29 +863,29 @@ export const EventsContent = () => {
                         }}
                     />
                     {calendarError && (
-                        <Text style={eventsStyles.errorText}>{calendarError}</Text>
+                        <Text style={styles.errorText}>{calendarError}</Text>
                     )}
                 </View>
 
                 <TouchableOpacity
-                    style={eventsStyles.detailsButton}
+                    style={styles.detailsButton}
                     onPress={handleOpenCalendar}
                 >
                     <Ionicons name="open-outline" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={eventsStyles.buttonText}>{content?.ui.openCalendarText || 'Open Calendar in Browser'}</Text>
+                    <Text style={styles.buttonText}>{content?.ui.openCalendarText || 'Open Calendar in Browser'}</Text>
                 </TouchableOpacity>
 
-                <View style={eventsStyles.tabContainer}>
+                <View style={styles.tabContainer}>
                     <TouchableOpacity
-                        style={[eventsStyles.tab, activeTab === 'upcoming' && eventsStyles.activeTab]}
+                        style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
                         onPress={() => setActiveTab('upcoming')}
                     >
-                        <Text style={[eventsStyles.tabText, activeTab === 'upcoming' && eventsStyles.activeTabText]}>
+                        <Text style={[styles.tabText, activeTab === 'upcoming' && styles.activeTabText]}>
                             {content?.tabs[0]?.label || 'Church Events'}
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[eventsStyles.tab, activeTab === 'holidays' && eventsStyles.activeTab]}
+                        style={[styles.tab, activeTab === 'holidays' && styles.activeTab]}
                         onPress={() => {
                             setActiveTab('holidays');
                             if (holidays.length === 0) {
@@ -767,7 +893,7 @@ export const EventsContent = () => {
                             }
                         }}
                     >
-                        <Text style={[eventsStyles.tabText, activeTab === 'holidays' && eventsStyles.activeTabText]}>
+                        <Text style={[styles.tabText, activeTab === 'holidays' && styles.activeTabText]}>
                             {content?.tabs[1]?.label || 'French Holidays'}
                         </Text>
                     </TouchableOpacity>
@@ -776,19 +902,19 @@ export const EventsContent = () => {
                 {activeTab === 'upcoming' && (
                     <>
                         {/* Month navigation */}
-                        <View style={eventsStyles.monthNavigation}>
+                        <View style={styles.monthNavigation}>
                             <TouchableOpacity
-                                style={eventsStyles.monthNavigationButton}
+                                style={styles.monthNavigationButton}
                                 onPress={prevMonth}
                             >
                                 <Ionicons name="chevron-back" size={24} color="#666" />
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={eventsStyles.yearPickerButton}
+                                style={styles.yearPickerButton}
                                 onPress={() => setShowMonthPicker(!showMonthPicker)}
                             >
-                                <Text style={eventsStyles.currentMonthDisplay}>
+                                <Text style={styles.currentMonthDisplay}>
                                     {getCurrentMonthYearString()}
                                 </Text>
                                 <Ionicons
@@ -800,7 +926,7 @@ export const EventsContent = () => {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={eventsStyles.monthNavigationButton}
+                                style={styles.monthNavigationButton}
                                 onPress={nextMonth}
                             >
                                 <Ionicons name="chevron-forward" size={24} color="#666" />
@@ -814,11 +940,11 @@ export const EventsContent = () => {
                         {renderCurrentMonthEvents()}
 
                         <TouchableOpacity
-                            style={eventsStyles.refreshButton}
+                            style={styles.refreshButton}
                             onPress={() => fetchEvents(currentYear, currentMonth)}
                         >
                             <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={eventsStyles.buttonText}>{content?.ui.refreshEventsText || 'Refresh Events'}</Text>
+                            <Text style={styles.buttonText}>{content?.ui.refreshEventsText || 'Refresh Events'}</Text>
                         </TouchableOpacity>
                     </>
                 )}
@@ -826,19 +952,19 @@ export const EventsContent = () => {
                 {activeTab === 'holidays' && (
                     <>
                         {/* Month navigation for holidays */}
-                        <View style={eventsStyles.monthNavigation}>
+                        <View style={styles.monthNavigation}>
                             <TouchableOpacity
-                                style={eventsStyles.monthNavigationButton}
+                                style={styles.monthNavigationButton}
                                 onPress={prevHolidayMonth}
                             >
                                 <Ionicons name="chevron-back" size={24} color="#666" />
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={eventsStyles.yearPickerButton}
+                                style={styles.yearPickerButton}
                                 onPress={() => setShowHolidayMonthPicker(!showHolidayMonthPicker)}
                             >
-                                <Text style={eventsStyles.currentMonthDisplay}>
+                                <Text style={styles.currentMonthDisplay}>
                                     {getHolidayMonthYearString()}
                                 </Text>
                                 <Ionicons
@@ -850,7 +976,7 @@ export const EventsContent = () => {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={eventsStyles.monthNavigationButton}
+                                style={styles.monthNavigationButton}
                                 onPress={nextHolidayMonth}
                             >
                                 <Ionicons name="chevron-forward" size={24} color="#666" />
@@ -860,17 +986,17 @@ export const EventsContent = () => {
                         {/* Month picker for holidays */}
                         {showHolidayMonthPicker && renderHolidayMonthPicker()}
 
-                        <Text style={eventsStyles.sectionTitle}>{content?.tabs[1]?.label || 'French Public Holidays'}</Text>
+                        <Text style={styles.sectionTitle}>{content?.tabs[1]?.label || 'French Public Holidays'}</Text>
 
                         {/* Holidays for current month */}
                         {renderCurrentMonthHolidays()}
 
                         <TouchableOpacity
-                            style={eventsStyles.refreshButton}
+                            style={styles.refreshButton}
                             onPress={() => fetchHolidays(holidayYear, holidayMonth)}
                         >
                             <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={eventsStyles.buttonText}>{content?.ui.refreshHolidaysText || 'Refresh Holidays'}</Text>
+                            <Text style={styles.buttonText}>{content?.ui.refreshHolidaysText || 'Refresh Holidays'}</Text>
                         </TouchableOpacity>
                     </>
                 )}
@@ -878,28 +1004,28 @@ export const EventsContent = () => {
 
             {/* Full Description Modal */}
             {showFullDescription && selectedEvent && (
-                <View style={eventsStyles.descriptionModal}>
-                    <View style={eventsStyles.descriptionModalContent}>
-                        <View style={eventsStyles.descriptionModalHeader}>
-                            <Text style={eventsStyles.descriptionModalTitle}>{selectedEvent.summary}</Text>
+                <View style={styles.descriptionModal}>
+                    <View style={styles.descriptionModalContent}>
+                        <View style={styles.descriptionModalHeader}>
+                            <Text style={styles.descriptionModalTitle}>{selectedEvent.summary}</Text>
                             <TouchableOpacity
-                                style={eventsStyles.modalCloseIconButton}
+                                style={styles.modalCloseIconButton}
                                 onPress={() => setShowFullDescription(false)}
                             >
                                 <Ionicons name="close" size={24} color="#666" />
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView style={eventsStyles.descriptionModalScrollView}>
+                        <ScrollView style={styles.descriptionModalScrollView}>
                             {/* Display event date */}
-                            <Text style={eventsStyles.modalEventDate}>
+                            <Text style={styles.modalEventDate}>
                                 {formatEventDate(selectedEvent)}
                             </Text>
 
                             {/* Display location if available */}
                             {selectedEvent.formattedLocation && (
                                 <TouchableOpacity
-                                    style={eventsStyles.eventLocation}
+                                    style={styles.eventLocation}
                                     onPress={() => {
                                         setShowFullDescription(false);
                                         selectedEvent.formattedLocation?.mapUrl
@@ -908,7 +1034,7 @@ export const EventsContent = () => {
                                     }}
                                 >
                                     <Ionicons name="location-outline" size={16} color="#666" />
-                                    <Text style={eventsStyles.eventLocationText}>
+                                    <Text style={styles.eventLocationText}>
                                         {selectedEvent.formattedLocation.address}
                                     </Text>
                                 </TouchableOpacity>
@@ -916,7 +1042,7 @@ export const EventsContent = () => {
 
                             {/* Full description */}
                             {selectedEvent.formattedDescription && (
-                                <Text style={eventsStyles.descriptionModalText}>
+                                <Text style={styles.descriptionModalText}>
                                     {selectedEvent.formattedDescription}
                                 </Text>
                             )}
@@ -925,18 +1051,18 @@ export const EventsContent = () => {
                             {selectedEvent.attachments && selectedEvent.attachments.some(
                                 attachment => isDriveAttachment(attachment.url)
                             ) && (
-                                    <View style={eventsStyles.modalPhotoAttachmentsContainer}>
-                                        <Text style={eventsStyles.modalAttachmentsTitle}>{content?.ui.viewAttachmentText || 'Files:'}:</Text>
+                                    <View style={styles.modalPhotoAttachmentsContainer}>
+                                        <Text style={styles.modalAttachmentsTitle}>{content?.ui.viewAttachmentText || 'Files:'}:</Text>
                                         {selectedEvent.attachments
                                             .filter(attachment => isDriveAttachment(attachment.url))
                                             .map((attachment, index) => (
                                                 <TouchableOpacity
                                                     key={index}
-                                                    style={eventsStyles.modalPhotoItem}
+                                                    style={styles.modalPhotoItem}
                                                     onPress={() => Linking.openURL(attachment.url)}
                                                 >
-                                                    <Ionicons name="document-outline" size={16} color="#FF9843" />
-                                                    <Text style={[eventsStyles.modalAttachmentText, { color: '#FF9843' }]}>
+                                                    <Ionicons name="document-outline" size={16} color={themeColors.primary} />
+                                                    <Text style={[styles.modalAttachmentText, { color: themeColors.primary }]}>
                                                         {attachment.title}
                                                     </Text>
                                                 </TouchableOpacity>
@@ -945,22 +1071,22 @@ export const EventsContent = () => {
                                 )}
                         </ScrollView>
 
-                        <View style={eventsStyles.modalButtonsContainer}>
+                        <View style={styles.modalButtonsContainer}>
                             <TouchableOpacity
-                                style={eventsStyles.modalCloseButton}
+                                style={styles.modalCloseButton}
                                 onPress={() => setShowFullDescription(false)}
                             >
-                                <Text style={eventsStyles.buttonText}>{content?.ui.closeText || 'Close'}</Text>
+                                <Text style={styles.buttonText}>{content?.ui.closeText || 'Close'}</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={eventsStyles.modalActionButton}
+                                style={styles.modalActionButton}
                                 onPress={() => {
                                     setShowFullDescription(false);
                                     handleAddToCalendar(selectedEvent);
                                 }}
                             >
-                                <Text style={eventsStyles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
+                                <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

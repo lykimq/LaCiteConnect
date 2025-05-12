@@ -7,4 +7,5 @@ export type MainTabParamList = {
     GetConnected: undefined;
     Events: undefined;
     Donations: undefined;
+    Settings: undefined;
 };

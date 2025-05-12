@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking, Dimensions, ActivityIndicator } from 'react-native';
-import { homeStyles } from '../styles/HomeContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import WebView from 'react-native-webview';
 import { STATIC_URLS } from '../config/staticData';
 import { contentService } from '../services/contentService';
+import { useTheme } from '../contexts/ThemeContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { createHomeStyles } from '../styles/ThemedStyles';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +37,8 @@ export const HomeContent = () => {
     const [content, setContent] = useState<HomeContent | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const { themeColors } = useTheme();
+    const styles = useThemedStyles(createHomeStyles);
 
     useEffect(() => {
         loadContent();
@@ -68,37 +72,37 @@ export const HomeContent = () => {
 
     if (loading) {
         return (
-            <View style={[homeStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color="#FF9843" />
+            <View style={[styles.container, styles.loadingContainer]}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
             </View>
         );
     }
 
     if (error || !content) {
         return (
-            <View style={[homeStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 16, color: '#FF3B30' }}>{error || 'Content not available'}</Text>
+            <View style={[styles.container, styles.loadingContainer]}>
+                <Text style={styles.errorText}>{error || 'Content not available'}</Text>
                 <TouchableOpacity
-                    style={{ marginTop: 20, padding: 10, backgroundColor: '#FF9843', borderRadius: 8 }}
+                    style={styles.retryButton}
                     onPress={loadContent}
                 >
-                    <Text style={{ color: '#FFFFFF' }}>Retry</Text>
+                    <Text style={styles.retryButtonText}>Retry</Text>
                 </TouchableOpacity>
             </View>
         );
     }
 
     return (
-        <View style={homeStyles.container}>
+        <View style={styles.container}>
             <ScrollView
-                style={homeStyles.scrollView}
+                style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={homeStyles.header}>
-                    <Text style={homeStyles.title}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>
                         {content.header.title}
                     </Text>
-                    <Text style={homeStyles.subtitle}>
+                    <Text style={styles.subtitle}>
                         {content.header.subtitle}
                     </Text>
                 </View>
@@ -106,12 +110,12 @@ export const HomeContent = () => {
                 {content.sections.map((section, index) => {
                     if (section.id === 'sundayService') {
                         return (
-                            <View key={section.id} style={homeStyles.cardContainer}>
+                            <View key={section.id} style={styles.cardContainer}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
                                 </View>
-                                <Text style={homeStyles.infoText}>
+                                <Text style={styles.infoText}>
                                     {section.content}
                                 </Text>
                                 <View style={{
@@ -132,77 +136,80 @@ export const HomeContent = () => {
                                 </View>
                             </View>
                         );
-                    } else if (section.id === 'joinUs') {
+                    }
+                    if (section.id === 'findUs') {
                         return (
-                            <View key={section.id} style={homeStyles.cardContainer}>
+                            <View key={section.id} style={styles.cardContainer}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
                                 </View>
-                                <Text style={homeStyles.infoText}>
+                                <Text style={styles.infoText}>
                                     {section.content}
                                 </Text>
                                 <TouchableOpacity
-                                    style={homeStyles.button}
+                                    style={styles.button}
                                     onPress={handleFindUs}
                                 >
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                                        <Text style={homeStyles.buttonText}>
+                                        <Text style={styles.buttonText}>
                                             {section.buttonText}
                                         </Text>
                                     </View>
                                 </TouchableOpacity>
                             </View>
                         );
-                    } else if (section.id === 'joinOnline') {
+                    }
+                    if (section.id === 'watchOnline') {
                         return (
-                            <View key={section.id} style={homeStyles.cardContainer}>
+                            <View key={section.id} style={styles.cardContainer}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
                                 </View>
-                                <Text style={homeStyles.infoText}>
+                                <Text style={styles.infoText}>
                                     {section.content}
                                 </Text>
                                 <TouchableOpacity
-                                    style={homeStyles.button}
+                                    style={styles.button}
                                     onPress={handleWatchOnline}
                                 >
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                                        <Text style={homeStyles.buttonText}>{section.buttonText}</Text>
+                                        <Text style={styles.buttonText}>{section.buttonText}</Text>
                                     </View>
                                 </TouchableOpacity>
                             </View>
                         );
-                    } else if (section.id === 'information' && section.subsections) {
+                    }
+                    if (section.subsections) {
                         return (
-                            <View key={section.id} style={homeStyles.cardContainer}>
+                            <View key={section.id} style={styles.cardContainer}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
                                 </View>
                                 <View>
                                     {section.subsections.map((subsection, subIndex) => (
                                         <View key={`${section.id}-sub-${subIndex}`} style={{ marginBottom: 20 }}>
-                                            <Text style={{ fontSize: 16, fontWeight: '600', color: '#2C3E50', marginBottom: 10 }}>
+                                            <Text style={styles.subsectionTitle}>
                                                 {subsection.title}
                                             </Text>
                                             {subsection.text && (
-                                                <Text style={homeStyles.infoText}>
+                                                <Text style={styles.infoText}>
                                                     {subsection.text}
                                                 </Text>
                                             )}
                                             {subsection.items && subsection.items.map((item, itemIndex) => (
-                                                <View key={`item-${itemIndex}`} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                                                <View key={`item-${itemIndex}`} style={styles.itemRow}>
                                                     <Ionicons
                                                         name={(subsection.itemIcons?.[itemIndex] || subsection.itemIcon || 'checkmark-circle') as any}
                                                         size={20}
-                                                        color="#FF9843"
+                                                        color={themeColors.primary}
                                                         style={{ marginRight: 8 }}
                                                     />
-                                                    <Text style={homeStyles.infoText}>{item}</Text>
+                                                    <Text style={styles.infoText}>{item}</Text>
                                                 </View>
                                             ))}
                                         </View>
@@ -212,12 +219,12 @@ export const HomeContent = () => {
                         );
                     } else {
                         return (
-                            <View key={section.id} style={homeStyles.cardContainer}>
+                            <View key={section.id} style={styles.cardContainer}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
                                 </View>
-                                <Text style={homeStyles.infoText}>
+                                <Text style={styles.infoText}>
                                     {section.content}
                                 </Text>
                             </View>

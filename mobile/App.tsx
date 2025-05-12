@@ -1,8 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Platform } from 'react-native';
 import { AppNavigator } from './navigation/AppNavigator';
 import { initializeApp, preloadContent } from './services/appInitService';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+
+// Main app content that has access to theme context
+const AppContent = () => {
+  const { themeColors, theme } = useTheme();
+
+  // Create styles with current theme colors
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: themeColors.background,
+    },
+  });
+
+  // Apply proper status bar style based on theme
+  // Use light-content for dark mode and dark-content for light mode
+  // This ensures the status bar (battery, clock) is visible in both themes
+  const statusBarStyle = theme === 'dark' ? 'light' : 'dark';
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style={statusBarStyle} backgroundColor="transparent" translucent={true} />
+      <AppNavigator />
+    </View>
+  );
+};
 
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -31,21 +57,21 @@ export default function App() {
   // Show a loading indicator while initializing
   if (!isInitialized) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
+      <View style={[baseStyles.container, baseStyles.loadingContainer]}>
         <ActivityIndicator size="large" color="#FF9843" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <AppNavigator />
-      <StatusBar style="auto" />
-    </View>
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
-const styles = StyleSheet.create({
+// Base styles for the loading state (before theme is initialized)
+const baseStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
