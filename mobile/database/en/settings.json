@@ -30,12 +30,14 @@
                 {
                     "id": "termsOfService",
                     "label": "Terms of Service",
-                    "type": "link"
+                    "type": "link",
+                    "url": "https://laciteconnect.org/terms"
                 },
                 {
                     "id": "privacyPolicy",
                     "label": "Privacy Policy",
-                    "type": "link"
+                    "type": "link",
+                    "url": "https://laciteconnect.org/privacy"
                 }
             ]
         }
