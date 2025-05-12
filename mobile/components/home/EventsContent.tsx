@@ -32,37 +32,23 @@ interface GoogleCalendarEvent {
     location?: string;
 }
 
-type CalendarMode = 'lacite' | 'public' | 'my';
-
 export const EventsContent = ({ showProfileSection, userData }: EventsContentProps) => {
     const { colors } = useTheme();
     const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [calendarError, setCalendarError] = useState<string | null>(null);
-    const [calendarMode, setCalendarMode] = useState<CalendarMode>('public');
 
     useEffect(() => {
         fetchEvents();
-    }, [calendarMode]);
+    }, []);
 
     const fetchEvents = async () => {
         try {
             setLoading(true);
             setCalendarError(null);
 
-            let data: GoogleCalendarEvent[];
-            if (calendarMode === 'lacite') {
-                try {
-                    data = await calendarService.getLaCiteEvents();
-                } catch (error) {
-                    console.error('Error fetching La Cité events, falling back to public calendar:', error);
-                    setCalendarMode('public');
-                    data = await calendarService.getPublicEvents();
-                }
-            } else {
-                data = await calendarService.getPublicEvents();
-            }
-
+            // Fetch events from personal calendar
+            const data = await calendarService.getEvents();
             setEvents(data);
         } catch (error) {
             console.error('Error fetching events:', error);
@@ -72,33 +58,13 @@ export const EventsContent = ({ showProfileSection, userData }: EventsContentPro
         }
     };
 
-    const handleFindUs = () => {
-        Linking.openURL('https://maps.google.com/?q=24+Rue+Antoine-Julien-Hénard+75012+Paris');
-    };
-
-    const handleWatchOnline = () => {
-        Linking.openURL('https://www.youtube.com/watch?v=SmPZrx7W1Eo');
-    };
-
     const handleAddToCalendar = (event: GoogleCalendarEvent) => {
         const url = calendarService.generateAddToCalendarUrl(event);
         Linking.openURL(url);
     };
 
     const handleOpenCalendar = () => {
-        if (calendarMode === 'my') {
-            // Open the user's personal Google Calendar
-            Linking.openURL('https://calendar.google.com/calendar/u/0/r?hl=en-GB');
-        } else {
-            const url = calendarMode === 'lacite'
-                ? 'https://calendar.google.com/calendar/u/0?cid=ZWdsaXNlbGFjaXRlLmNvbV9ldmVudHNAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ'
-                : 'https://calendar.google.com/calendar/u/0?cid=ZW4uZnJlbmNoI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t';
-            Linking.openURL(url);
-        }
-    };
-
-    const toggleCalendarMode = () => {
-        setCalendarMode(prev => prev === 'lacite' ? 'public' : 'lacite');
+        Linking.openURL(calendarService.getCalendarEmbedUrl());
     };
 
     const formatEventDate = (event: GoogleCalendarEvent) => {
@@ -147,26 +113,51 @@ export const EventsContent = ({ showProfileSection, userData }: EventsContentPro
         </View>
     );
 
-    const getCalendarTitle = () => {
-        switch (calendarMode) {
-            case 'lacite': return 'La Cité Events';
-            case 'public': return 'French Holidays';
-            case 'my': return 'My Personal Calendar';
-            default: return 'Calendar';
-        }
+    // Group events by month
+    const groupEventsByMonth = (eventsList: GoogleCalendarEvent[]) => {
+        const grouped: { [key: string]: GoogleCalendarEvent[] } = {};
+
+        eventsList.forEach(event => {
+            // Get month and year from event date
+            let eventDate;
+            if (event.start.dateTime) {
+                eventDate = new Date(event.start.dateTime);
+            } else if (event.start.date) {
+                eventDate = new Date(event.start.date);
+            } else {
+                return; // Skip if no date
+            }
+
+            const monthYear = `${eventDate.toLocaleString('default', { month: 'long' })} ${eventDate.getFullYear()}`;
+
+            if (!grouped[monthYear]) {
+                grouped[monthYear] = [];
+            }
+
+            grouped[monthYear].push(event);
+        });
+
+        return grouped;
     };
 
-    const getCalendarEmbedUrl = () => {
-        switch (calendarMode) {
-            case 'lacite':
-                return calendarService.getCalendarEmbedUrl('egliselacite.com_events@group.calendar.google.com');
-            case 'my':
-                // For personal calendar, we'll open in a browser instead
-                return 'https://calendar.google.com/calendar/embed?src=primary';
-            case 'public':
-            default:
-                return calendarService.getCalendarEmbedUrl('en.french#holiday@group.v.calendar.google.com');
-        }
+    // Render grouped events by month
+    const renderGroupedEvents = () => {
+        const groupedEvents = groupEventsByMonth(events);
+        const monthKeys = Object.keys(groupedEvents);
+
+        // Sort months chronologically
+        monthKeys.sort((a, b) => {
+            const dateA = new Date(groupedEvents[a][0].start.dateTime || groupedEvents[a][0].start.date || "");
+            const dateB = new Date(groupedEvents[b][0].start.dateTime || groupedEvents[b][0].start.date || "");
+            return dateA.getTime() - dateB.getTime();
+        });
+
+        return monthKeys.map(month => (
+            <View key={month} style={styles.monthGroup}>
+                <Text style={styles.monthTitle}>{month}</Text>
+                {groupedEvents[month].map(renderEventCard)}
+            </View>
+        ));
     };
 
     return (
@@ -176,58 +167,19 @@ export const EventsContent = ({ showProfileSection, userData }: EventsContentPro
         >
             <View style={[welcomeStyles.header, { marginTop: 40 }]}>
                 <Text style={[welcomeStyles.title, { color: colors.text }]}>
-                    {showProfileSection && userData ? 'Welcome to La Cité Connect' : 'Our Events'}
+                    My Calendar
                 </Text>
                 <Text style={[welcomeStyles.subtitle, { color: colors.textSecondary }]}>
-                    {showProfileSection && userData
-                        ? 'To know Jesus and make Him known in Paris'
-                        : 'Join us for our upcoming events'}
+                    View and manage your upcoming events
                 </Text>
             </View>
 
             <View style={welcomeStyles.featuresContainer}>
-                {/* Calendar Selection */}
-                <View style={styles.calendarSelector}>
-                    <TouchableOpacity
-                        style={[
-                            styles.calendarOption,
-                            calendarMode === 'public' && styles.calendarOptionActive
-                        ]}
-                        onPress={() => setCalendarMode('public')}
-                    >
-                        <Text style={[
-                            styles.calendarOptionText,
-                            calendarMode === 'public' && styles.calendarOptionTextActive
-                        ]}>
-                            French Holidays
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.calendarOption,
-                            calendarMode === 'my' && styles.calendarOptionActive
-                        ]}
-                        onPress={() => {
-                            setCalendarMode('my');
-                            // When selecting My Calendar, open it directly
-                            Linking.openURL('https://calendar.google.com/calendar/u/0/r?hl=en-GB');
-                        }}
-                    >
-                        <Text style={[
-                            styles.calendarOptionText,
-                            calendarMode === 'my' && styles.calendarOptionTextActive
-                        ]}>
-                            My Calendar
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
                 {/* Google Calendar Integration */}
                 <View style={welcomeStyles.featureCard}>
                     <View style={styles.cardHeader}>
                         <Ionicons name="calendar" size={24} color="#FF9843" style={styles.cardIcon} />
-                        <Text style={welcomeStyles.featureTitle}>{getCalendarTitle()}</Text>
+                        <Text style={welcomeStyles.featureTitle}>Personal Calendar</Text>
 
                         <TouchableOpacity
                             style={styles.openCalendarButton}
@@ -237,71 +189,52 @@ export const EventsContent = ({ showProfileSection, userData }: EventsContentPro
                         </TouchableOpacity>
                     </View>
 
-                    {calendarMode === 'my' ? (
-                        <View style={styles.directCalendarAccess}>
-                            <Text style={styles.directCalendarText}>
-                                Access your personal calendar directly through Google Calendar
-                            </Text>
-                            <TouchableOpacity
-                                style={styles.openGoogleCalendarButton}
-                                onPress={() => Linking.openURL('https://calendar.google.com/calendar/u/0/r?hl=en-GB')}
-                            >
-                                <Ionicons name="open" size={16} color="#FFFFFF" style={styles.buttonIcon} />
-                                <Text style={styles.openGoogleCalendarText}>Open Google Calendar</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ) : (
-                        <View style={styles.calendarContainer}>
-                            <WebView
-                                source={{ uri: getCalendarEmbedUrl() }}
-                                style={styles.calendar}
-                                javaScriptEnabled={true}
-                                domStorageEnabled={true}
-                                androidLayerType="hardware"
-                                androidHardwareAccelerationDisabled={false}
-                                onError={(syntheticEvent) => {
-                                    const { nativeEvent } = syntheticEvent;
-                                    console.warn('WebView error: ', nativeEvent);
-                                    setCalendarError('Failed to load calendar view. Please try again later.');
-                                }}
-                            />
-                        </View>
-                    )}
+                    <View style={styles.calendarContainer}>
+                        <WebView
+                            source={{ uri: calendarService.getCalendarEmbedUrl() }}
+                            style={styles.calendar}
+                            javaScriptEnabled={true}
+                            domStorageEnabled={true}
+                            androidLayerType="hardware"
+                            androidHardwareAccelerationDisabled={false}
+                            onError={(syntheticEvent) => {
+                                const { nativeEvent } = syntheticEvent;
+                                console.warn('WebView error: ', nativeEvent);
+                                setCalendarError('Failed to load calendar view. Please try again later.');
+                            }}
+                        />
+                    </View>
 
-                    {calendarError && calendarMode !== 'my' && (
+                    {calendarError && (
                         <Text style={styles.errorText}>{calendarError}</Text>
                     )}
                 </View>
 
                 {/* Upcoming Events List */}
-                {calendarMode !== 'my' && (
-                    <View style={welcomeStyles.featureCard}>
-                        <View style={styles.cardHeader}>
-                            <Ionicons name="list" size={24} color="#FF9843" style={styles.cardIcon} />
-                            <Text style={welcomeStyles.featureTitle}>Upcoming Events</Text>
-                        </View>
-                        {loading ? (
-                            <ActivityIndicator size="large" color="#FF9843" style={styles.loader} />
-                        ) : calendarError ? (
-                            <Text style={styles.errorText}>{calendarError}</Text>
-                        ) : events.length > 0 ? (
-                            events.map(renderEventCard)
-                        ) : (
-                            <Text style={styles.noEventsText}>No upcoming events at the moment.</Text>
-                        )}
+                <View style={welcomeStyles.featureCard}>
+                    <View style={styles.cardHeader}>
+                        <Ionicons name="list" size={24} color="#FF9843" style={styles.cardIcon} />
+                        <Text style={welcomeStyles.featureTitle}>Upcoming Events</Text>
                     </View>
-                )}
+                    {loading ? (
+                        <ActivityIndicator size="large" color="#FF9843" style={styles.loader} />
+                    ) : calendarError ? (
+                        <Text style={styles.errorText}>{calendarError}</Text>
+                    ) : events.length > 0 ? (
+                        renderGroupedEvents()
+                    ) : (
+                        <Text style={styles.noEventsText}>No upcoming events at the moment.</Text>
+                    )}
+                </View>
 
-                {/* Refresh Button - only show for public calendars */}
-                {calendarMode !== 'my' && (
-                    <TouchableOpacity
-                        style={styles.refreshButton}
-                        onPress={fetchEvents}
-                    >
-                        <Ionicons name="refresh" size={16} color="#FFFFFF" style={styles.buttonIcon} />
-                        <Text style={styles.refreshButtonText}>Refresh Events</Text>
-                    </TouchableOpacity>
-                )}
+                {/* Refresh Button */}
+                <TouchableOpacity
+                    style={styles.refreshButton}
+                    onPress={fetchEvents}
+                >
+                    <Ionicons name="refresh" size={16} color="#FFFFFF" style={styles.buttonIcon} />
+                    <Text style={styles.refreshButtonText}>Refresh Events</Text>
+                </TouchableOpacity>
             </View>
         </ScrollView>
     );
@@ -444,29 +377,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginVertical: 20,
     },
-    signInButton: {
-        backgroundColor: '#4285F4',
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 8,
-        marginTop: 15,
-        alignSelf: 'center',
-    },
-    signInButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    authContainer: {
-        padding: 20,
-        alignItems: 'center',
-    },
-    infoText: {
-        fontSize: 14,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 15,
-    },
     refreshButton: {
         backgroundColor: '#FF9843',
         paddingVertical: 12,
@@ -483,59 +393,23 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-    calendarSelector: {
-        flexDirection: 'row',
-        marginBottom: 15,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 8,
-        overflow: 'hidden',
+    monthGroup: {
+        marginBottom: 20,
     },
-    calendarOption: {
-        flex: 1,
-        paddingVertical: 12,
-        alignItems: 'center',
-    },
-    calendarOptionActive: {
-        backgroundColor: '#FF9843',
-    },
-    calendarOptionText: {
-        fontSize: 14,
-        color: '#666',
-        fontWeight: '500',
-    },
-    calendarOptionTextActive: {
-        color: '#FFFFFF',
+    monthTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#2C3E50',
+        marginBottom: 10,
+        paddingHorizontal: 5,
+        paddingVertical: 8,
+        backgroundColor: '#f8f9fa',
+        borderRadius: 5,
+        borderLeftWidth: 3,
+        borderLeftColor: '#FF9843',
     },
     openCalendarButton: {
         marginLeft: 'auto',
         padding: 5,
-    },
-    directCalendarAccess: {
-        padding: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f9f9f9',
-        borderRadius: 8,
-        marginTop: 15,
-    },
-    directCalendarText: {
-        fontSize: 16,
-        color: '#555',
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    openGoogleCalendarButton: {
-        backgroundColor: '#4285F4',
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    openGoogleCalendarText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
     },
 });

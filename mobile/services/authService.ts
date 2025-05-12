@@ -2,7 +2,6 @@ import { LoginCredentials, RegisterCredentials, AuthResponse } from '../types/au
 import { API_BASE_URL } from '../config/api';
 import { uploadService } from './uploadService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GOOGLE_CONFIG } from '../config/google';
 
 const TOKEN_KEY = '@auth_token';
 const REFRESH_TOKEN_KEY = '@refresh_token';
@@ -192,23 +191,23 @@ export const authService = {
                 return null;
             }
 
-            const response = await fetch('https://oauth2.googleapis.com/token', {
+            // Use the backend API to refresh the token
+            const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: new URLSearchParams({
-                    client_id: GOOGLE_CONFIG.clientId,
-                    client_secret: GOOGLE_CONFIG.clientSecret,
-                    refresh_token: refreshToken,
-                    grant_type: 'refresh_token',
-                }),
+                body: JSON.stringify({ refreshToken }),
             });
 
+            if (!response.ok) {
+                throw new Error('Failed to refresh token');
+            }
+
             const data = await response.json();
-            if (data.access_token) {
-                await AsyncStorage.setItem(TOKEN_KEY, data.access_token);
-                return data.access_token;
+            if (data.accessToken) {
+                await AsyncStorage.setItem(TOKEN_KEY, data.accessToken);
+                return data.accessToken;
             }
             return null;
         } catch (error) {
