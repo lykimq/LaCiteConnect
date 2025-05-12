@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, Clipboard, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Clipboard, ActivityIndicator, Image, ToastAndroid, Platform, Alert, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS, BANK_DETAILS } from '../config/staticData';
 import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createDonationStyles } from '../styles/ThemedStyles';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Define the donation content interface
 interface DonationContent {
@@ -39,6 +40,7 @@ export const DonationContent = () => {
     const [content, setContent] = useState<DonationContent | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [copiedText, setCopiedText] = useState<string | null>(null);
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createDonationStyles);
 
@@ -64,9 +66,21 @@ export const DonationContent = () => {
         }
     };
 
-    const handleCopyToClipboard = (text: string) => {
+    const handleCopyToClipboard = (text: string, label: string) => {
         Clipboard.setString(text);
-        // You might want to add a toast notification here
+        setCopiedText(text);
+
+        // Show toast notification
+        if (Platform.OS === 'android') {
+            ToastAndroid.show(`${label} copied to clipboard`, ToastAndroid.SHORT);
+        } else {
+            Alert.alert('Copied', `${label} copied to clipboard`);
+        }
+
+        // Reset copied text after 3 seconds
+        setTimeout(() => {
+            setCopiedText(null);
+        }, 3000);
     };
 
     const handleOpenLink = (url: string) => {
@@ -123,6 +137,20 @@ export const DonationContent = () => {
         }
     };
 
+    // Helper function to get icon for each fund type
+    const getFundIcon = (sectionId: string) => {
+        switch (sectionId) {
+            case 'missionFund':
+                return 'heart-circle-outline';
+            case 'buildingFund':
+                return 'business-outline';
+            case 'lesMainsTendues':
+                return 'hand-left-outline';
+            default:
+                return 'cash-outline';
+        }
+    };
+
     return (
         <View style={styles.container}>
             <ScrollView
@@ -130,6 +158,8 @@ export const DonationContent = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.header}>
+                    <Ionicons name="heart-circle" size={60} color={themeColors.primary} />
+                    <View style={styles.headerDivider} />
                     <Text style={styles.title}>
                         {content.header.title}
                     </Text>
@@ -143,24 +173,15 @@ export const DonationContent = () => {
                         return (
                             <View key={section.id} style={styles.cardContainer}>
                                 <Text style={styles.sectionTitle}>{section.title}</Text>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
+                                <View style={styles.donationButtonsContainer}>
                                     {section.buttons?.map((button, buttonIndex) => (
                                         <TouchableOpacity
                                             key={`button-${buttonIndex}`}
-                                            style={{
-                                                backgroundColor: themeColors.primary,
-                                                paddingVertical: 12,
-                                                paddingHorizontal: 15,
-                                                borderRadius: 8,
-                                                flex: 1,
-                                                marginHorizontal: 5,
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                            }}
+                                            style={styles.donationButton}
                                             onPress={() => handleOpenLink(getDonationUrl(buttonIndex))}
+                                            activeOpacity={0.7}
                                         >
-                                            <Ionicons name={button.icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                            <Ionicons name={button.icon as any} size={28} color="#FFFFFF" style={styles.buttonIcon} />
                                             <Text style={styles.buttonText}>{button.text}</Text>
                                         </TouchableOpacity>
                                     ))}
@@ -181,37 +202,65 @@ export const DonationContent = () => {
                         const accountName = section.details?.accountName || '';
                         const iban = section.details?.iban || '';
                         const bic = section.details?.bic || '';
+                        const icon = getFundIcon(section.id);
 
                         return (
                             <View key={section.id} style={styles.cardContainer}>
-                                <Text style={styles.sectionTitle}>{section.title}</Text>
+                                <View style={styles.cardHeader}>
+                                    <Ionicons name={icon as any} size={24} color={themeColors.primary} style={styles.cardHeaderIcon} />
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                </View>
+
                                 <Text style={styles.paragraph}>
                                     {section.description}
                                 </Text>
-                                <View style={{
-                                    marginTop: 10,
-                                    backgroundColor: themeColors.card,
-                                    padding: 15,
-                                    borderRadius: 8,
-                                    borderWidth: 1,
-                                    borderColor: themeColors.border
-                                }}>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                        <Text style={{ fontSize: 14, color: themeColors.text, fontWeight: '500' }}>{section.labels.accountName}</Text>
-                                        <TouchableOpacity onPress={() => handleCopyToClipboard(accountName)}>
-                                            <Text style={{ fontSize: 14, color: themeColors.primary, fontWeight: '600' }}>{accountName}</Text>
+
+                                <View style={styles.bankDetailsContainer}>
+                                    <View style={styles.bankDetailRow}>
+                                        <Text style={styles.bankDetailLabel}>{section.labels.accountName}</Text>
+                                        <TouchableOpacity
+                                            style={styles.bankDetailValueContainer}
+                                            onPress={() => handleCopyToClipboard(accountName, 'Account name')}
+                                            activeOpacity={0.6}
+                                        >
+                                            <Text style={styles.bankDetailValue}>{accountName}</Text>
+                                            <Ionicons
+                                                name={copiedText === accountName ? "checkmark" : "copy-outline"}
+                                                size={20}
+                                                color={copiedText === accountName ? "#4CAF50" : themeColors.primary}
+                                            />
                                         </TouchableOpacity>
                                     </View>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                        <Text style={{ fontSize: 14, color: themeColors.text, fontWeight: '500' }}>{section.labels.iban}</Text>
-                                        <TouchableOpacity onPress={() => handleCopyToClipboard(iban)}>
-                                            <Text style={{ fontSize: 14, color: themeColors.primary, fontWeight: '600' }}>{iban}</Text>
+
+                                    <View style={styles.bankDetailRow}>
+                                        <Text style={styles.bankDetailLabel}>{section.labels.iban}</Text>
+                                        <TouchableOpacity
+                                            style={styles.bankDetailValueContainer}
+                                            onPress={() => handleCopyToClipboard(iban, 'IBAN')}
+                                            activeOpacity={0.6}
+                                        >
+                                            <Text style={styles.bankDetailValue}>{iban}</Text>
+                                            <Ionicons
+                                                name={copiedText === iban ? "checkmark" : "copy-outline"}
+                                                size={20}
+                                                color={copiedText === iban ? "#4CAF50" : themeColors.primary}
+                                            />
                                         </TouchableOpacity>
                                     </View>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Text style={{ fontSize: 14, color: themeColors.text, fontWeight: '500' }}>{section.labels.bic}</Text>
-                                        <TouchableOpacity onPress={() => handleCopyToClipboard(bic)}>
-                                            <Text style={{ fontSize: 14, color: themeColors.primary, fontWeight: '600' }}>{bic}</Text>
+
+                                    <View style={[styles.bankDetailRow, { marginBottom: 0, paddingBottom: 0, borderBottomWidth: 0 }]}>
+                                        <Text style={styles.bankDetailLabel}>{section.labels.bic}</Text>
+                                        <TouchableOpacity
+                                            style={styles.bankDetailValueContainer}
+                                            onPress={() => handleCopyToClipboard(bic, 'BIC/SWIFT')}
+                                            activeOpacity={0.6}
+                                        >
+                                            <Text style={styles.bankDetailValue}>{bic}</Text>
+                                            <Ionicons
+                                                name={copiedText === bic ? "checkmark" : "copy-outline"}
+                                                size={20}
+                                                color={copiedText === bic ? "#4CAF50" : themeColors.primary}
+                                            />
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -230,6 +279,17 @@ export const DonationContent = () => {
                         );
                     }
                 })}
+
+                <View style={styles.donateNowContainer}>
+                    <TouchableOpacity
+                        style={styles.donateNowButton}
+                        onPress={() => handleOpenLink(STATIC_URLS.donate.mission)}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="heart" size={24} color="#FFFFFF" style={{ marginRight: 10 }} />
+                        <Text style={styles.donateNowButtonText}>Donate Now</Text>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
         </View>
     );
