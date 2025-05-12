@@ -1006,25 +1006,45 @@ export const EventsContent = () => {
         ];
 
         return (
-            <View style={styles.monthPicker}>
-                {months.map((month, index) => (
-                    <TouchableOpacity
-                        key={month}
-                        style={[
-                            styles.monthPickerItem,
-                            currentMonth === index && styles.monthPickerItemActive
-                        ]}
-                        onPress={() => selectMonth(index)}
-                    >
-                        <Text style={[
-                            styles.monthPickerText,
-                            currentMonth === index && styles.monthPickerTextActive
-                        ]}>
-                            {month}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+            <Modal
+                visible={showMonthPicker}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowMonthPicker(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.monthPickerModal}>
+                        <View style={styles.monthPickerHeader}>
+                            <Text style={styles.monthPickerTitle}>{content?.ui.monthViewText || 'Select Month'}</Text>
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={() => setShowMonthPicker(false)}
+                            >
+                                <Ionicons name="close" size={24} color={themeColors.text} />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.monthPicker}>
+                            {months.map((month, index) => (
+                                <TouchableOpacity
+                                    key={`month-${index}`}
+                                    style={[
+                                        styles.monthPickerItem,
+                                        currentMonth === index && styles.monthPickerItemActive
+                                    ]}
+                                    onPress={() => selectMonth(index)}
+                                >
+                                    <Text style={[
+                                        styles.monthPickerText,
+                                        currentMonth === index && styles.monthPickerTextActive
+                                    ]}>
+                                        {month}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         );
     };
 
@@ -1039,7 +1059,7 @@ export const EventsContent = () => {
             <View style={styles.monthPicker}>
                 {months.map((month, index) => (
                     <TouchableOpacity
-                        key={month}
+                        key={`holiday-month-${index}`}
                         style={[
                             styles.monthPickerItem,
                             holidayMonth === index && styles.monthPickerItemActive

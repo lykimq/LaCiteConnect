@@ -1286,6 +1286,35 @@ export const createEventsStyles = (colors: any) => StyleSheet.create({
         fontWeight: '600',
         color: colors.text,
     },
+    monthPickerModal: {
+        backgroundColor: colors.card,
+        borderRadius: 12,
+        padding: 20,
+        width: '90%',
+        maxHeight: '80%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    monthPickerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 15,
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    monthPickerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: colors.text,
+    },
+    closeButton: {
+        padding: 8,
+    },
 });
 
 /**

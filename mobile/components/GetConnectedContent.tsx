@@ -54,7 +54,6 @@ export const GetConnectedContent = () => {
     const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({});
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createGetConnectedStyles);
-    const animatedValues = useRef<{ [key: string]: Animated.Value }>({});
     const scrollViewRef = useRef<ScrollView>(null);
 
     useEffect(() => {
@@ -63,10 +62,8 @@ export const GetConnectedContent = () => {
 
     useEffect(() => {
         if (content) {
-            // Initialize animation values for each section
             const initialExpandedState: { [key: string]: boolean } = {};
             content.sections.forEach(section => {
-                animatedValues.current[section.id] = new Animated.Value(0);
                 initialExpandedState[section.id] = false;
             });
             setExpandedSections(initialExpandedState);
@@ -92,31 +89,23 @@ export const GetConnectedContent = () => {
     };
 
     const toggleSection = (sectionId: string) => {
-        // Update expanded state immediately
         setExpandedSections(prev => {
             const newState = { ...prev, [sectionId]: !prev[sectionId] };
 
-            // Animate the section expansion/collapse
-            Animated.timing(animatedValues.current[sectionId], {
-                toValue: newState[sectionId] ? 1 : 0,
-                duration: 200, // Faster animation for better responsiveness
-                useNativeDriver: false,
-            }).start(() => {
-                // Scroll to the expanded section if it was expanded
-                if (newState[sectionId] && scrollViewRef.current && content) {
-                    const sectionIndex = content.sections.findIndex(s => s.id === sectionId);
-                    if (sectionIndex !== -1) {
-                        setTimeout(() => {
-                            if (scrollViewRef.current) {
-                                scrollViewRef.current.scrollTo({
-                                    y: sectionIndex * 150,
-                                    animated: true
-                                });
-                            }
-                        }, 100);
-                    }
+            // Scroll to the expanded section if it was expanded
+            if (newState[sectionId] && scrollViewRef.current && content) {
+                const sectionIndex = content.sections.findIndex(s => s.id === sectionId);
+                if (sectionIndex !== -1) {
+                    setTimeout(() => {
+                        if (scrollViewRef.current) {
+                            scrollViewRef.current.scrollTo({
+                                y: sectionIndex * 150,
+                                animated: true
+                            });
+                        }
+                    }, 100);
                 }
-            });
+            }
 
             return newState;
         });
@@ -202,20 +191,10 @@ export const GetConnectedContent = () => {
     };
 
     const renderSectionContent = (section: GetConnectedContent['sections'][0]) => {
-        const animation = animatedValues.current[section.id] || new Animated.Value(0);
-
-        const maxHeight = animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 1000] // Large enough value to accommodate content
-        });
-
-        const opacity = animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 1]
-        });
+        if (!expandedSections[section.id]) return null;
 
         return (
-            <Animated.View style={{ maxHeight, opacity, overflow: 'hidden' }}>
+            <View>
                 <Text style={styles.paragraph}>
                     {section.content}
                 </Text>
@@ -279,7 +258,7 @@ export const GetConnectedContent = () => {
                         </TouchableOpacity>
                     </View>
                 )}
-            </Animated.View>
+            </View>
         );
     };
 

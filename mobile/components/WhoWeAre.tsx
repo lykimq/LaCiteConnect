@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,6 @@ import {
     Linking,
     Dimensions,
     ActivityIndicator,
-    Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS } from '../config/staticData';
@@ -53,22 +52,10 @@ export const WhoWeAreContent = () => {
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createWhoWeAreStyles);
-    const animatedValues = useRef<{ [key: string]: Animated.Value }>({});
-    const animationsInProgress = useRef<{ [key: string]: boolean }>({});
 
     useEffect(() => {
         loadContent();
     }, []);
-
-    useEffect(() => {
-        if (content) {
-            // Initialize animation values for each section
-            content.sections.forEach(section => {
-                animatedValues.current[section.id] = new Animated.Value(0);
-                animationsInProgress.current[section.id] = false;
-            });
-        }
-    }, [content]);
 
     const loadContent = async () => {
         try {
@@ -89,24 +76,7 @@ export const WhoWeAreContent = () => {
     };
 
     const toggleSection = (sectionId: string) => {
-        // Prevent multiple clicks during animation
-        if (animationsInProgress.current[sectionId]) {
-            return;
-        }
-
-        animationsInProgress.current[sectionId] = true;
-        const newExpandedSection = expandedSection === sectionId ? null : sectionId;
-        setExpandedSection(newExpandedSection);
-
-        // Animate the section expansion/collapse
-        Animated.timing(animatedValues.current[sectionId], {
-            toValue: newExpandedSection === sectionId ? 1 : 0,
-            duration: 250, // Reduced animation time for better responsiveness
-            useNativeDriver: false,
-        }).start(() => {
-            // Animation is complete
-            animationsInProgress.current[sectionId] = false;
-        });
+        setExpandedSection(expandedSection === sectionId ? null : sectionId);
     };
 
     if (loading) {
@@ -149,17 +119,13 @@ export const WhoWeAreContent = () => {
 
     const renderSectionContent = (section: WhoWeAreContent['sections'][0]) => {
         const isExpanded = expandedSection === section.id;
-        const animation = animatedValues.current[section.id] || new Animated.Value(0);
 
-        const maxHeight = animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 1000] // Large enough value to accommodate content
-        });
+        if (!isExpanded) return null;
 
         switch (section.id) {
             case 'ourChurch':
                 return (
-                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                    <View>
                         <Text style={styles.paragraph}>
                             {section.content?.split('(NCMI)').map((part, i) => {
                                 if (i === 0) {
@@ -175,11 +141,11 @@ export const WhoWeAreContent = () => {
                                 return <React.Fragment key={i}>{part}</React.Fragment>;
                             })}
                         </Text>
-                    </Animated.View>
+                    </View>
                 );
             case 'ourCulture':
                 return (
-                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                    <View>
                         <View style={{ marginTop: 10 }}>
                             {section.values?.map((value, i) => (
                                 <View key={i} style={styles.valueItem}>
@@ -190,11 +156,11 @@ export const WhoWeAreContent = () => {
                                 </View>
                             ))}
                         </View>
-                    </Animated.View>
+                    </View>
                 );
             case 'ourEldershipTeam':
                 return (
-                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                    <View>
                         <View style={styles.teamGrid}>
                             {section.team?.map((member, i) => (
                                 <View key={i} style={styles.teamMemberCard}>
@@ -210,11 +176,11 @@ export const WhoWeAreContent = () => {
                                 </View>
                             ))}
                         </View>
-                    </Animated.View>
+                    </View>
                 );
             case 'ourStatement':
                 return (
-                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                    <View>
                         <Text style={styles.paragraph}>
                             {section.content}
                         </Text>
@@ -227,15 +193,15 @@ export const WhoWeAreContent = () => {
                                 {section.buttonText}
                             </Text>
                         </TouchableOpacity>
-                    </Animated.View>
+                    </View>
                 );
             default:
                 return (
-                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                    <View>
                         <Text style={styles.paragraph}>
                             {section.content}
                         </Text>
-                    </Animated.View>
+                    </View>
                 );
         }
     };
