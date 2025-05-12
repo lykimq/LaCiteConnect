@@ -1,3 +1,0 @@
-- test@example.com; Test123!
-- test1@example.com; Test123!
-- test2@example.com; Test123!
