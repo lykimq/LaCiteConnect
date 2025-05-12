@@ -1598,20 +1598,24 @@ export const createDonationStyles = (colors: any) => StyleSheet.create({
     },
     cardHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         marginBottom: 16,
         paddingBottom: 12,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+        flexWrap: 'wrap',
     },
     cardHeaderIcon: {
         marginRight: 12,
+        marginTop: 4,
     },
     sectionTitle: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: 'bold',
         color: colors.text,
         marginBottom: 15,
+        flex: 1,
+        flexWrap: 'wrap',
     },
     paragraph: {
         fontSize: 16,
@@ -1629,7 +1633,7 @@ export const createDonationStyles = (colors: any) => StyleSheet.create({
     donationButton: {
         backgroundColor: colors.primary,
         paddingVertical: 16,
-        paddingHorizontal: 15,
+        paddingHorizontal: 12,
         borderRadius: 12,
         flex: 1,
         flexDirection: 'column',
@@ -1640,15 +1644,17 @@ export const createDonationStyles = (colors: any) => StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3,
+        minHeight: 100,
     },
     buttonIcon: {
         marginBottom: 10,
     },
     buttonText: {
         color: '#fff',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
         textAlign: 'center',
+        flexWrap: 'wrap',
     },
     bankDetailsContainer: {
         marginTop: 16,
