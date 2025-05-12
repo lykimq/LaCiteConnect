@@ -17,6 +17,7 @@ export const themes = {
             border: '#E0E0E0',
             notification: '#FF9843',
             accent: '#FFE4C4',
+            error: '#FF3B30',
         }
     },
     dark: {
@@ -31,6 +32,7 @@ export const themes = {
             border: '#333333',
             notification: '#FF9843',
             accent: '#442D1A',
+            error: '#FF453A',
         }
     },
 };

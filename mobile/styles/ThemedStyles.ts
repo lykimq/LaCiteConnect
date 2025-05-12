@@ -9,10 +9,17 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
         padding: 16,
         backgroundColor: colors.background,
     },
-    header: {
-        marginBottom: 20,
+    scrollView: {
+        flex: 1,
+    },
+    scrollViewContent: {
+        paddingBottom: 20,
+    },
+    heroSection: {
+        marginBottom: 24,
         marginTop: 30,
         alignItems: 'center',
+        paddingHorizontal: 10,
     },
     logo: {
         width: 50,
@@ -34,10 +41,48 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
         marginBottom: 20,
         textAlign: 'center',
     },
+    featureGridContainer: {
+        marginBottom: 24,
+    },
+    featureRow: {
+        justifyContent: 'space-between',
+        marginBottom: 16,
+    },
+    featureCard: {
+        width: '48%',
+        backgroundColor: colors.card,
+        borderRadius: 12,
+        padding: 16,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        borderColor: colors.border,
+        borderWidth: 1,
+    },
+    featureIconContainer: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    featureTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.text,
+        textAlign: 'center',
+    },
     cardContainer: {
         backgroundColor: colors.card,
-        borderRadius: 10,
-        padding: 16,
+        borderRadius: 12,
+        padding: 18,
         marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -47,11 +92,35 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
         borderColor: colors.border,
         borderWidth: 1,
     },
+    streamCardContainer: {
+        backgroundColor: colors.card,
+        borderRadius: 12,
+        padding: 18,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        borderColor: colors.border,
+        borderWidth: 1,
+    },
+    sectionHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginBottom: 12,
+    },
+    sectionHeaderIcon: {
+        marginRight: 10,
+        marginTop: 2,
+        flexShrink: 0,
+    },
     sectionTitle: {
         fontSize: 22,
         fontWeight: 'bold',
         color: colors.text,
         marginBottom: 15,
+        flex: 1,
     },
     infoText: {
         fontSize: 16,
@@ -59,6 +128,18 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
         opacity: 0.8,
         lineHeight: 24,
         marginBottom: 12,
+    },
+    videoContainer: {
+        marginTop: 15,
+        width: '100%',
+        height: 200,
+        borderRadius: 12,
+        overflow: 'hidden',
+        backgroundColor: '#000',
+    },
+    videoWebView: {
+        flex: 1,
+        backgroundColor: '#000',
     },
     image: {
         width: '100%',
@@ -109,9 +190,6 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
         width: 24,
         marginRight: 10,
     },
-    scrollView: {
-        flex: 1,
-    },
     loadingContainer: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -128,6 +206,9 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
     },
     retryButtonText: {
         color: '#FFFFFF',
+    },
+    subsectionContainer: {
+        marginBottom: 20,
     },
     subsectionTitle: {
         fontSize: 16,
@@ -147,6 +228,19 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
         marginRight: 8,
         marginTop: 2,
         flexShrink: 0,
+    },
+    skeletonContainer: {
+        backgroundColor: colors.card,
+    },
+    skeletonBox: {
+        backgroundColor: colors.border,
+        borderRadius: 4,
+        opacity: 0.15,
+    },
+    skeletonCircle: {
+        backgroundColor: colors.border,
+        borderRadius: 100,
+        opacity: 0.15,
     },
 });
 
