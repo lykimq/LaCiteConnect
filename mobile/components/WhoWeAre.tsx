@@ -1,5 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, Linking, Dimensions, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+    View,
+    Text,
+    Image,
+    ScrollView,
+    TouchableOpacity,
+    Linking,
+    Dimensions,
+    ActivityIndicator,
+    Animated
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS } from '../config/staticData';
 import { contentService } from '../services/contentService';
@@ -40,12 +50,25 @@ export const WhoWeAreContent = () => {
     const [content, setContent] = useState<WhoWeAreContent | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [expandedSection, setExpandedSection] = useState<string | null>(null);
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createWhoWeAreStyles);
+    const animatedValues = useRef<{ [key: string]: Animated.Value }>({});
+    const animationsInProgress = useRef<{ [key: string]: boolean }>({});
 
     useEffect(() => {
         loadContent();
     }, []);
+
+    useEffect(() => {
+        if (content) {
+            // Initialize animation values for each section
+            content.sections.forEach(section => {
+                animatedValues.current[section.id] = new Animated.Value(0);
+                animationsInProgress.current[section.id] = false;
+            });
+        }
+    }, [content]);
 
     const loadContent = async () => {
         try {
@@ -63,6 +86,27 @@ export const WhoWeAreContent = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const toggleSection = (sectionId: string) => {
+        // Prevent multiple clicks during animation
+        if (animationsInProgress.current[sectionId]) {
+            return;
+        }
+
+        animationsInProgress.current[sectionId] = true;
+        const newExpandedSection = expandedSection === sectionId ? null : sectionId;
+        setExpandedSection(newExpandedSection);
+
+        // Animate the section expansion/collapse
+        Animated.timing(animatedValues.current[sectionId], {
+            toValue: newExpandedSection === sectionId ? 1 : 0,
+            duration: 250, // Reduced animation time for better responsiveness
+            useNativeDriver: false,
+        }).start(() => {
+            // Animation is complete
+            animationsInProgress.current[sectionId] = false;
+        });
     };
 
     if (loading) {
@@ -87,117 +131,6 @@ export const WhoWeAreContent = () => {
         );
     }
 
-    const renderSection = (section: WhoWeAreContent['sections'][0], index: number) => {
-        switch (section.id) {
-            case 'ourChurch':
-                return (
-                    <View key={section.id} style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                            <Text style={styles.sectionTitle}>{section.title}</Text>
-                        </View>
-                        <Text style={styles.paragraph}>
-                            {section.content?.split('(NCMI)').map((part, i) => {
-                                if (i === 0) {
-                                    return <React.Fragment key={i}>{part}(
-                                        <Text
-                                            style={{ color: themeColors.primary, textDecorationLine: 'underline' }}
-                                            onPress={() => Linking.openURL('https://ncmi.net/')}
-                                        >
-                                            NCMI
-                                        </Text>
-                                        )</React.Fragment>;
-                                }
-                                return <React.Fragment key={i}>{part}</React.Fragment>;
-                            })}
-                        </Text>
-                    </View>
-                );
-            case 'ourCulture':
-                return (
-                    <View key={section.id} style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                            <Text style={styles.sectionTitle}>{section.title}</Text>
-                        </View>
-                        <View style={{ marginTop: 10 }}>
-                            {section.values?.map((value, i) => (
-                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                    <Ionicons name={section.itemIcon as any} size={20} color={themeColors.primary} style={{ marginRight: 10 }} />
-                                    <Text style={{ fontSize: 14, color: themeColors.text }}>{value}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                );
-            case 'ourEldershipTeam':
-                return (
-                    <View key={section.id} style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                            <Text style={styles.sectionTitle}>{section.title}</Text>
-                        </View>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 15 }}>
-                            {section.team?.map((member, i) => (
-                                <View key={i} style={{ width: (width - 60) / 2, alignItems: 'center', marginBottom: 20, marginHorizontal: 5 }}>
-                                    <Image
-                                        source={getTeamImage(member.image)}
-                                        style={{ width: 120, height: 120, borderRadius: 60, marginBottom: 10 }}
-                                        resizeMode="cover"
-                                    />
-                                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: themeColors.text, textAlign: 'center' }}>{member.firstName}</Text>
-                                    <Text style={{ fontSize: 14, color: themeColors.text, opacity: 0.7, textAlign: 'center' }}>{member.lastName}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                );
-            case 'ourStatement':
-                return (
-                    <View key={section.id} style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                            <Text style={styles.sectionTitle}>{section.title}</Text>
-                        </View>
-                        <Text style={styles.paragraph}>
-                            {section.content}
-                        </Text>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: themeColors.primary,
-                                paddingVertical: 12,
-                                paddingHorizontal: 15,
-                                borderRadius: 8,
-                                marginTop: 15,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                alignSelf: 'center',
-                            }}
-                            onPress={() => Linking.openURL(STATIC_URLS.statements)}
-                        >
-                            <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
-                                {section.buttonText}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                );
-            default:
-                return (
-                    <View key={section.id} style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                            <Text style={styles.sectionTitle}>{section.title}</Text>
-                        </View>
-                        <Text style={styles.paragraph}>
-                            {section.content}
-                        </Text>
-                    </View>
-                );
-        }
-    };
-
     // Helper function to get team member images
     const getTeamImage = (imageName: string) => {
         switch (imageName) {
@@ -214,11 +147,131 @@ export const WhoWeAreContent = () => {
         }
     };
 
+    const renderSectionContent = (section: WhoWeAreContent['sections'][0]) => {
+        const isExpanded = expandedSection === section.id;
+        const animation = animatedValues.current[section.id] || new Animated.Value(0);
+
+        const maxHeight = animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 1000] // Large enough value to accommodate content
+        });
+
+        switch (section.id) {
+            case 'ourChurch':
+                return (
+                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                        <Text style={styles.paragraph}>
+                            {section.content?.split('(NCMI)').map((part, i) => {
+                                if (i === 0) {
+                                    return <React.Fragment key={i}>{part}(
+                                        <Text
+                                            style={{ color: themeColors.primary, textDecorationLine: 'underline' }}
+                                            onPress={() => Linking.openURL('https://ncmi.net/')}
+                                        >
+                                            NCMI
+                                        </Text>
+                                        )</React.Fragment>;
+                                }
+                                return <React.Fragment key={i}>{part}</React.Fragment>;
+                            })}
+                        </Text>
+                    </Animated.View>
+                );
+            case 'ourCulture':
+                return (
+                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                        <View style={{ marginTop: 10 }}>
+                            {section.values?.map((value, i) => (
+                                <View key={i} style={styles.valueItem}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Ionicons name={section.itemIcon as any} size={22} color={themeColors.primary} style={{ marginRight: 10 }} />
+                                        <Text style={styles.valueText}>{value}</Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </Animated.View>
+                );
+            case 'ourEldershipTeam':
+                return (
+                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                        <View style={styles.teamGrid}>
+                            {section.team?.map((member, i) => (
+                                <View key={i} style={styles.teamMemberCard}>
+                                    <Image
+                                        source={getTeamImage(member.image)}
+                                        style={styles.teamMemberImage}
+                                        resizeMode="cover"
+                                    />
+                                    <View style={styles.teamMemberInfo}>
+                                        <Text style={styles.teamMemberName}>{member.firstName}</Text>
+                                        <Text style={styles.teamMemberLastName}>{member.lastName}</Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </Animated.View>
+                );
+            case 'ourStatement':
+                return (
+                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                        <Text style={styles.paragraph}>
+                            {section.content}
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.downloadButton}
+                            onPress={() => Linking.openURL(STATIC_URLS.statements)}
+                        >
+                            <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={styles.downloadButtonText}>
+                                {section.buttonText}
+                            </Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                );
+            default:
+                return (
+                    <Animated.View style={{ maxHeight, overflow: 'hidden' }}>
+                        <Text style={styles.paragraph}>
+                            {section.content}
+                        </Text>
+                    </Animated.View>
+                );
+        }
+    };
+
+    const renderSection = (section: WhoWeAreContent['sections'][0], index: number) => {
+        const isExpanded = expandedSection === section.id;
+        return (
+            <View key={section.id} style={styles.sectionContainer}>
+                <TouchableOpacity
+                    style={styles.sectionHeader}
+                    onPress={() => toggleSection(section.id)}
+                    activeOpacity={0.6}
+                >
+                    <View style={styles.sectionHeaderContent}>
+                        <View style={styles.sectionIconContainer}>
+                            <Ionicons name={section.icon as any} size={24} color="#FFFFFF" />
+                        </View>
+                        <Text style={styles.sectionTitle}>{section.title}</Text>
+                    </View>
+                    <Ionicons
+                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                        size={24}
+                        color={themeColors.text}
+                    />
+                </TouchableOpacity>
+                {renderSectionContent(section)}
+            </View>
+        );
+    };
+
     return (
         <View style={styles.container}>
             <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollViewContent}
             >
                 <View style={styles.header}>
                     <Text style={styles.title}>

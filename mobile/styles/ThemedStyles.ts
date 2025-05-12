@@ -1,4 +1,6 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 /**
  * Creates themed styles for the HomeContent component
@@ -256,6 +258,9 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
     scrollView: {
         flex: 1,
     },
+    scrollViewContent: {
+        paddingBottom: 30,
+    },
     header: {
         marginBottom: 20,
         marginTop: 30,
@@ -277,27 +282,40 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
     },
     sectionContainer: {
         backgroundColor: colors.card,
-        borderRadius: 10,
-        padding: 16,
-        marginBottom: 20,
+        borderRadius: 12,
+        marginBottom: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 2,
+        elevation: 3,
         borderColor: colors.border,
         borderWidth: 1,
+        overflow: 'hidden',
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 10,
+        justifyContent: 'space-between',
+        padding: 16,
+    },
+    sectionHeaderContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    sectionIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
     sectionTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: colors.text,
-        marginLeft: 10,
     },
     paragraph: {
         fontSize: 16,
@@ -305,6 +323,84 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
         opacity: 0.8,
         lineHeight: 24,
         marginBottom: 15,
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+    valueItem: {
+        marginBottom: 12,
+        paddingHorizontal: 16,
+    },
+    valueText: {
+        fontSize: 16,
+        color: colors.text,
+        fontWeight: '500',
+    },
+    teamGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-around',
+        padding: 10,
+    },
+    teamMemberCard: {
+        width: (width - 80) / 2,
+        backgroundColor: colors.background,
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 16,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+        borderColor: colors.border,
+        borderWidth: 1,
+    },
+    teamMemberImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 12,
+        borderWidth: 3,
+        borderColor: colors.primary,
+    },
+    teamMemberInfo: {
+        alignItems: 'center',
+    },
+    teamMemberName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: colors.text,
+        textAlign: 'center',
+    },
+    teamMemberLastName: {
+        fontSize: 14,
+        color: colors.text,
+        opacity: 0.7,
+        textAlign: 'center',
+    },
+    downloadButton: {
+        backgroundColor: colors.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 25,
+        marginTop: 15,
+        marginBottom: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    downloadButtonText: {
+        color: '#FFFFFF',
+        fontSize: 15,
+        fontWeight: '600',
+        textAlign: 'center',
     },
 });
 
