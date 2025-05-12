@@ -24,25 +24,55 @@ interface CalendarEvent {
     };
     location?: string;
     recurrence?: boolean;
+    isHoliday?: boolean;
 }
 
 export const EventsContent = () => {
     const [activeTab, setActiveTab] = useState('upcoming');
     const [events, setEvents] = useState<CalendarEvent[]>([]);
+    const [holidays, setHolidays] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
+    const [holidaysLoading, setHolidaysLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [holidaysError, setHolidaysError] = useState<string | null>(null);
     const [calendarError, setCalendarError] = useState<string | null>(null);
+
+    // Month pagination state
+    const currentDate = new Date();
+    const [currentYear, setCurrentYear] = useState(currentDate.getFullYear());
+    const [currentMonth, setCurrentMonth] = useState(currentDate.getMonth());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+
+    // Holiday month pagination
+    const [holidayYear, setHolidayYear] = useState(currentDate.getFullYear());
+    const [holidayMonth, setHolidayMonth] = useState(currentDate.getMonth());
+    const [showHolidayMonthPicker, setShowHolidayMonthPicker] = useState(false);
 
     useEffect(() => {
         fetchEvents();
+        fetchHolidays();
     }, []);
 
-    const fetchEvents = async () => {
+    // Fetch events for the current month when month/year changes
+    useEffect(() => {
+        if (activeTab === 'upcoming') {
+            fetchEvents(currentYear, currentMonth);
+        }
+    }, [currentYear, currentMonth]);
+
+    // Fetch holidays for the selected month when it changes
+    useEffect(() => {
+        if (activeTab === 'holidays') {
+            fetchHolidays(holidayYear, holidayMonth);
+        }
+    }, [holidayYear, holidayMonth]);
+
+    const fetchEvents = async (year?: number, month?: number) => {
         try {
             setLoading(true);
             setError(null);
-            const data = await calendarService.getEvents();
+            const data = await calendarService.getEvents(year, month);
             console.log(`Fetched ${data.length} events from calendar service`);
 
             // Ensure each event has a unique ID by adding an index if needed
@@ -89,9 +119,29 @@ export const EventsContent = () => {
         }
     };
 
+    const fetchHolidays = async (year?: number, month?: number) => {
+        try {
+            setHolidaysLoading(true);
+            setHolidaysError(null);
+            const data = await calendarService.getFrenchHolidays(year, month);
+            console.log(`Fetched ${data.length} French holidays`);
+            setHolidays(data);
+        } catch (err) {
+            console.error('Error fetching holidays:', err);
+            setHolidaysError('Failed to load holidays. Please try again later.');
+        } finally {
+            setHolidaysLoading(false);
+            setRefreshing(false);
+        }
+    };
+
     const onRefresh = () => {
         setRefreshing(true);
-        fetchEvents();
+        if (activeTab === 'upcoming') {
+            fetchEvents(currentYear, currentMonth);
+        } else {
+            fetchHolidays(holidayYear, holidayMonth);
+        }
     };
 
     const formatEventDate = (event: CalendarEvent) => {
@@ -118,61 +168,115 @@ export const EventsContent = () => {
         calendarService.openCalendarInBrowser();
     };
 
+    // Navigate to next month for events
+    const nextMonth = () => {
+        if (currentMonth === 11) {
+            setCurrentMonth(0);
+            setCurrentYear(currentYear + 1);
+        } else {
+            setCurrentMonth(currentMonth + 1);
+        }
+    };
+
+    // Navigate to previous month for events
+    const prevMonth = () => {
+        if (currentMonth === 0) {
+            setCurrentMonth(11);
+            setCurrentYear(currentYear - 1);
+        } else {
+            setCurrentMonth(currentMonth - 1);
+        }
+    };
+
+    // Navigate to next month for holidays
+    const nextHolidayMonth = () => {
+        if (holidayMonth === 11) {
+            setHolidayMonth(0);
+            setHolidayYear(holidayYear + 1);
+        } else {
+            setHolidayMonth(holidayMonth + 1);
+        }
+    };
+
+    // Navigate to previous month for holidays
+    const prevHolidayMonth = () => {
+        if (holidayMonth === 0) {
+            setHolidayMonth(11);
+            setHolidayYear(holidayYear - 1);
+        } else {
+            setHolidayMonth(holidayMonth - 1);
+        }
+    };
+
+    // Get current month and year as string
+    const getCurrentMonthYearString = () => {
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        return `${monthNames[currentMonth]} ${currentYear}`;
+    };
+
+    // Get holiday month and year as string
+    const getHolidayMonthYearString = () => {
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        return `${monthNames[holidayMonth]} ${holidayYear}`;
+    };
+
+    // Select a specific month for events
+    const selectMonth = (month: number) => {
+        setCurrentMonth(month);
+        setShowMonthPicker(false);
+    };
+
+    // Select a specific month for holidays
+    const selectHolidayMonth = (month: number) => {
+        setHolidayMonth(month);
+        setShowHolidayMonthPicker(false);
+    };
+
     // Memoize filtered events to avoid re-filtering on every render
-    const { upcomingEvents, pastEvents } = useMemo(() => {
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-
-        const upcoming: CalendarEvent[] = [];
-        const past: CalendarEvent[] = [];
-
-        events.forEach(event => {
+    const eventsForCurrentMonth = useMemo(() => {
+        return events.filter(event => {
             const eventDate = event.start.dateTime
                 ? new Date(event.start.dateTime)
                 : event.start.date
                     ? new Date(event.start.date)
                     : null;
 
-            if (!eventDate) return;
+            if (!eventDate) return false;
 
-            if (eventDate >= now) {
-                upcoming.push(event);
-            } else {
-                past.push(event);
-            }
+            return eventDate.getFullYear() === currentYear &&
+                eventDate.getMonth() === currentMonth;
+        }).sort((a, b) => {
+            const dateA = a.start.dateTime ? new Date(a.start.dateTime) : new Date(a.start.date || "");
+            const dateB = b.start.dateTime ? new Date(b.start.dateTime) : new Date(b.start.date || "");
+            return dateA.getTime() - dateB.getTime();
         });
+    }, [events, currentYear, currentMonth]);
 
-        console.log(`Filtered ${upcoming.length} upcoming events and ${past.length} past events`);
+    // Filter holidays for current month
+    const holidaysForCurrentMonth = useMemo(() => {
+        return holidays.filter(holiday => {
+            const holidayDate = holiday.start.dateTime
+                ? new Date(holiday.start.dateTime)
+                : holiday.start.date
+                    ? new Date(holiday.start.date)
+                    : null;
 
-        return { upcomingEvents: upcoming, pastEvents: past };
-    }, [events]);
+            if (!holidayDate) return false;
 
-    // Group events by month and year
-    const groupEventsByMonth = (eventsList: CalendarEvent[]) => {
-        const grouped: { [key: string]: CalendarEvent[] } = {};
-
-        eventsList.forEach(event => {
-            // Get month and year from event date
-            let eventDate;
-            if (event.start.dateTime) {
-                eventDate = new Date(event.start.dateTime);
-            } else if (event.start.date) {
-                eventDate = new Date(event.start.date);
-            } else {
-                return; // Skip if no date
-            }
-
-            const monthYear = `${eventDate.toLocaleString('default', { month: 'long' })} ${eventDate.getFullYear()}`;
-
-            if (!grouped[monthYear]) {
-                grouped[monthYear] = [];
-            }
-
-            grouped[monthYear].push(event);
+            return holidayDate.getFullYear() === holidayYear &&
+                holidayDate.getMonth() === holidayMonth;
+        }).sort((a, b) => {
+            const dateA = a.start.date ? new Date(a.start.date) : new Date();
+            const dateB = b.start.date ? new Date(b.start.date) : new Date();
+            return dateA.getTime() - dateB.getTime();
         });
-
-        return grouped;
-    };
+    }, [holidays, holidayYear, holidayMonth]);
 
     const renderEventCard = (event: CalendarEvent) => (
         <View key={event.id} style={eventsStyles.eventCard}>
@@ -221,60 +325,174 @@ export const EventsContent = () => {
         </View>
     );
 
-    // Render grouped events by month
-    const renderGroupedEvents = (eventsList: CalendarEvent[]) => {
-        const groupedEvents = groupEventsByMonth(eventsList);
-        const monthKeys = Object.keys(groupedEvents);
+    const renderHolidayCard = (holiday: CalendarEvent) => (
+        <View key={holiday.id} style={eventsStyles.holidayCard}>
+            <View style={eventsStyles.eventHeader}>
+                <Text style={eventsStyles.holidayTitle}>{holiday.summary}</Text>
+                <View style={eventsStyles.dateContainer}>
+                    <Text style={eventsStyles.dateText}>
+                        {holiday.start.date
+                            ? new Date(holiday.start.date).getDate()
+                            : ''}
+                    </Text>
+                </View>
+            </View>
+            <View style={eventsStyles.holidayTag}>
+                <Text style={eventsStyles.holidayTagText}>Public Holiday</Text>
+            </View>
+            <Text style={eventsStyles.holidayDate}>
+                {holiday.start.date ? formatDate(new Date(holiday.start.date)) : ''}
+            </Text>
+            {holiday.description && (
+                <Text style={eventsStyles.eventDescription}>{holiday.description}</Text>
+            )}
+            <TouchableOpacity
+                style={eventsStyles.registerButton}
+                onPress={() => handleAddToCalendar(holiday)}
+            >
+                <Text style={eventsStyles.buttonText}>Add to Calendar</Text>
+            </TouchableOpacity>
+        </View>
+    );
 
-        // Log months for debugging
-        console.log('Months to display:', monthKeys.join(', '));
+    // Render month picker for events
+    const renderMonthPicker = () => {
+        const months = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
 
-        // If no months are found
-        if (monthKeys.length === 0) {
+        return (
+            <View style={eventsStyles.monthPicker}>
+                {months.map((month, index) => (
+                    <TouchableOpacity
+                        key={month}
+                        style={[
+                            eventsStyles.monthPickerItem,
+                            currentMonth === index && eventsStyles.monthPickerItemActive
+                        ]}
+                        onPress={() => selectMonth(index)}
+                    >
+                        <Text style={[
+                            eventsStyles.monthPickerText,
+                            currentMonth === index && eventsStyles.monthPickerTextActive
+                        ]}>
+                            {month}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        );
+    };
+
+    // Render month picker for holidays
+    const renderHolidayMonthPicker = () => {
+        const months = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+
+        return (
+            <View style={eventsStyles.monthPicker}>
+                {months.map((month, index) => (
+                    <TouchableOpacity
+                        key={month}
+                        style={[
+                            eventsStyles.monthPickerItem,
+                            holidayMonth === index && eventsStyles.monthPickerItemActive
+                        ]}
+                        onPress={() => selectHolidayMonth(index)}
+                    >
+                        <Text style={[
+                            eventsStyles.monthPickerText,
+                            holidayMonth === index && eventsStyles.monthPickerTextActive
+                        ]}>
+                            {month}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        );
+    };
+
+    // Render current month events
+    const renderCurrentMonthEvents = () => {
+        if (loading) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <ActivityIndicator size="large" color="#FF9843" />
+                    <Text style={eventsStyles.noEventsText}>Loading events...</Text>
+                </View>
+            );
+        }
+
+        if (error) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
+                    <Text style={eventsStyles.noEventsText}>{error}</Text>
+                    <TouchableOpacity
+                        style={eventsStyles.detailsButton}
+                        onPress={() => fetchEvents(currentYear, currentMonth)}
+                    >
+                        <Text style={eventsStyles.buttonText}>Try Again</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        if (eventsForCurrentMonth.length === 0) {
             return (
                 <View style={eventsStyles.noEventsContainer}>
                     <Ionicons name="calendar-outline" size={40} color="#ccc" />
                     <Text style={eventsStyles.noEventsText}>
-                        No events found
+                        No events found for {getCurrentMonthYearString()}
                     </Text>
                 </View>
             );
         }
 
-        // Sort months chronologically
-        const months = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
+        return eventsForCurrentMonth.map(renderEventCard);
+    };
 
-        monthKeys.sort((a, b) => {
-            const monthA = a.split(' ')[0];
-            const yearA = parseInt(a.split(' ')[1]);
-            const monthB = b.split(' ')[0];
-            const yearB = parseInt(b.split(' ')[1]);
+    // Render French holidays for current month
+    const renderCurrentMonthHolidays = () => {
+        if (holidaysLoading) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <ActivityIndicator size="large" color="#FF9843" />
+                    <Text style={eventsStyles.noEventsText}>Loading holidays...</Text>
+                </View>
+            );
+        }
 
-            // Compare years first
-            if (yearA !== yearB) {
-                return yearA - yearB;
-            }
+        if (holidaysError) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
+                    <Text style={eventsStyles.noEventsText}>{holidaysError}</Text>
+                    <TouchableOpacity
+                        style={eventsStyles.detailsButton}
+                        onPress={() => fetchHolidays(holidayYear, holidayMonth)}
+                    >
+                        <Text style={eventsStyles.buttonText}>Try Again</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
 
-            // If years are the same, compare months
-            return months.indexOf(monthA) - months.indexOf(monthB);
-        });
+        if (holidaysForCurrentMonth.length === 0) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <Ionicons name="calendar-outline" size={40} color="#ccc" />
+                    <Text style={eventsStyles.noEventsText}>
+                        No holidays found for {getHolidayMonthYearString()}
+                    </Text>
+                </View>
+            );
+        }
 
-        return monthKeys.map(month => (
-            <View key={month} style={eventsStyles.monthGroup}>
-                <Text style={eventsStyles.sectionTitle}>{month}</Text>
-                {/* Sort events within the month by day */}
-                {groupedEvents[month]
-                    .sort((a, b) => {
-                        const dateA = a.start.dateTime ? new Date(a.start.dateTime) : new Date(a.start.date || "");
-                        const dateB = b.start.dateTime ? new Date(b.start.dateTime) : new Date(b.start.date || "");
-                        return dateA.getTime() - dateB.getTime();
-                    })
-                    .map(renderEventCard)}
-            </View>
-        ));
+        return holidaysForCurrentMonth.map(renderHolidayCard);
     };
 
     return (
@@ -330,49 +548,125 @@ export const EventsContent = () => {
                         onPress={() => setActiveTab('upcoming')}
                     >
                         <Text style={[eventsStyles.tabText, activeTab === 'upcoming' && eventsStyles.activeTabText]}>
-                            Upcoming ({upcomingEvents.length})
+                            Church Events
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[eventsStyles.tab, activeTab === 'past' && eventsStyles.activeTab]}
-                        onPress={() => setActiveTab('past')}
+                        style={[eventsStyles.tab, activeTab === 'holidays' && eventsStyles.activeTab]}
+                        onPress={() => {
+                            setActiveTab('holidays');
+                            if (holidays.length === 0) {
+                                fetchHolidays(holidayYear, holidayMonth);
+                            }
+                        }}
                     >
-                        <Text style={[eventsStyles.tabText, activeTab === 'past' && eventsStyles.activeTabText]}>
-                            Past ({pastEvents.length})
+                        <Text style={[eventsStyles.tabText, activeTab === 'holidays' && eventsStyles.activeTabText]}>
+                            French Holidays
                         </Text>
                     </TouchableOpacity>
                 </View>
 
-                {loading ? (
-                    <View style={eventsStyles.noEventsContainer}>
-                        <ActivityIndicator size="large" color="#FF9843" />
-                        <Text style={eventsStyles.noEventsText}>Loading events...</Text>
-                    </View>
-                ) : error ? (
-                    <View style={eventsStyles.noEventsContainer}>
-                        <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
-                        <Text style={eventsStyles.noEventsText}>{error}</Text>
-                        <TouchableOpacity
-                            style={eventsStyles.detailsButton}
-                            onPress={fetchEvents}
-                        >
-                            <Text style={eventsStyles.buttonText}>Try Again</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
+                {activeTab === 'upcoming' && (
                     <>
-                        {activeTab === 'upcoming' && renderGroupedEvents(upcomingEvents)}
-                        {activeTab === 'past' && renderGroupedEvents(pastEvents)}
+                        {/* Month navigation */}
+                        <View style={eventsStyles.monthNavigation}>
+                            <TouchableOpacity
+                                style={eventsStyles.monthNavigationButton}
+                                onPress={prevMonth}
+                            >
+                                <Ionicons name="chevron-back" size={24} color="#666" />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={eventsStyles.yearPickerButton}
+                                onPress={() => setShowMonthPicker(!showMonthPicker)}
+                            >
+                                <Text style={eventsStyles.currentMonthDisplay}>
+                                    {getCurrentMonthYearString()}
+                                </Text>
+                                <Ionicons
+                                    name={showMonthPicker ? "chevron-up" : "chevron-down"}
+                                    size={16}
+                                    color="#666"
+                                    style={{ marginLeft: 5 }}
+                                />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={eventsStyles.monthNavigationButton}
+                                onPress={nextMonth}
+                            >
+                                <Ionicons name="chevron-forward" size={24} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Month picker */}
+                        {showMonthPicker && renderMonthPicker()}
+
+                        {/* Events for current month */}
+                        {renderCurrentMonthEvents()}
+
+                        <TouchableOpacity
+                            style={eventsStyles.refreshButton}
+                            onPress={() => fetchEvents(currentYear, currentMonth)}
+                        >
+                            <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={eventsStyles.buttonText}>Refresh Events</Text>
+                        </TouchableOpacity>
                     </>
                 )}
 
-                <TouchableOpacity
-                    style={eventsStyles.refreshButton}
-                    onPress={fetchEvents}
-                >
-                    <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={eventsStyles.buttonText}>Refresh Events</Text>
-                </TouchableOpacity>
+                {activeTab === 'holidays' && (
+                    <>
+                        {/* Month navigation for holidays */}
+                        <View style={eventsStyles.monthNavigation}>
+                            <TouchableOpacity
+                                style={eventsStyles.monthNavigationButton}
+                                onPress={prevHolidayMonth}
+                            >
+                                <Ionicons name="chevron-back" size={24} color="#666" />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={eventsStyles.yearPickerButton}
+                                onPress={() => setShowHolidayMonthPicker(!showHolidayMonthPicker)}
+                            >
+                                <Text style={eventsStyles.currentMonthDisplay}>
+                                    {getHolidayMonthYearString()}
+                                </Text>
+                                <Ionicons
+                                    name={showHolidayMonthPicker ? "chevron-up" : "chevron-down"}
+                                    size={16}
+                                    color="#666"
+                                    style={{ marginLeft: 5 }}
+                                />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={eventsStyles.monthNavigationButton}
+                                onPress={nextHolidayMonth}
+                            >
+                                <Ionicons name="chevron-forward" size={24} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Month picker for holidays */}
+                        {showHolidayMonthPicker && renderHolidayMonthPicker()}
+
+                        <Text style={eventsStyles.sectionTitle}>French Public Holidays</Text>
+
+                        {/* Holidays for current month */}
+                        {renderCurrentMonthHolidays()}
+
+                        <TouchableOpacity
+                            style={eventsStyles.refreshButton}
+                            onPress={() => fetchHolidays(holidayYear, holidayMonth)}
+                        >
+                            <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={eventsStyles.buttonText}>Refresh Holidays</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
             </ScrollView>
         </View>
     );

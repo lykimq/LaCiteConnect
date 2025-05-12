@@ -18,6 +18,7 @@ interface CalendarEvent {
     };
     location?: string;
     recurrence?: boolean;
+    isHoliday?: boolean;
 }
 
 // Personal calendar ID
@@ -32,16 +33,22 @@ const EMBED_URL = 'https://calendar.google.com/calendar/embed?src=lykimq%40gmail
 // Alternative public calendar REST API URL
 const API_URL = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs&timeMin=${new Date().toISOString()}&maxResults=100&singleEvents=true&orderBy=startTime`;
 
+// French holidays calendar ID
+const FRENCH_HOLIDAYS_CALENDAR_ID = 'en.french#holiday@group.v.calendar.google.com';
+
+// French holidays API URL - Use the public calendar endpoint
+const FRENCH_HOLIDAYS_API_URL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(FRENCH_HOLIDAYS_CALENDAR_ID)}/events?key=AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs&maxResults=100&singleEvents=true&orderBy=startTime`;
+
 export const calendarService = {
     /**
      * Get personal calendar events
      */
-    async getEvents(): Promise<CalendarEvent[]> {
+    async getEvents(year?: number, month?: number): Promise<CalendarEvent[]> {
         try {
             // Try using Google Calendar API first
             console.log('Attempting to fetch from Google Calendar API');
             try {
-                const apiEvents = await this.fetchFromGoogleApi();
+                const apiEvents = await this.fetchFromGoogleApi(year, month);
                 if (apiEvents && apiEvents.length > 0) {
                     console.log(`Successfully fetched ${apiEvents.length} events from API`);
                     return apiEvents;
@@ -51,7 +58,7 @@ export const calendarService = {
             }
 
             // Fall back to iCal if API fails
-            return this.fetchICalEvents(ICAL_URL);
+            return this.fetchICalEvents(ICAL_URL, year, month);
         } catch (error) {
             console.error('All event fetch methods failed', error);
             // Return empty array to avoid crashing the app
@@ -60,10 +67,145 @@ export const calendarService = {
     },
 
     /**
-     * Attempt to fetch events from Google Calendar API
+     * Get French public holidays
      */
-    async fetchFromGoogleApi(): Promise<CalendarEvent[]> {
-        const response = await fetch(API_URL);
+    async getFrenchHolidays(year?: number, month?: number): Promise<CalendarEvent[]> {
+        try {
+            console.log('Fetching French public holidays');
+            const currentYear = year || new Date().getFullYear();
+            let nextYear = currentYear;
+
+            // If we're filtering by month, use exact month range
+            if (month !== undefined) {
+                // Build URL with year and month filter
+                const startDate = new Date(currentYear, month, 1);
+                const endDate = new Date(currentYear, month + 1, 0); // Last day of month
+
+                const timeMin = startDate.toISOString();
+                const timeMax = endDate.toISOString();
+
+                const url = `${FRENCH_HOLIDAYS_API_URL}&timeMin=${timeMin}&timeMax=${timeMax}`;
+
+                return await this.fetchHolidaysFromApi(url);
+            }
+
+            // Otherwise get full year(s)
+            nextYear = currentYear + 1;
+            const timeMin = `${currentYear}-01-01T00:00:00Z`;
+            const timeMax = `${nextYear}-12-31T23:59:59Z`;
+
+            const url = `${FRENCH_HOLIDAYS_API_URL}&timeMin=${timeMin}&timeMax=${timeMax}`;
+
+            return await this.fetchHolidaysFromApi(url);
+        } catch (error) {
+            console.error('Error fetching French holidays:', error);
+            // If API fails, use hardcoded list of major French holidays
+            return this.getHardcodedFrenchHolidays(year, month);
+        }
+    },
+
+    /**
+     * Helper method to fetch holidays from API with error handling
+     */
+    async fetchHolidaysFromApi(url: string): Promise<CalendarEvent[]> {
+        try {
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                console.error(`French holidays API request failed with status ${response.status}`);
+                throw new Error(`French holidays API request failed with status ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.items || !Array.isArray(data.items)) {
+                throw new Error('Invalid French holidays API response format');
+            }
+
+            // Map and mark as holidays
+            return data.items.map((item: any) => ({
+                id: item.id,
+                summary: item.summary || 'Holiday',
+                description: item.description || 'French Public Holiday',
+                location: 'France',
+                start: {
+                    dateTime: item.start.dateTime,
+                    date: item.start.date
+                },
+                end: {
+                    dateTime: item.end.dateTime,
+                    date: item.end.date
+                },
+                isHoliday: true
+            }));
+        } catch (error) {
+            console.error('Failed to fetch holidays from API:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get hardcoded French holidays as fallback
+     */
+    getHardcodedFrenchHolidays(year?: number, month?: number): CalendarEvent[] {
+        const currentYear = year || new Date().getFullYear();
+
+        // List of major French holidays
+        const holidays = [
+            { name: "Jour de l'An", month: 0, day: 1 },
+            { name: "Lundi de Pâques", month: 3, day: 10 },
+            { name: "Fête du Travail", month: 4, day: 1 },
+            { name: "Victoire 1945", month: 4, day: 8 },
+            { name: "Ascension", month: 4, day: 18 },
+            { name: "Lundi de Pentecôte", month: 4, day: 29 },
+            { name: "Fête Nationale", month: 6, day: 14 },
+            { name: "Assomption", month: 7, day: 15 },
+            { name: "Toussaint", month: 10, day: 1 },
+            { name: "Armistice 1918", month: 10, day: 11 },
+            { name: "Noël", month: 11, day: 25 }
+        ];
+
+        let filteredHolidays = holidays;
+
+        // Filter by month if provided
+        if (month !== undefined) {
+            filteredHolidays = holidays.filter(holiday => holiday.month === month);
+        }
+
+        return filteredHolidays.map((holiday, index) => {
+            const dateStr = `${currentYear}-${(holiday.month + 1).toString().padStart(2, '0')}-${holiday.day.toString().padStart(2, '0')}`;
+
+            return {
+                id: `holiday-${currentYear}-${index}`,
+                summary: holiday.name,
+                description: 'French Public Holiday',
+                location: 'France',
+                start: {
+                    date: dateStr
+                },
+                end: {
+                    date: dateStr
+                },
+                isHoliday: true
+            };
+        });
+    },
+
+    /**
+     * Attempt to fetch events from Google Calendar API with optional filtering
+     */
+    async fetchFromGoogleApi(year?: number, month?: number): Promise<CalendarEvent[]> {
+        let url = API_URL;
+
+        // If year and month are provided, add time filters
+        if (year !== undefined && month !== undefined) {
+            const startDate = new Date(year, month, 1);
+            const endDate = new Date(year, month + 1, 0); // Last day of month
+
+            url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs&timeMin=${startDate.toISOString()}&timeMax=${endDate.toISOString()}&maxResults=100&singleEvents=true&orderBy=startTime`;
+        }
+
+        const response = await fetch(url);
 
         if (!response.ok) {
             throw new Error(`API request failed with status ${response.status}`);
@@ -93,9 +235,9 @@ export const calendarService = {
     },
 
     /**
-     * Fetch events from a public calendar using iCal format
+     * Fetch events from a public calendar using iCal format with optional filtering
      */
-    async fetchICalEvents(icalUrl: string): Promise<CalendarEvent[]> {
+    async fetchICalEvents(icalUrl: string, year?: number, month?: number): Promise<CalendarEvent[]> {
         try {
             console.log(`Fetching iCal events from: ${icalUrl}`);
 
@@ -108,7 +250,24 @@ export const calendarService = {
             const icalData = await response.text();
 
             // Parse the iCal data manually
-            return this.parseICalData(icalData);
+            let events = this.parseICalData(icalData);
+
+            // Filter by year and month if provided
+            if (year !== undefined && month !== undefined) {
+                events = events.filter(event => {
+                    const eventDate = event.start.dateTime
+                        ? new Date(event.start.dateTime)
+                        : event.start.date
+                            ? new Date(event.start.date)
+                            : null;
+
+                    if (!eventDate) return false;
+
+                    return eventDate.getFullYear() === year && eventDate.getMonth() === month;
+                });
+            }
+
+            return events;
         } catch (error) {
             console.error('Error fetching iCal events:', error);
             throw error;
