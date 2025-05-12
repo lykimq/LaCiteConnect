@@ -31,7 +31,51 @@
     "allDayText": "All day",
     "viewAllEventsText": "View All Events in Calendar",
     "locationText": "Location",
-    "directionsText": "Directions"
+    "directionsText": "Directions",
+    "filterText": "Filter",
+    "filterModalTitle": "Filter & Sort Events",
+    "searchPlaceholder": "Search events...",
+    "filterSectionTitle": "Show Events",
+    "filterOptions": {
+      "allEvents": "All Events",
+      "upcoming": "Upcoming",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "pastEvents": "Past Events"
+    },
+    "sortSectionTitle": "Sort By",
+    "sortByLabel": "Sort by:",
+    "sortOptions": {
+      "date": "Date",
+      "title": "Title",
+      "location": "Location"
+    },
+    "sortOrderLabel": "Order:",
+    "applyFiltersText": "Apply Filters",
+    "quickViewText": "Quick View",
+    "monthViewText": "Month View",
+    "quickPeriodOptions": {
+      "allEvents": "All Events",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "nextSevenDays": "Next 7 Days",
+      "nextThirtyDays": "Next 30 Days"
+    },
+    "featuredView": {
+      "todayTitle": "Today",
+      "tomorrowTitle": "Tomorrow",
+      "nextSevenDaysTitle": "Next 7 Days",
+      "nextThirtyDaysTitle": "Next 30 Days",
+      "comingUpTitle": "Coming Up",
+      "noUpcomingEventsText": "No upcoming events found",
+      "addToCalendarButtonText": "Add to Calendar",
+      "viewLocationButtonText": "View Location"
+    },
+    "viewModes": {
+      "calendar": "Calendar",
+      "simpleList": "Simple List",
+      "featured": "Featured"
+    }
   },
   "months": [
     "January", "February", "March", "April",

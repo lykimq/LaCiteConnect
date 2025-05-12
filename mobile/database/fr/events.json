@@ -42,7 +42,51 @@
     "refreshEventsText": "Actualiser les Événements",
     "refreshHolidaysText": "Actualiser les Jours Fériés",
     "tryAgainText": "Réessayer",
-    "openCalendarText": "Ouvrir le Calendrier dans le Navigateur"
+    "openCalendarText": "Ouvrir le Calendrier dans le Navigateur",
+    "filterText": "Filtrer",
+    "filterModalTitle": "Filtrer & Trier les Événements",
+    "searchPlaceholder": "Rechercher des événements...",
+    "filterSectionTitle": "Afficher les Événements",
+    "filterOptions": {
+      "allEvents": "Tous les Événements",
+      "upcoming": "À Venir",
+      "thisWeek": "Cette Semaine",
+      "thisMonth": "Ce Mois",
+      "pastEvents": "Événements Passés"
+    },
+    "sortSectionTitle": "Trier Par",
+    "sortByLabel": "Trier par :",
+    "sortOptions": {
+      "date": "Date",
+      "title": "Titre",
+      "location": "Lieu"
+    },
+    "sortOrderLabel": "Ordre :",
+    "applyFiltersText": "Appliquer les Filtres",
+    "quickViewText": "Vue Rapide",
+    "monthViewText": "Vue par Mois",
+    "quickPeriodOptions": {
+      "allEvents": "Tous les Événements",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "nextSevenDays": "7 Prochains Jours",
+      "nextThirtyDays": "30 Prochains Jours"
+    },
+    "featuredView": {
+      "todayTitle": "Aujourd'hui",
+      "tomorrowTitle": "Demain",
+      "nextSevenDaysTitle": "7 Prochains Jours",
+      "nextThirtyDaysTitle": "30 Prochains Jours",
+      "comingUpTitle": "À Venir",
+      "noUpcomingEventsText": "Aucun événement à venir",
+      "addToCalendarButtonText": "Ajouter au Calendrier",
+      "viewLocationButtonText": "Voir l'Emplacement"
+    },
+    "viewModes": {
+      "calendar": "Calendrier",
+      "simpleList": "Liste Simple",
+      "featured": "En Vedette"
+    }
   },
   "months": [
     "Janvier", "Février", "Mars", "Avril",

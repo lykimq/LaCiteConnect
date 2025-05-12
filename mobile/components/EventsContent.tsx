@@ -100,6 +100,49 @@ interface EventsContent {
         upcomingText: string;
         pastText: string;
         allText: string;
+        filterModalTitle: string;
+        searchPlaceholder: string;
+        filterSectionTitle: string;
+        filterOptions: {
+            allEvents: string;
+            upcoming: string;
+            thisWeek: string;
+            thisMonth: string;
+            pastEvents: string;
+        };
+        sortSectionTitle: string;
+        sortByLabel: string;
+        sortOptions: {
+            date: string;
+            title: string;
+            location: string;
+        };
+        sortOrderLabel: string;
+        applyFiltersText: string;
+        quickViewText: string;
+        monthViewText: string;
+        quickPeriodOptions: {
+            allEvents: string;
+            today: string;
+            tomorrow: string;
+            nextSevenDays: string;
+            nextThirtyDays: string;
+        };
+        featuredView: {
+            todayTitle: string;
+            tomorrowTitle: string;
+            nextSevenDaysTitle: string;
+            nextThirtyDaysTitle: string;
+            comingUpTitle: string;
+            noUpcomingEventsText: string;
+            addToCalendarButtonText: string;
+            viewLocationButtonText: string;
+        };
+        viewModes: {
+            calendar: string;
+            simpleList: string;
+            featured: string;
+        };
     };
     months: string[];
 }
@@ -372,7 +415,7 @@ export const EventsContent = () => {
                     color={viewMode === 'calendar' ? '#FFFFFF' : themeColors.text}
                 />
                 <Text style={[styles.viewModeText, viewMode === 'calendar' && styles.activeViewModeText]}>
-                    Calendar
+                    {content?.ui.viewModes.calendar || 'Calendar'}
                 </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -385,7 +428,7 @@ export const EventsContent = () => {
                     color={viewMode === 'list' ? '#FFFFFF' : themeColors.text}
                 />
                 <Text style={[styles.viewModeText, viewMode === 'list' && styles.activeViewModeText]}>
-                    Simple List
+                    {content?.ui.viewModes.simpleList || 'Simple List'}
                 </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -398,7 +441,7 @@ export const EventsContent = () => {
                     color={viewMode === 'timeline' ? '#FFFFFF' : themeColors.text}
                 />
                 <Text style={[styles.viewModeText, viewMode === 'timeline' && styles.activeViewModeText]}>
-                    Featured
+                    {content?.ui.viewModes.featured || 'Featured'}
                 </Text>
             </TouchableOpacity>
         </View>
@@ -426,7 +469,7 @@ export const EventsContent = () => {
             <View style={styles.modalOverlay}>
                 <View style={styles.filterModalContent}>
                     <View style={styles.filterModalHeader}>
-                        <Text style={styles.filterModalTitle}>Filter & Sort Events</Text>
+                        <Text style={styles.filterModalTitle}>{content?.ui.filterModalTitle || 'Filter & Sort Events'}</Text>
                     </View>
 
                     {/* Search Input */}
@@ -434,7 +477,7 @@ export const EventsContent = () => {
                         <Ionicons name="search" size={20} color={themeColors.text} style={styles.searchIcon} />
                         <TextInput
                             style={styles.searchInput}
-                            placeholder="Search events..."
+                            placeholder={content?.ui.searchPlaceholder || 'Search events...'}
                             value={filterOptions.searchQuery}
                             onChangeText={(text) => setFilterOptions(prev => ({ ...prev, searchQuery: text }))}
                             placeholderTextColor={themeColors.text + '80'}
@@ -442,14 +485,14 @@ export const EventsContent = () => {
                     </View>
 
                     {/* Category Filter */}
-                    <Text style={styles.filterSectionTitle}>Show Events</Text>
+                    <Text style={styles.filterSectionTitle}>{content?.ui.filterSectionTitle || 'Show Events'}</Text>
                     <View style={styles.filterOptions}>
                         {[
-                            { value: 'all', label: 'All Events' },
-                            { value: 'upcoming', label: 'Upcoming' },
-                            { value: 'thisWeek', label: 'This Week' },
-                            { value: 'thisMonth', label: 'This Month' },
-                            { value: 'past', label: 'Past Events' }
+                            { value: 'all', label: content?.ui.filterOptions.allEvents || 'All Events' },
+                            { value: 'upcoming', label: content?.ui.filterOptions.upcoming || 'Upcoming' },
+                            { value: 'thisWeek', label: content?.ui.filterOptions.thisWeek || 'This Week' },
+                            { value: 'thisMonth', label: content?.ui.filterOptions.thisMonth || 'This Month' },
+                            { value: 'past', label: content?.ui.filterOptions.pastEvents || 'Past Events' }
                         ].map(option => (
                             <TouchableOpacity
                                 key={option.value}
@@ -470,15 +513,15 @@ export const EventsContent = () => {
                     </View>
 
                     {/* Sort Options */}
-                    <Text style={styles.filterSectionTitle}>Sort By</Text>
+                    <Text style={styles.filterSectionTitle}>{content?.ui.sortSectionTitle || 'Sort By'}</Text>
                     <View style={styles.sortOptions}>
                         <View style={styles.sortRow}>
-                            <Text style={styles.sortLabel}>Sort by:</Text>
+                            <Text style={styles.sortLabel}>{content?.ui.sortByLabel || 'Sort by:'}</Text>
                             <View style={styles.sortButtons}>
                                 {[
-                                    { value: 'date', label: 'Date' },
-                                    { value: 'title', label: 'Title' },
-                                    { value: 'location', label: 'Location' }
+                                    { value: 'date', label: content?.ui.sortOptions.date || 'Date' },
+                                    { value: 'title', label: content?.ui.sortOptions.title || 'Title' },
+                                    { value: 'location', label: content?.ui.sortOptions.location || 'Location' }
                                 ].map(option => (
                                     <TouchableOpacity
                                         key={option.value}
@@ -499,7 +542,7 @@ export const EventsContent = () => {
                             </View>
                         </View>
                         <View style={styles.sortRow}>
-                            <Text style={styles.sortLabel}>Order:</Text>
+                            <Text style={styles.sortLabel}>{content?.ui.sortOrderLabel || 'Order:'}</Text>
                             <View style={styles.sortButtons}>
                                 <TouchableOpacity
                                     style={[
@@ -536,7 +579,7 @@ export const EventsContent = () => {
                         style={styles.applyButton}
                         onPress={() => setShowFilterModal(false)}
                     >
-                        <Text style={styles.applyButtonText}>Apply Filters</Text>
+                        <Text style={styles.applyButtonText}>{content?.ui.applyFiltersText || 'Apply Filters'}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -578,7 +621,7 @@ export const EventsContent = () => {
                         <Text style={[
                             styles.periodTypeText,
                             selectedListPeriod === 'quick' && styles.activePeriodTypeText
-                        ]}>Quick View</Text>
+                        ]}>{content?.ui.quickViewText || 'Quick View'}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[
@@ -590,7 +633,7 @@ export const EventsContent = () => {
                         <Text style={[
                             styles.periodTypeText,
                             selectedListPeriod === 'month' && styles.activePeriodTypeText
-                        ]}>Month View</Text>
+                        ]}>{content?.ui.monthViewText || 'Month View'}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -601,11 +644,11 @@ export const EventsContent = () => {
                         style={styles.quickPeriodSelector}
                     >
                         {[
-                            { value: 'all', label: 'All Events' },
-                            { value: 'today', label: 'Today' },
-                            { value: 'tomorrow', label: 'Tomorrow' },
-                            { value: 'week', label: 'Next 7 Days' },
-                            { value: 'month', label: 'Next 30 Days' }
+                            { value: 'all', label: content?.ui.quickPeriodOptions.allEvents || 'All Events' },
+                            { value: 'today', label: content?.ui.quickPeriodOptions.today || 'Today' },
+                            { value: 'tomorrow', label: content?.ui.quickPeriodOptions.tomorrow || 'Tomorrow' },
+                            { value: 'week', label: content?.ui.quickPeriodOptions.nextSevenDays || 'Next 7 Days' },
+                            { value: 'month', label: content?.ui.quickPeriodOptions.nextThirtyDays || 'Next 30 Days' }
                         ].map(period => (
                             <TouchableOpacity
                                 key={period.value}
@@ -711,7 +754,9 @@ export const EventsContent = () => {
                     <View style={styles.featuredSection}>
                         <View style={styles.featuredHeader}>
                             <Ionicons name="today-outline" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>Today</Text>
+                            <Text style={styles.featuredTitle}>
+                                {content?.ui.featuredView.todayTitle || 'Today'}
+                            </Text>
                         </View>
                         {todayEvents.map(event => renderFeaturedEventCard(event))}
                     </View>
@@ -721,7 +766,9 @@ export const EventsContent = () => {
                     <View style={styles.featuredSection}>
                         <View style={styles.featuredHeader}>
                             <Ionicons name="sunny-outline" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>Tomorrow</Text>
+                            <Text style={styles.featuredTitle}>
+                                {content?.ui.featuredView.tomorrowTitle || 'Tomorrow'}
+                            </Text>
                         </View>
                         {tomorrowEvents.map(event => renderFeaturedEventCard(event))}
                     </View>
@@ -731,7 +778,9 @@ export const EventsContent = () => {
                     <View style={styles.featuredSection}>
                         <View style={styles.featuredHeader}>
                             <Ionicons name="calendar-outline" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>Next 7 Days</Text>
+                            <Text style={styles.featuredTitle}>
+                                {content?.ui.featuredView.nextSevenDaysTitle || 'Next 7 Days'}
+                            </Text>
                         </View>
                         {nextSevenDaysEvents.map(event => renderFeaturedEventCard(event))}
                     </View>
@@ -741,7 +790,9 @@ export const EventsContent = () => {
                     <View style={styles.featuredSection}>
                         <View style={styles.featuredHeader}>
                             <Ionicons name="calendar" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>Next 30 Days</Text>
+                            <Text style={styles.featuredTitle}>
+                                {content?.ui.featuredView.nextThirtyDaysTitle || 'Next 30 Days'}
+                            </Text>
                         </View>
                         {nextMonthEvents.map(event => renderFeaturedEventCard(event))}
                     </View>
@@ -751,7 +802,9 @@ export const EventsContent = () => {
                     <View style={styles.featuredSection}>
                         <View style={styles.featuredHeader}>
                             <Ionicons name="star" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>Coming Up</Text>
+                            <Text style={styles.featuredTitle}>
+                                {content?.ui.featuredView.comingUpTitle || 'Coming Up'}
+                            </Text>
                         </View>
                         {futureEvents.map(event => renderFeaturedEventCard(event))}
                     </View>
@@ -760,7 +813,7 @@ export const EventsContent = () => {
                 {upcomingEvents.length === 0 && (
                     <View style={styles.noEventsContainer}>
                         <Text style={styles.noEventsText}>
-                            {content?.ui.noEventsText || 'No upcoming events found'}
+                            {content?.ui.featuredView.noUpcomingEventsText || 'No upcoming events found'}
                         </Text>
                     </View>
                 )}
@@ -790,7 +843,9 @@ export const EventsContent = () => {
                             {event.summary}
                         </Text>
                         <Text style={styles.featuredEventTime}>
-                            {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatDate(eventDate)}
+                            {isToday ? content?.ui.featuredView.todayTitle || 'Today' :
+                                isTomorrow ? content?.ui.featuredView.tomorrowTitle || 'Tomorrow' :
+                                    formatDate(eventDate)}
                             {event.start.dateTime && ` • ${formatTime(eventDate)}`}
                         </Text>
                         {event.location && (
@@ -809,7 +864,9 @@ export const EventsContent = () => {
                         onPress={() => handleAddToCalendar(event)}
                     >
                         <Ionicons name="calendar-outline" size={16} color={themeColors.primary} />
-                        <Text style={styles.featuredActionText}>Add to Calendar</Text>
+                        <Text style={styles.featuredActionText}>
+                            {content?.ui.featuredView.addToCalendarButtonText || 'Add to Calendar'}
+                        </Text>
                     </TouchableOpacity>
                     {event.location && (
                         <TouchableOpacity
@@ -817,7 +874,9 @@ export const EventsContent = () => {
                             onPress={() => handleOpenMap(event.location || '')}
                         >
                             <Ionicons name="map-outline" size={16} color={themeColors.primary} />
-                            <Text style={styles.featuredActionText}>View Location</Text>
+                            <Text style={styles.featuredActionText}>
+                                {content?.ui.featuredView.viewLocationButtonText || 'View Location'}
+                            </Text>
                         </TouchableOpacity>
                     )}
                 </View>
