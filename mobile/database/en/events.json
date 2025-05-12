@@ -1,0 +1,41 @@
+{
+  "header": {
+    "title": "Events",
+    "subtitle": "What's happening at La Cité"
+  },
+  "tabs": [
+    {
+      "id": "upcoming",
+      "label": "Upcoming Events"
+    },
+    {
+      "id": "holidays",
+      "label": "French Holidays"
+    }
+  ],
+  "ui": {
+    "loadingText": "Loading events...",
+    "errorText": "Failed to load events. Please try again later.",
+    "holidaysErrorText": "Failed to load holidays. Please try again later.",
+    "calendarErrorText": "Failed to connect to calendar service.",
+    "noEventsText": "No upcoming events for this month.",
+    "noHolidaysText": "No holidays for this month.",
+    "addToCalendarText": "Add to Calendar",
+    "viewOnMapText": "View on Map",
+    "setReminderText": "Set Reminder",
+    "reminderSetText": "Reminder Set",
+    "viewFullDescriptionText": "View Full Description",
+    "viewAttachmentText": "View Attachment",
+    "openInBrowserText": "Open in Browser",
+    "dateNotSpecifiedText": "Date not specified",
+    "allDayText": "All day",
+    "viewAllEventsText": "View All Events in Calendar",
+    "locationText": "Location",
+    "directionsText": "Directions"
+  },
+  "months": [
+    "January", "February", "March", "April",
+    "May", "June", "July", "August",
+    "September", "October", "November", "December"
+  ]
+}

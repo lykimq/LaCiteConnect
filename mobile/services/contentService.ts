@@ -1,0 +1,176 @@
+import { defaultLanguage, getLanguage, setLanguage } from './languageService';
+
+// Define content types
+export type ContentType = 'home' | 'whoWeAre' | 'events' | 'donation' | 'getConnected';
+
+// Interface for content API response
+export interface ContentResponse<T> {
+    success: boolean;
+    data?: T;
+    error?: string;
+}
+
+// Import all JSON files statically
+// English content
+import enHome from '../database/en/home.json';
+import enWhoWeAre from '../database/en/whoWeAre.json';
+import enEvents from '../database/en/events.json';
+import enDonation from '../database/en/donation.json';
+import enGetConnected from '../database/en/getConnected.json';
+
+// Try to import French content where available
+let frHome;
+let frEvents;
+try {
+    frHome = require('../database/fr/home.json');
+} catch (e) {
+    console.log('French home content not available, will fall back to English');
+    frHome = null;
+}
+
+try {
+    frEvents = require('../database/fr/events.json');
+} catch (e) {
+    console.log('French events content not available, will fall back to English');
+    frEvents = null;
+}
+
+// Content map interface for type safety
+interface ContentMap {
+    [language: string]: {
+        [contentType: string]: any;
+    };
+}
+
+// Content map for faster lookups
+const contentMap: ContentMap = {
+    en: {
+        home: enHome,
+        whoWeAre: enWhoWeAre,
+        events: enEvents,
+        donation: enDonation,
+        getConnected: enGetConnected
+    },
+    fr: {
+        home: frHome,
+        events: frEvents
+        // Other French content will be added as files are created
+    }
+};
+
+/**
+ * Content Service - Handles loading and managing content from JSON files
+ */
+class ContentService {
+    private cache: { [key: string]: any } = {};
+    private currentLanguage: string = defaultLanguage;
+    private initialized: boolean = false;
+
+    /**
+     * Initialize the content service
+     */
+    async initialize(): Promise<void> {
+        if (!this.initialized) {
+            // Load current language
+            this.currentLanguage = await getLanguage();
+            this.initialized = true;
+        }
+    }
+
+    /**
+     * Set the current language for content
+     * @param languageCode ISO language code (e.g., 'en', 'fr')
+     */
+    async setLanguage(languageCode: string): Promise<void> {
+        this.currentLanguage = languageCode;
+        await setLanguage(languageCode);
+        // Clear cache when language changes
+        this.clearCache();
+    }
+
+    /**
+     * Get the current language code
+     * @returns current language code
+     */
+    getCurrentLanguage(): string {
+        return this.currentLanguage;
+    }
+
+    /**
+     * Get content for the specified type in the current language
+     * @param contentType Type of content to retrieve
+     * @returns Promise with the content data
+     */
+    async getContent<T>(contentType: ContentType): Promise<ContentResponse<T>> {
+        try {
+            // Make sure service is initialized
+            if (!this.initialized) {
+                await this.initialize();
+            }
+
+            const cacheKey = `${this.currentLanguage}_${contentType}`;
+
+            // Return from cache if available
+            if (this.cache[cacheKey]) {
+                return {
+                    success: true,
+                    data: this.cache[cacheKey]
+                };
+            }
+
+            // Load content from static imports
+            const content = await this.loadContent<T>(contentType);
+
+            // Store in cache
+            this.cache[cacheKey] = content;
+
+            return {
+                success: true,
+                data: content
+            };
+        } catch (error) {
+            console.error(`Error loading content for ${contentType}:`, error);
+            return {
+                success: false,
+                error: `Failed to load ${contentType} content.`
+            };
+        }
+    }
+
+    /**
+     * Clear the content cache
+     */
+    clearCache(): void {
+        this.cache = {};
+    }
+
+    /**
+     * Load content from the static imports map
+     * @param contentType Type of content to load
+     * @returns Promise with the content data
+     */
+    private async loadContent<T>(contentType: ContentType): Promise<T> {
+        try {
+            // Try to get content for current language
+            if (contentMap[this.currentLanguage] &&
+                contentMap[this.currentLanguage][contentType] &&
+                contentMap[this.currentLanguage][contentType] !== null) {
+                return contentMap[this.currentLanguage][contentType] as T;
+            }
+
+            // If language-specific content is not available, fall back to English
+            if (this.currentLanguage !== 'en') {
+                console.log(`Falling back to English for ${contentType}`);
+                return contentMap.en[contentType] as T;
+            }
+
+            throw new Error(`Content not found for ${contentType}`);
+        } catch (error) {
+            console.error(`Error loading ${contentType} content:`, error);
+            throw error;
+        }
+    }
+}
+
+// Export a singleton instance
+export const contentService = new ContentService();

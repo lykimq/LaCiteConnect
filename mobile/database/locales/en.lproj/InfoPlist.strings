@@ -1,0 +1,11 @@
+/*
+  InfoPlist.strings
+  LaCiteConnect
+*/
+
+"CFBundleDisplayName" = "La Cité Connect";
+"NSCameraUsageDescription" = "This app needs access to your camera to scan QR codes for event check-ins and donations.";
+"NSPhotoLibraryUsageDescription" = "This app needs access to your photo library to upload profile pictures.";
+"NSLocationWhenInUseUsageDescription" = "This app needs access to your location to provide directions to the church and events.";
+"NSCalendarsUsageDescription" = "This app needs access to your calendar to add church events.";
+"NSUserTrackingUsageDescription" = "This will be used to deliver personalized content relevant to you and to improve our app experience.";

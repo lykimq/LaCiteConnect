@@ -1,0 +1,86 @@
+{
+  "header": {
+    "title": "Who We Are",
+    "subtitle": "To know Jesus and make Him known in Paris"
+  },
+  "sections": [
+    {
+      "id": "ourChurch",
+      "icon": "home",
+      "title": "Our Church",
+      "content": "We are a Christian church based in Paris, in partnership with New Covenant Ministries International (NCMI). Our church is a community of Parisians from all over the world and of all ages, with a heart for Paris and for France.",
+      "links": [
+        {
+          "text": "NCMI",
+          "url": "https://ncmi.net/"
+        }
+      ]
+    },
+    {
+      "id": "ourVision",
+      "icon": "eye",
+      "title": "Our Vision",
+      "content": "To be a church that knows Jesus and makes Him known in Paris and from Paris for His glory."
+    },
+    {
+      "id": "ourStory",
+      "icon": "book",
+      "title": "Our Story",
+      "content": "In April 2009, Fred and Vanessa together with their two sons at the time; Daniel (6) and Joel (3), left Dubai and the church they had been serving as full-time elders in for over 5 years, after feeling called by God to plant a church in Paris. Soon after arriving, they started to hold church meetings in their lounge every Sunday. Little by little, the church put down roots and God has added to our number those who are now part of La Cité."
+    },
+    {
+      "id": "ourHeart",
+      "icon": "heart",
+      "title": "Our Heart",
+      "content": "Our desire and passion is to see the Kingdom of God increasingly established here in Paris. To see His City (the church), His Ways and His Reign established. This includes seeing the captives set free, physical, emotional, and spiritual healing, people realizing their unique identity and calling, as well as many other things, on Earth, in Paris, as it is in Heaven."
+    },
+    {
+      "id": "ourCulture",
+      "icon": "people",
+      "title": "Our Culture",
+      "values": [
+        "Authenticity",
+        "Family values",
+        "Apostolic vision",
+        "Humility",
+        "Love"
+      ],
+      "itemIcon": "checkmark-circle"
+    },
+    {
+      "id": "ourEldershipTeam",
+      "icon": "people-circle",
+      "title": "Our Eldership Team",
+      "team": [
+        {
+          "image": "fred-vanessa.png",
+          "firstName": "Fred and Vanessa",
+          "lastName": "DALAIS"
+        },
+        {
+          "image": "nathanael-camille.png",
+          "firstName": "Nathanaël and Camille",
+          "lastName": "WESTPHAL"
+        },
+        {
+          "image": "marius-simona.png",
+          "firstName": "Marius and Simona",
+          "lastName": "VILCU"
+        },
+        {
+          "image": "louis-rebecca.png",
+          "firstName": "Louis and Rebecca",
+          "lastName": "BONICEL"
+        }
+      ]
+    },
+    {
+      "id": "ourStatement",
+      "icon": "document-text",
+      "title": "Our Statement of Faith",
+      "content": "Want to know more about us and our statement of faith?",
+      "buttonText": "Download Statement of Faith",
+      "buttonIcon": "download"
+    }
+  ]
+}

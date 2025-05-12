@@ -662,4 +662,170 @@ export const eventsStyles = StyleSheet.create({
         fontStyle: 'italic',
         textAlign: 'center',
     },
+    eventDescriptionContainer: {
+        marginVertical: 10,
+    },
+    viewMoreButton: {
+        alignSelf: 'flex-start',
+        marginTop: 5,
+    },
+    viewMoreText: {
+        fontSize: 14,
+        color: '#FF9843',
+        textDecorationLine: 'underline',
+    },
+    eventLocationContainer: {
+        marginVertical: 8,
+        padding: 10,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 6,
+    },
+    locationLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#666',
+        marginBottom: 4,
+    },
+    locationText: {
+        fontSize: 14,
+        color: '#333',
+        marginBottom: 6,
+    },
+    mapButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+    },
+    mapButtonText: {
+        fontSize: 14,
+        color: '#FF9843',
+        marginLeft: 4,
+        textDecorationLine: 'underline',
+    },
+    attachmentButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 8,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 6,
+        marginVertical: 4,
+    },
+    eventActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        backgroundColor: '#FFF5E9',
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#FFE4C4',
+    },
+    actionButtonText: {
+        fontSize: 14,
+        color: '#FF9843',
+        marginLeft: 4,
+    },
+    loadingContainer: {
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#666',
+    },
+    errorContainer: {
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    retryButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: '#FF9843',
+        borderRadius: 6,
+    },
+    retryButtonText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    monthPickerContainer: {
+        marginBottom: 15,
+    },
+    monthGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        padding: 10,
+    },
+    monthItem: {
+        width: '30%',
+        paddingVertical: 8,
+        alignItems: 'center',
+        marginBottom: 8,
+        borderRadius: 4,
+    },
+    selectedMonthItem: {
+        backgroundColor: '#FFE4C4',
+    },
+    monthItemText: {
+        fontSize: 14,
+        color: '#666',
+    },
+    selectedMonthItemText: {
+        color: '#FF9843',
+        fontWeight: '500',
+    },
+    monthNavigator: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        padding: 10,
+    },
+    monthNavButton: {
+        padding: 5,
+    },
+    currentMonthButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 5,
+    },
+    currentMonthText: {
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
+        marginRight: 5,
+    },
+    eventsContainer: {
+        marginBottom: 20,
+    },
+    holidaysContainer: {
+        marginBottom: 20,
+    },
+    viewAllButton: {
+        backgroundColor: '#f9f9f9',
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    viewAllButtonText: {
+        fontSize: 14,
+        color: '#666',
+        fontWeight: '500',
+    }
 });

@@ -1,0 +1,91 @@
+{
+  "header": {
+    "title": "Get Connected",
+    "subtitle": "Join us in fellowship and service"
+  },
+  "sections": [
+    {
+      "id": "stayUpdated",
+      "icon": "mail",
+      "title": "Stay Updated",
+      "content": "Join our mailing list to receive updates about our services, events, and community news.",
+      "button": {
+        "text": "Subscribe Now",
+        "icon": "paper-plane"
+      }
+    },
+    {
+      "id": "socialMedia",
+      "icon": "share-social",
+      "title": "Connect On Social Media",
+      "content": "Follow us on social media to stay connected with La Cité community and see regular updates.",
+      "contact": [
+        {
+          "type": "email",
+          "value": "salut@egliselacite.com",
+          "icon": "mail-outline"
+        },
+        {
+          "type": "instagram",
+          "value": "@laciteparis",
+          "icon": "logo-instagram",
+          "url": "https://www.instagram.com/laciteparis/"
+        },
+        {
+          "type": "facebook",
+          "value": "La Cité Paris",
+          "icon": "logo-facebook",
+          "url": "https://www.facebook.com/laciteparis/"
+        },
+        {
+          "type": "youtube",
+          "value": "Eglise La Cité",
+          "icon": "logo-youtube",
+          "url": "https://www.youtube.com/channel/UC-0imDK8zeP8lEBTEjiCx2A"
+        },
+        {
+          "type": "soundcloud",
+          "value": "Soundcloud",
+          "icon": "cloud",
+          "url": "https://soundcloud.com/egliselacite/tracks"
+        }
+      ]
+    },
+    {
+      "id": "getInvolved",
+      "icon": "people",
+      "title": "Get Involved",
+      "content": "Want to get involved in the church, connect with others, and serve God with us? Volunteer with one of our teams!",
+      "button": {
+        "text": "Volunteer Now",
+        "icon": "hand-left"
+      }
+    },
+    {
+      "id": "chezNous",
+      "icon": "home",
+      "title": "Join A Chez Nous",
+      "content": "Just as the early church met in homes, our Chez Nous are small groups of usually around 4-12 people that meet 2 or 3 times a month in homes in different parts of Paris.\n\nThese groups enjoy a time of fellowship over a meal, opening the Word of God and praying together.\n\nAs Jesus being the center of these groups, our Chez Nous allow us to grow together in our faith, to have a sense of belonging and to care for one another.",
+      "buttons": [
+        {
+          "text": "Join a Group",
+          "icon": "add-circle"
+        },
+        {
+          "text": "View Details",
+          "icon": "information-circle"
+        }
+      ]
+    },
+    {
+      "id": "prayerRequest",
+      "icon": "heart",
+      "title": "Prayer Request",
+      "content": "Do you have something you'd like us to pray for? Submit a prayer request and our team will pray for you.",
+      "button": {
+        "text": "Submit Prayer Request",
+        "icon": "chatbubbles"
+      }
+    }
+  ]
+}

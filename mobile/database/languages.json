@@ -1,0 +1,20 @@
+{
+  "available": ["en", "fr"],
+  "default": "en",
+  "names": {
+    "en": "English",
+    "fr": "Français"
+  },
+  "metadata": {
+    "en": {
+      "name": "English",
+      "nativeName": "English",
+      "direction": "ltr"
+    },
+    "fr": {
+      "name": "French",
+      "nativeName": "Français",
+      "direction": "ltr"
+    }
+  }
+}

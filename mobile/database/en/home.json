@@ -1,0 +1,61 @@
+{
+  "header": {
+    "title": "Our Sundays",
+    "subtitle": "Join us for worship and fellowship"
+  },
+  "sections": [
+    {
+      "id": "sundayService",
+      "icon": "videocam",
+      "title": "Our Sunday Service",
+      "content": "Take a look into one of our Sundays to see what to expect when you join us!"
+    },
+    {
+      "id": "joinUs",
+      "icon": "location",
+      "title": "Join Us",
+      "content": "Every Sunday at 10:30 AM\nBilingual Service (English & French)",
+      "buttonText": "24 Rue Antoine-Julien Hénard, 75012 Paris",
+      "buttonIcon": "map"
+    },
+    {
+      "id": "joinOnline",
+      "icon": "globe",
+      "title": "Join Us Online",
+      "content": "Can't make it in person? Join us online for our live stream service.",
+      "buttonText": "Watch Live Stream",
+      "buttonIcon": "videocam"
+    },
+    {
+      "id": "information",
+      "icon": "information-circle",
+      "title": "Things You May Want to Know",
+      "subsections": [
+        {
+          "title": "Service Details",
+          "items": [
+            "Our services are in English and French",
+            "We meet in person and online",
+            "Everyone is invited and welcome!",
+            "Come as you are!"
+          ],
+          "itemIcon": "checkmark-circle"
+        },
+        {
+          "title": "Children's Ministry",
+          "text": "We love children! We have a Parents' room for babies and a Sunday school program for kids (they are also welcome to stay in the main room with their parents)."
+        },
+        {
+          "title": "Service Schedule",
+          "text": "Our services start at 10:30am and finish around 12pm and are composed of:",
+          "items": [
+            "A time of worship and prayer",
+            "A time of teaching/preaching",
+            "A time of connection/fellowship"
+          ],
+          "itemIcons": ["musical-notes", "book", "people"]
+        }
+      ]
+    }
+  ]
+}

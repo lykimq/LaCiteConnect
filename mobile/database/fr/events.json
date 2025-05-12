@@ -1,0 +1,52 @@
+{
+  "header": {
+    "title": "Événements",
+    "subtitle": "Ce qui se passe à La Cité"
+  },
+  "tabs": [
+    {
+      "id": "upcoming",
+      "label": "Événements de l'Église"
+    },
+    {
+      "id": "holidays",
+      "label": "Jours Fériés Français"
+    }
+  ],
+  "ui": {
+    "loadingText": "Chargement en cours...",
+    "errorText": "Échec du chargement des événements. Veuillez réessayer plus tard.",
+    "holidaysErrorText": "Échec du chargement des jours fériés. Veuillez réessayer plus tard.",
+    "calendarErrorText": "Échec de connexion au service de calendrier.",
+    "noEventsText": "Aucun événement à venir pour ce mois",
+    "noHolidaysText": "Aucun jour férié pour ce mois",
+    "addToCalendarText": "Ajouter au Calendrier",
+    "viewOnMapText": "Voir sur la Carte",
+    "setReminderText": "Définir un Rappel",
+    "reminderSetText": "Rappel Défini",
+    "viewFullDescriptionText": "Voir la Description Complète",
+    "viewAttachmentText": "Pièces Jointes",
+    "openInBrowserText": "Ouvrir dans le Navigateur",
+    "dateNotSpecifiedText": "Date non spécifiée",
+    "allDayText": "Toute la journée",
+    "viewAllEventsText": "Voir Tous les Événements",
+    "locationText": "Emplacement",
+    "directionsText": "Itinéraire",
+    "publicHolidayText": "Jour Férié",
+    "readMoreText": "Lire Plus",
+    "viewLocationText": "Voir l'Emplacement",
+    "viewFilesText": "Voir les Fichiers",
+    "viewDetailsText": "Voir les Détails",
+    "closeText": "Fermer",
+    "eventAddedText": "Événement ajouté à votre calendrier",
+    "refreshEventsText": "Actualiser les Événements",
+    "refreshHolidaysText": "Actualiser les Jours Fériés",
+    "tryAgainText": "Réessayer",
+    "openCalendarText": "Ouvrir le Calendrier dans le Navigateur"
+  },
+  "months": [
+    "Janvier", "Février", "Mars", "Avril",
+    "Mai", "Juin", "Juillet", "Août",
+    "Septembre", "Octobre", "Novembre", "Décembre"
+  ]
+}

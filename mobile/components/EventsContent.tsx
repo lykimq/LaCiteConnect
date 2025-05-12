@@ -4,6 +4,7 @@ import { eventsStyles } from '../styles/EventsContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime, isPastEvent } from '../utils/dateUtils';
 import { calendarService } from '../services/calendarService';
+import { contentService } from '../services/contentService';
 import WebView from 'react-native-webview';
 
 // Get screen dimensions for WebView sizing
@@ -34,6 +35,51 @@ interface CalendarEvent {
     reminderSet?: boolean;
 }
 
+// Events content interface from JSON
+interface EventsContent {
+    header: {
+        title: string;
+        subtitle: string;
+    };
+    tabs: Array<{
+        id: string;
+        label: string;
+    }>;
+    ui: {
+        loadingText: string;
+        errorText: string;
+        holidaysErrorText: string;
+        calendarErrorText: string;
+        noEventsText: string;
+        noHolidaysText: string;
+        addToCalendarText: string;
+        viewOnMapText: string;
+        setReminderText: string;
+        reminderSetText: string;
+        viewFullDescriptionText: string;
+        viewAttachmentText: string;
+        openInBrowserText: string;
+        dateNotSpecifiedText: string;
+        allDayText: string;
+        viewAllEventsText: string;
+        locationText: string;
+        directionsText: string;
+        publicHolidayText: string;
+        readMoreText: string;
+        viewLocationText: string;
+        viewFilesText: string;
+        viewDetailsText: string;
+        closeText: string;
+        setReminderText: string;
+        eventAddedText: string;
+        refreshEventsText: string;
+        refreshHolidaysText: string;
+        tryAgainText: string;
+        openCalendarText: string;
+    };
+    months: string[];
+}
+
 // Add this function before the EventsContent component to identify Google Drive attachments
 const isDriveAttachment = (url: string): boolean => {
     return url.includes('drive.google.com');
@@ -50,6 +96,11 @@ export const EventsContent = () => {
     const [holidaysError, setHolidaysError] = useState<string | null>(null);
     const [calendarError, setCalendarError] = useState<string | null>(null);
 
+    // Content state for UI strings
+    const [content, setContent] = useState<EventsContent | null>(null);
+    const [contentLoading, setContentLoading] = useState<boolean>(true);
+    const [contentError, setContentError] = useState<string | null>(null);
+
     // State for expanded description modal
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [showFullDescription, setShowFullDescription] = useState(false);
@@ -64,6 +115,29 @@ export const EventsContent = () => {
     const [holidayYear, setHolidayYear] = useState(currentDate.getFullYear());
     const [holidayMonth, setHolidayMonth] = useState(currentDate.getMonth());
     const [showHolidayMonthPicker, setShowHolidayMonthPicker] = useState(false);
+
+    // Load content from JSON
+    useEffect(() => {
+        loadContent();
+    }, []);
+
+    const loadContent = async () => {
+        try {
+            setContentLoading(true);
+            const response = await contentService.getContent<EventsContent>('events');
+
+            if (response.success && response.data) {
+                setContent(response.data);
+            } else {
+                setContentError(response.error || 'Failed to load content');
+            }
+        } catch (err) {
+            console.error('Error loading events content:', err);
+            setContentError('An error occurred while loading content');
+        } finally {
+            setContentLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetchEvents();
@@ -163,12 +237,12 @@ export const EventsContent = () => {
     const formatEventDate = (event: CalendarEvent) => {
         if (event.start.date) {
             // This is an all-day event
-            return `${formatDate(new Date(event.start.date))} (All day)`;
+            return `${formatDate(new Date(event.start.date))} (${content?.ui.allDayText || 'All day'})`;
         } else if (event.start.dateTime) {
             // This is a timed event
             return `${formatDate(new Date(event.start.dateTime))} • ${formatTime(new Date(event.start.dateTime))} - ${formatTime(new Date(event.end.dateTime || ''))}`;
         }
-        return 'Date not specified';
+        return content?.ui.dateNotSpecifiedText || 'Date not specified';
     };
 
     const handleOpenMap = (location: string) => {
@@ -230,124 +304,201 @@ export const EventsContent = () => {
         }
     };
 
-    // Get current month and year as string
     const getCurrentMonthYearString = () => {
-        const monthNames = [
+        const monthNames = content?.months || [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
         return `${monthNames[currentMonth]} ${currentYear}`;
     };
 
-    // Get holiday month and year as string
     const getHolidayMonthYearString = () => {
-        const monthNames = [
+        const monthNames = content?.months || [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
         return `${monthNames[holidayMonth]} ${holidayYear}`;
     };
 
-    // Select a specific month for events
     const selectMonth = (month: number) => {
         setCurrentMonth(month);
         setShowMonthPicker(false);
     };
 
-    // Select a specific month for holidays
     const selectHolidayMonth = (month: number) => {
         setHolidayMonth(month);
         setShowHolidayMonthPicker(false);
     };
 
-    // Memoize filtered events to avoid re-filtering on every render
-    const eventsForCurrentMonth = useMemo(() => {
-        // Get current date at midnight to compare properly
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        return events.filter(event => {
-            const eventDate = event.start.dateTime
-                ? new Date(event.start.dateTime)
-                : event.start.date
-                    ? new Date(event.start.date)
-                    : null;
-
-            if (!eventDate) return false;
-
-            // Only show events in the current month AND in the future (today or later)
-            return eventDate.getFullYear() === currentYear &&
-                eventDate.getMonth() === currentMonth &&
-                eventDate >= today;
-        }).sort((a, b) => {
-            const dateA = a.start.dateTime ? new Date(a.start.dateTime) : new Date(a.start.date || "");
-            const dateB = b.start.dateTime ? new Date(b.start.dateTime) : new Date(b.start.date || "");
-            return dateA.getTime() - dateB.getTime();
-        });
-    }, [events, currentYear, currentMonth]);
-
-    // Filter holidays for current month
-    const holidaysForCurrentMonth = useMemo(() => {
-        return holidays.filter(holiday => {
-            const holidayDate = holiday.start.dateTime
-                ? new Date(holiday.start.dateTime)
-                : holiday.start.date
-                    ? new Date(holiday.start.date)
-                    : null;
-
-            if (!holidayDate) return false;
-
-            return holidayDate.getFullYear() === holidayYear &&
-                holidayDate.getMonth() === holidayMonth;
-        }).sort((a, b) => {
-            const dateA = a.start.date ? new Date(a.start.date) : new Date();
-            const dateB = b.start.date ? new Date(b.start.date) : new Date();
-            return dateA.getTime() - dateB.getTime();
-        });
-    }, [holidays, holidayYear, holidayMonth]);
-
-    // Add a reminder for an event
-    const handleAddReminder = async (event: CalendarEvent) => {
-        try {
-            const success = await calendarService.addEventReminder(event);
-            if (success) {
-                // Update the event state to show reminder is set
-                const updatedEvents = events.map(e =>
-                    e.id === event.id ? { ...e, reminderSet: true } : e
-                );
-                setEvents(updatedEvents);
-                alert('Reminder set for this event');
-            } else {
-                alert('Failed to set reminder. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error adding reminder:', error);
-            alert('Error adding reminder');
-        }
-    };
-
-    // Add event to device calendar
-    const handleAddToDeviceCalendar = async (event: CalendarEvent) => {
-        try {
-            const success = await calendarService.addToDeviceCalendar(event);
-            if (success) {
-                alert('Event added to your device calendar');
-            } else {
-                alert('Failed to add to calendar. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error adding to device calendar:', error);
-            alert('Error adding to calendar');
-        }
-    };
-
-    // Add this inside the component, with other handler functions
     const handleViewAttachment = (attachmentUrl: string) => {
-        // Open attachment links directly in browser
         Linking.openURL(attachmentUrl);
     };
 
-    // Update the renderEventCard function to remove image display
+    // Render month picker for events
+    const renderMonthPicker = () => {
+        const months = content?.months?.map(month => month.substring(0, 3)) || [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+
+        return (
+            <View style={eventsStyles.monthPicker}>
+                {months.map((month, index) => (
+                    <TouchableOpacity
+                        key={month}
+                        style={[
+                            eventsStyles.monthPickerItem,
+                            currentMonth === index && eventsStyles.monthPickerItemActive
+                        ]}
+                        onPress={() => selectMonth(index)}
+                    >
+                        <Text style={[
+                            eventsStyles.monthPickerText,
+                            currentMonth === index && eventsStyles.monthPickerTextActive
+                        ]}>
+                            {month}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        );
+    };
+
+    // Render month picker for holidays
+    const renderHolidayMonthPicker = () => {
+        const months = content?.months?.map(month => month.substring(0, 3)) || [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+
+        return (
+            <View style={eventsStyles.monthPicker}>
+                {months.map((month, index) => (
+                    <TouchableOpacity
+                        key={month}
+                        style={[
+                            eventsStyles.monthPickerItem,
+                            holidayMonth === index && eventsStyles.monthPickerItemActive
+                        ]}
+                        onPress={() => selectHolidayMonth(index)}
+                    >
+                        <Text style={[
+                            eventsStyles.monthPickerText,
+                            holidayMonth === index && eventsStyles.monthPickerTextActive
+                        ]}>
+                            {month}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        );
+    };
+
+    // Render current month events
+    const renderCurrentMonthEvents = () => {
+        if (loading) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <ActivityIndicator size="large" color="#FF9843" />
+                    <Text style={eventsStyles.noEventsText}>{content?.ui.loadingText || 'Loading events...'}</Text>
+                </View>
+            );
+        }
+
+        if (error) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
+                    <Text style={eventsStyles.noEventsText}>{error}</Text>
+                    <TouchableOpacity
+                        style={eventsStyles.detailsButton}
+                        onPress={() => fetchEvents(currentYear, currentMonth)}
+                    >
+                        <Text style={eventsStyles.buttonText}>{content?.ui.tryAgainText || 'Try Again'}</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        if (events.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+            return (
+                eventDate.getMonth() === currentMonth &&
+                eventDate.getFullYear() === currentYear
+            );
+        }).length === 0) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <Ionicons name="calendar-outline" size={40} color="#ccc" />
+                    <Text style={eventsStyles.noEventsText}>
+                        {content?.ui.noEventsText || 'No events found for'} {getCurrentMonthYearString()}
+                    </Text>
+                </View>
+            );
+        }
+
+        return events.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+            return (
+                eventDate.getMonth() === currentMonth &&
+                eventDate.getFullYear() === currentYear
+            );
+        }).map(renderEventCard);
+    };
+
+    // Render French holidays for current month
+    const renderCurrentMonthHolidays = () => {
+        if (holidaysLoading) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <ActivityIndicator size="large" color="#FF9843" />
+                    <Text style={eventsStyles.noEventsText}>{content?.ui.loadingText || 'Loading holidays...'}</Text>
+                </View>
+            );
+        }
+
+        if (holidaysError) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
+                    <Text style={eventsStyles.noEventsText}>{holidaysError}</Text>
+                    <TouchableOpacity
+                        style={eventsStyles.detailsButton}
+                        onPress={() => fetchHolidays(holidayYear, holidayMonth)}
+                    >
+                        <Text style={eventsStyles.buttonText}>{content?.ui.tryAgainText || 'Try Again'}</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        if (holidays.filter(holiday => {
+            const holidayDate = new Date(holiday.start.dateTime || holiday.start.date || '');
+            return (
+                holidayDate.getMonth() === holidayMonth &&
+                holidayDate.getFullYear() === holidayYear
+            );
+        }).length === 0) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <Ionicons name="calendar-outline" size={40} color="#ccc" />
+                    <Text style={eventsStyles.noEventsText}>
+                        {content?.ui.noHolidaysText || 'No holidays found for'} {getHolidayMonthYearString()}
+                    </Text>
+                </View>
+            );
+        }
+
+        return holidays.filter(holiday => {
+            const holidayDate = new Date(holiday.start.dateTime || holiday.start.date || '');
+            return (
+                holidayDate.getMonth() === holidayMonth &&
+                holidayDate.getFullYear() === holidayYear
+            );
+        }).map(renderHolidayCard);
+    };
+
+    // Render event card
     const renderEventCard = (event: CalendarEvent) => {
         // Check if this event has any Google Drive attachments
         const hasDriveAttachments = event.attachments?.some(
@@ -413,7 +564,7 @@ export const EventsContent = () => {
                                 style={eventsStyles.readMoreButton}
                                 onPress={() => handleViewFullDescription(event)}
                             >
-                                <Text style={eventsStyles.readMoreText}>Read More</Text>
+                                <Text style={eventsStyles.readMoreText}>{content?.ui.readMoreText || 'Read More'}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -422,7 +573,7 @@ export const EventsContent = () => {
                 {/* Display attachments if available */}
                 {event.attachments && event.attachments.length > 0 && (
                     <View style={eventsStyles.attachmentsContainer}>
-                        <Text style={eventsStyles.attachmentsTitle}>Attachments:</Text>
+                        <Text style={eventsStyles.attachmentsTitle}>{content?.ui.viewAttachmentText || 'Attachments:'}:</Text>
                         {event.attachments.map((attachment, index) => (
                             <TouchableOpacity
                                 key={index}
@@ -452,7 +603,7 @@ export const EventsContent = () => {
                             style={eventsStyles.detailsButton}
                             onPress={() => handleOpenMap(event.location || '')}
                         >
-                            <Text style={eventsStyles.buttonText}>View Location</Text>
+                            <Text style={eventsStyles.buttonText}>{content?.ui.viewLocationText || 'View Location'}</Text>
                         </TouchableOpacity>
                     )}
 
@@ -460,7 +611,7 @@ export const EventsContent = () => {
                         style={eventsStyles.registerButton}
                         onPress={() => handleAddToCalendar(event)}
                     >
-                        <Text style={eventsStyles.buttonText}>Add to Calendar</Text>
+                        <Text style={eventsStyles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -471,7 +622,7 @@ export const EventsContent = () => {
                         onPress={() => handleAddReminder(event)}
                     >
                         <Ionicons name="notifications-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                        <Text style={eventsStyles.secondaryButtonText}>Set Reminder</Text>
+                        <Text style={eventsStyles.secondaryButtonText}>{content?.ui.setReminderText || 'Set Reminder'}</Text>
                     </TouchableOpacity>
 
                     {driveAttachment ? (
@@ -480,7 +631,7 @@ export const EventsContent = () => {
                             onPress={() => handleViewAttachment(driveAttachment.url)}
                         >
                             <Ionicons name="document-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                            <Text style={eventsStyles.secondaryButtonText}>View Files</Text>
+                            <Text style={eventsStyles.secondaryButtonText}>{content?.ui.viewFilesText || 'View Files'}</Text>
                         </TouchableOpacity>
                     ) : (
                         <TouchableOpacity
@@ -488,7 +639,7 @@ export const EventsContent = () => {
                             onPress={() => Linking.openURL('https://fr.egliselacite.com/events2')}
                         >
                             <Ionicons name="open-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                            <Text style={eventsStyles.secondaryButtonText}>View Details</Text>
+                            <Text style={eventsStyles.secondaryButtonText}>{content?.ui.viewDetailsText || 'View Details'}</Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -496,6 +647,7 @@ export const EventsContent = () => {
         );
     };
 
+    // Render holiday card
     const renderHolidayCard = (holiday: CalendarEvent) => (
         <View key={holiday.id} style={eventsStyles.holidayCard}>
             <View style={eventsStyles.eventHeader}>
@@ -509,7 +661,7 @@ export const EventsContent = () => {
                 </View>
             </View>
             <View style={eventsStyles.holidayTag}>
-                <Text style={eventsStyles.holidayTagText}>Public Holiday</Text>
+                <Text style={eventsStyles.holidayTagText}>{content?.ui.publicHolidayText || 'Public Holiday'}</Text>
             </View>
             <Text style={eventsStyles.holidayDate}>
                 {holiday.start.date ? formatDate(new Date(holiday.start.date)) : ''}
@@ -521,150 +673,34 @@ export const EventsContent = () => {
                 style={eventsStyles.registerButton}
                 onPress={() => handleAddToCalendar(holiday)}
             >
-                <Text style={eventsStyles.buttonText}>Add to Calendar</Text>
+                <Text style={eventsStyles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
             </TouchableOpacity>
         </View>
     );
 
-    // Render month picker for events
-    const renderMonthPicker = () => {
-        const months = [
-            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-        ];
-
+    // Handle loading and error states for content
+    if (contentLoading) {
         return (
-            <View style={eventsStyles.monthPicker}>
-                {months.map((month, index) => (
-                    <TouchableOpacity
-                        key={month}
-                        style={[
-                            eventsStyles.monthPickerItem,
-                            currentMonth === index && eventsStyles.monthPickerItemActive
-                        ]}
-                        onPress={() => selectMonth(index)}
-                    >
-                        <Text style={[
-                            eventsStyles.monthPickerText,
-                            currentMonth === index && eventsStyles.monthPickerTextActive
-                        ]}>
-                            {month}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+            <View style={[eventsStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color="#FF9843" />
             </View>
         );
-    };
+    }
 
-    // Render month picker for holidays
-    const renderHolidayMonthPicker = () => {
-        const months = [
-            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-        ];
-
+    // If there's an error loading content, show an error message
+    if (contentError || !content) {
         return (
-            <View style={eventsStyles.monthPicker}>
-                {months.map((month, index) => (
-                    <TouchableOpacity
-                        key={month}
-                        style={[
-                            eventsStyles.monthPickerItem,
-                            holidayMonth === index && eventsStyles.monthPickerItemActive
-                        ]}
-                        onPress={() => selectHolidayMonth(index)}
-                    >
-                        <Text style={[
-                            eventsStyles.monthPickerText,
-                            holidayMonth === index && eventsStyles.monthPickerTextActive
-                        ]}>
-                            {month}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+            <View style={[eventsStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 16, color: '#FF3B30' }}>{contentError || 'Content not available'}</Text>
+                <TouchableOpacity
+                    style={{ marginTop: 20, padding: 10, backgroundColor: '#FF9843', borderRadius: 8 }}
+                    onPress={loadContent}
+                >
+                    <Text style={{ color: '#FFFFFF' }}>Retry</Text>
+                </TouchableOpacity>
             </View>
         );
-    };
-
-    // Render current month events
-    const renderCurrentMonthEvents = () => {
-        if (loading) {
-            return (
-                <View style={eventsStyles.noEventsContainer}>
-                    <ActivityIndicator size="large" color="#FF9843" />
-                    <Text style={eventsStyles.noEventsText}>Loading events...</Text>
-                </View>
-            );
-        }
-
-        if (error) {
-            return (
-                <View style={eventsStyles.noEventsContainer}>
-                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
-                    <Text style={eventsStyles.noEventsText}>{error}</Text>
-                    <TouchableOpacity
-                        style={eventsStyles.detailsButton}
-                        onPress={() => fetchEvents(currentYear, currentMonth)}
-                    >
-                        <Text style={eventsStyles.buttonText}>Try Again</Text>
-                    </TouchableOpacity>
-                </View>
-            );
-        }
-
-        if (eventsForCurrentMonth.length === 0) {
-            return (
-                <View style={eventsStyles.noEventsContainer}>
-                    <Ionicons name="calendar-outline" size={40} color="#ccc" />
-                    <Text style={eventsStyles.noEventsText}>
-                        No events found for {getCurrentMonthYearString()}
-                    </Text>
-                </View>
-            );
-        }
-
-        return eventsForCurrentMonth.map(renderEventCard);
-    };
-
-    // Render French holidays for current month
-    const renderCurrentMonthHolidays = () => {
-        if (holidaysLoading) {
-            return (
-                <View style={eventsStyles.noEventsContainer}>
-                    <ActivityIndicator size="large" color="#FF9843" />
-                    <Text style={eventsStyles.noEventsText}>Loading holidays...</Text>
-                </View>
-            );
-        }
-
-        if (holidaysError) {
-            return (
-                <View style={eventsStyles.noEventsContainer}>
-                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
-                    <Text style={eventsStyles.noEventsText}>{holidaysError}</Text>
-                    <TouchableOpacity
-                        style={eventsStyles.detailsButton}
-                        onPress={() => fetchHolidays(holidayYear, holidayMonth)}
-                    >
-                        <Text style={eventsStyles.buttonText}>Try Again</Text>
-                    </TouchableOpacity>
-                </View>
-            );
-        }
-
-        if (holidaysForCurrentMonth.length === 0) {
-            return (
-                <View style={eventsStyles.noEventsContainer}>
-                    <Ionicons name="calendar-outline" size={40} color="#ccc" />
-                    <Text style={eventsStyles.noEventsText}>
-                        No holidays found for {getHolidayMonthYearString()}
-                    </Text>
-                </View>
-            );
-        }
-
-        return holidaysForCurrentMonth.map(renderHolidayCard);
-    };
+    }
 
     return (
         <View style={eventsStyles.container}>
@@ -681,10 +717,10 @@ export const EventsContent = () => {
             >
                 <View style={eventsStyles.header}>
                     <Text style={eventsStyles.title}>
-                        Events
+                        {content?.header.title || 'Events'}
                     </Text>
                     <Text style={eventsStyles.subtitle}>
-                        Join us for upcoming church events
+                        {content?.header.subtitle || 'Join us for upcoming church events'}
                     </Text>
                 </View>
 
@@ -696,7 +732,7 @@ export const EventsContent = () => {
                         javaScriptEnabled={true}
                         domStorageEnabled={true}
                         onError={(e) => {
-                            setCalendarError('Failed to load calendar view. Please try again later.');
+                            setCalendarError(content?.ui.calendarErrorText || 'Failed to load calendar view. Please try again later.');
                             console.error('WebView error:', e.nativeEvent);
                         }}
                     />
@@ -710,7 +746,7 @@ export const EventsContent = () => {
                     onPress={handleOpenCalendar}
                 >
                     <Ionicons name="open-outline" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={eventsStyles.buttonText}>Open Calendar in Browser</Text>
+                    <Text style={eventsStyles.buttonText}>{content?.ui.openCalendarText || 'Open Calendar in Browser'}</Text>
                 </TouchableOpacity>
 
                 <View style={eventsStyles.tabContainer}>
@@ -719,7 +755,7 @@ export const EventsContent = () => {
                         onPress={() => setActiveTab('upcoming')}
                     >
                         <Text style={[eventsStyles.tabText, activeTab === 'upcoming' && eventsStyles.activeTabText]}>
-                            Church Events
+                            {content?.tabs[0]?.label || 'Church Events'}
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -732,7 +768,7 @@ export const EventsContent = () => {
                         }}
                     >
                         <Text style={[eventsStyles.tabText, activeTab === 'holidays' && eventsStyles.activeTabText]}>
-                            French Holidays
+                            {content?.tabs[1]?.label || 'French Holidays'}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -782,7 +818,7 @@ export const EventsContent = () => {
                             onPress={() => fetchEvents(currentYear, currentMonth)}
                         >
                             <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={eventsStyles.buttonText}>Refresh Events</Text>
+                            <Text style={eventsStyles.buttonText}>{content?.ui.refreshEventsText || 'Refresh Events'}</Text>
                         </TouchableOpacity>
                     </>
                 )}
@@ -824,7 +860,7 @@ export const EventsContent = () => {
                         {/* Month picker for holidays */}
                         {showHolidayMonthPicker && renderHolidayMonthPicker()}
 
-                        <Text style={eventsStyles.sectionTitle}>French Public Holidays</Text>
+                        <Text style={eventsStyles.sectionTitle}>{content?.tabs[1]?.label || 'French Public Holidays'}</Text>
 
                         {/* Holidays for current month */}
                         {renderCurrentMonthHolidays()}
@@ -834,7 +870,7 @@ export const EventsContent = () => {
                             onPress={() => fetchHolidays(holidayYear, holidayMonth)}
                         >
                             <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={eventsStyles.buttonText}>Refresh Holidays</Text>
+                            <Text style={eventsStyles.buttonText}>{content?.ui.refreshHolidaysText || 'Refresh Holidays'}</Text>
                         </TouchableOpacity>
                     </>
                 )}
@@ -890,7 +926,7 @@ export const EventsContent = () => {
                                 attachment => isDriveAttachment(attachment.url)
                             ) && (
                                     <View style={eventsStyles.modalPhotoAttachmentsContainer}>
-                                        <Text style={eventsStyles.modalAttachmentsTitle}>Files:</Text>
+                                        <Text style={eventsStyles.modalAttachmentsTitle}>{content?.ui.viewAttachmentText || 'Files:'}:</Text>
                                         {selectedEvent.attachments
                                             .filter(attachment => isDriveAttachment(attachment.url))
                                             .map((attachment, index) => (
@@ -914,7 +950,7 @@ export const EventsContent = () => {
                                 style={eventsStyles.modalCloseButton}
                                 onPress={() => setShowFullDescription(false)}
                             >
-                                <Text style={eventsStyles.buttonText}>Close</Text>
+                                <Text style={eventsStyles.buttonText}>{content?.ui.closeText || 'Close'}</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -924,7 +960,7 @@ export const EventsContent = () => {
                                     handleAddToCalendar(selectedEvent);
                                 }}
                             >
-                                <Text style={eventsStyles.buttonText}>Add to Calendar</Text>
+                                <Text style={eventsStyles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

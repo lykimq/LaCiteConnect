@@ -17,7 +17,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.laciteconnect.app"
+      "bundleIdentifier": "com.laciteconnect.app",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "locales": {
+        "en": "./database/locales/ios/en.json",
+        "fr": "./database/locales/ios/fr.json"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,6 +43,11 @@
       "eas": {
         "projectId": "la-cite-connect"
       }
+    },
+    "localization": {
+      "defaultLanguage": "en",
+      "supportedLanguages": ["en", "fr"],
+      "fallbackLanguage": "en"
     }
   }
 }

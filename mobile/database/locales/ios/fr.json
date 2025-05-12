@@ -1,0 +1,7 @@
+{
+  "CFBundleDisplayName": "La Cité Connect",
+  "NSHumanReadableCopyright": "© Église La Cité Paris",
+  "NSCalendarsUsageDescription": "Cette application nécessite l'accès à votre calendrier pour ajouter et gérer les événements de l'église.",
+  "NSCameraUsageDescription": "Cette application nécessite l'accès à l'appareil photo pour scanner les codes QR des événements.",
+  "NSPhotoLibraryUsageDescription": "Cette application nécessite l'accès à votre bibliothèque de photos pour télécharger des images."
+}

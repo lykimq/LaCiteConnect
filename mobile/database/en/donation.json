@@ -1,0 +1,72 @@
+{
+  "header": {
+    "title": "Donate",
+    "subtitle": "Give generously and with joy (2 Cor 9 : 7)"
+  },
+  "sections": [
+    {
+      "id": "quickDonation",
+      "title": "Quick Donation Links",
+      "buttons": [
+        {
+          "text": "Donate to Mission",
+          "icon": "heart"
+        },
+        {
+          "text": "Building Fund",
+          "icon": "home"
+        }
+      ]
+    },
+    {
+      "id": "missionFund",
+      "title": "Bank Details - Mission Fund",
+      "description": "Religious association 1905 - authorized to issue tax receipts",
+      "details": {
+        "accountName": "La Cité Eglise Chrétienne",
+        "iban": "FR76 3000 3032 9100 0372 7230 583",
+        "bic": "SOGEFRPP"
+      },
+      "labels": {
+        "accountName": "Account Name:",
+        "iban": "IBAN:",
+        "bic": "BIC/SWIFT:"
+      }
+    },
+    {
+      "id": "buildingFund",
+      "title": "Bank Details - Building Fund",
+      "description": "For our permanent place project",
+      "details": {
+        "accountName": "La Cité Eglise Chrétienne",
+        "iban": "FR76 3000 3032 9100 0372 7264 436",
+        "bic": "SOGEFRPP"
+      },
+      "labels": {
+        "accountName": "Account Name:",
+        "iban": "IBAN:",
+        "bic": "BIC/SWIFT:"
+      }
+    },
+    {
+      "id": "lesMainsTendues",
+      "title": "Les Mains Tendues De La Cité",
+      "description": "Association 1901 - NOT authorized to issue tax receipts. For caring for the poor and other biblical activities",
+      "details": {
+        "accountName": "Les Mains Tendues De La Cité",
+        "iban": "FR76 3000 3032 9100 0372 7277 628",
+        "bic": "SOGEFRPP"
+      },
+      "labels": {
+        "accountName": "Account Name:",
+        "iban": "IBAN:",
+        "bic": "BIC/SWIFT:"
+      }
+    },
+    {
+      "id": "thankYou",
+      "title": "Thank You",
+      "content": "Thank you for your obedience to God and for your generosity of heart."
+    }
+  ]
+}

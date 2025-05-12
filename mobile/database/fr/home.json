@@ -1,0 +1,55 @@
+{
+  "header": {
+    "title": "La Cité Église",
+    "subtitle": "Bienvenue à notre communauté"
+  },
+  "sections": [
+    {
+      "id": "sundayService",
+      "icon": "calendar",
+      "title": "Service du Dimanche",
+      "content": "Nous nous réunissons tous les dimanches à 10h pour un moment de louange, de prière et d'enseignement. Venez vous joindre à nous!"
+    },
+    {
+      "id": "joinUs",
+      "icon": "navigate",
+      "title": "Venez nous Rejoindre",
+      "content": "Notre église est située à Levallois-Perret. Nous serions ravis de vous accueillir parmi nous!",
+      "buttonText": "Nous Trouver",
+      "buttonIcon": "map"
+    },
+    {
+      "id": "joinOnline",
+      "icon": "videocam",
+      "title": "Regardez en Ligne",
+      "content": "Vous ne pouvez pas nous rejoindre en personne? Regardez notre service en direct chaque dimanche sur YouTube.",
+      "buttonText": "Voir sur YouTube",
+      "buttonIcon": "logo-youtube"
+    },
+    {
+      "id": "information",
+      "icon": "information-circle",
+      "title": "Informations Pratiques",
+      "subsections": [
+        {
+          "title": "Nos Horaires",
+          "items": [
+            "Service principal: Dimanche 10h00 - 12h00",
+            "Prière: Mercredi 19h30 - 20h30",
+            "Groupe de jeunes: Vendredi 19h30 - 21h30"
+          ],
+          "itemIcon": "time"
+        },
+        {
+          "title": "Pour les Enfants",
+          "text": "Nous proposons un programme adapté aux enfants pendant le service du dimanche matin.",
+          "items": [
+            "École du dimanche: 3-12 ans",
+            "Garderie: 0-3 ans"
+          ],
+          "itemIcon": "happy"
+        }
+      ]
+    }
+  ]
+}

@@ -1,10 +1,65 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
 import { getConnectedStyles } from '../styles/GetConnectedContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS } from '../config/staticData';
+import { contentService } from '../services/contentService';
+
+// Define the get connected content interface
+interface GetConnectedContent {
+    header: {
+        title: string;
+        subtitle: string;
+    };
+    sections: Array<{
+        id: string;
+        icon: string;
+        title: string;
+        content: string;
+        button?: {
+            text: string;
+            icon: string;
+        };
+        buttons?: Array<{
+            text: string;
+            icon: string;
+        }>;
+        contact?: Array<{
+            type: string;
+            value: string;
+            icon: string;
+            url?: string;
+        }>;
+    }>;
+}
 
 export const GetConnectedContent = () => {
+    const [content, setContent] = useState<GetConnectedContent | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        loadContent();
+    }, []);
+
+    const loadContent = async () => {
+        try {
+            setLoading(true);
+            const response = await contentService.getContent<GetConnectedContent>('getConnected');
+
+            if (response.success && response.data) {
+                setContent(response.data);
+            } else {
+                setError(response.error || 'Failed to load content');
+            }
+        } catch (err) {
+            console.error('Error loading get connected content:', err);
+            setError('An error occurred while loading content');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSubscribe = () => {
         Linking.openURL(STATIC_URLS.subscribe);
     };
@@ -33,6 +88,52 @@ export const GetConnectedContent = () => {
         Linking.openURL('mailto:salut@egliselacite.com');
     };
 
+    if (loading) {
+        return (
+            <View style={[getConnectedStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color="#FF9843" />
+            </View>
+        );
+    }
+
+    if (error || !content) {
+        return (
+            <View style={[getConnectedStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 16, color: '#FF3B30' }}>{error || 'Content not available'}</Text>
+                <TouchableOpacity
+                    style={{ marginTop: 20, padding: 10, backgroundColor: '#FF9843', borderRadius: 8 }}
+                    onPress={loadContent}
+                >
+                    <Text style={{ color: '#FFFFFF' }}>Retry</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
+    // Helper function to handle button actions based on section ID
+    const handleButtonAction = (sectionId: string) => {
+        switch (sectionId) {
+            case 'stayUpdated':
+                return handleSubscribe;
+            case 'getInvolved':
+                return handleVolunteer;
+            case 'prayerRequest':
+                return handlePrayerRequest;
+            default:
+                return () => console.log(`No action defined for section: ${sectionId}`);
+        }
+    };
+
+    // Helper function to handle contact item actions
+    const handleContactAction = (contactType: string, url?: string) => {
+        if (contactType === 'email') {
+            return handleEmail;
+        } else if (url) {
+            return () => handleSocialMedia(url);
+        }
+        return () => console.log(`No action defined for contact type: ${contactType}`);
+    };
+
     return (
         <View style={getConnectedStyles.container}>
             <ScrollView
@@ -41,189 +142,82 @@ export const GetConnectedContent = () => {
             >
                 <View style={getConnectedStyles.header}>
                     <Text style={getConnectedStyles.title}>
-                        Get Connected
+                        {content.header.title}
                     </Text>
                     <Text style={getConnectedStyles.subtitle}>
-                        Join us in fellowship and service
+                        {content.header.subtitle}
                     </Text>
                 </View>
 
-                <View style={getConnectedStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="mail" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={getConnectedStyles.sectionTitle}>Stay Updated</Text>
-                    </View>
-                    <Text style={getConnectedStyles.paragraph}>
-                        Join our mailing list to receive updates about our services, events, and community news.
-                    </Text>
-                    <TouchableOpacity
-                        style={getConnectedStyles.contactButton}
-                        onPress={handleSubscribe}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="paper-plane" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={getConnectedStyles.buttonText}>
-                                Subscribe Now
-                            </Text>
+                {content.sections.map((section, index) => (
+                    <View key={section.id} style={getConnectedStyles.cardContainer}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                            <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
+                            <Text style={getConnectedStyles.sectionTitle}>{section.title}</Text>
                         </View>
-                    </TouchableOpacity>
-                </View>
+                        <Text style={getConnectedStyles.paragraph}>
+                            {section.content}
+                        </Text>
 
-                <View style={getConnectedStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="share-social" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={getConnectedStyles.sectionTitle}>Connect On Social Media</Text>
-                    </View>
-                    <Text style={getConnectedStyles.paragraph}>
-                        Follow us on social media to stay connected with La Cité community and see regular updates.
-                    </Text>
+                        {section.button && (
+                            <TouchableOpacity
+                                style={getConnectedStyles.contactButton}
+                                onPress={handleButtonAction(section.id)}
+                            >
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Ionicons name={section.button.icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                    <Text style={getConnectedStyles.buttonText}>
+                                        {section.button.text}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        )}
 
-                    <TouchableOpacity
-                        style={getConnectedStyles.contactButton}
-                        onPress={handleEmail}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="mail-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={getConnectedStyles.buttonText}>
-                                salut@egliselacite.com
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
+                        {section.contact && section.contact.map((contactItem, contactIndex) => (
+                            <React.Fragment key={`contact-${contactIndex}`}>
+                                {contactIndex > 0 && <View style={{ marginTop: 10 }} />}
+                                <TouchableOpacity
+                                    style={getConnectedStyles.contactButton}
+                                    onPress={handleContactAction(contactItem.type, contactItem.url)}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Ionicons name={contactItem.icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                        <Text style={getConnectedStyles.buttonText}>
+                                            {contactItem.value}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </React.Fragment>
+                        ))}
 
-                    <View style={{ marginTop: 10 }} />
-
-                    <TouchableOpacity
-                        style={getConnectedStyles.contactButton}
-                        onPress={() => handleSocialMedia('https://www.instagram.com/laciteparis/')}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="logo-instagram" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={getConnectedStyles.buttonText}>
-                                @laciteparis
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <View style={{ marginTop: 10 }} />
-
-                    <TouchableOpacity
-                        style={getConnectedStyles.contactButton}
-                        onPress={() => handleSocialMedia('https://www.facebook.com/laciteparis/')}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="logo-facebook" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={getConnectedStyles.buttonText}>
-                                La Cité Paris
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <View style={{ marginTop: 10 }} />
-
-                    <TouchableOpacity
-                        style={getConnectedStyles.contactButton}
-                        onPress={() => handleSocialMedia('https://www.youtube.com/channel/UC-0imDK8zeP8lEBTEjiCx2A')}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="logo-youtube" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={getConnectedStyles.buttonText}>
-                                Eglise La Cité
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <View style={{ marginTop: 10 }} />
-
-                    <TouchableOpacity
-                        style={getConnectedStyles.contactButton}
-                        onPress={() => handleSocialMedia('https://soundcloud.com/egliselacite/tracks')}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="cloud" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={getConnectedStyles.buttonText}>
-                                Soundcloud
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={getConnectedStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="people" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={getConnectedStyles.sectionTitle}>Get Involved</Text>
-                    </View>
-                    <Text style={getConnectedStyles.paragraph}>
-                        Want to get involved in the church, connect with others, and serve God with us? Volunteer with one of our teams!
-                    </Text>
-                    <TouchableOpacity
-                        style={getConnectedStyles.contactButton}
-                        onPress={handleVolunteer}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="hand-left" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={getConnectedStyles.buttonText}>
-                                Volunteer Now
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={getConnectedStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="home" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={getConnectedStyles.sectionTitle}>Join A Chez Nous</Text>
-                    </View>
-                    <Text style={getConnectedStyles.paragraph}>
-                        Just as the early church met in homes, our Chez Nous are small groups of usually around 4-12 people that meet 2 or 3 times a month in homes in different parts of Paris.{'\n\n'}
-                        These groups enjoy a time of fellowship over a meal, opening the Word of God and praying together.{'\n\n'}
-                        As Jesus being the center of these groups, our Chez Nous allow us to grow together in our faith, to have a sense of belonging and to care for one another.
-                    </Text>
-                    <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
-                        <TouchableOpacity
-                            style={[getConnectedStyles.contactButton, { flex: 1, marginRight: 5 }]}
-                            onPress={handleChezNous}
-                        >
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Ionicons name="add-circle" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                                <Text style={getConnectedStyles.buttonText}>
-                                    Join a Group
-                                </Text>
+                        {section.id === 'chezNous' && section.buttons && (
+                            <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
+                                <TouchableOpacity
+                                    style={[getConnectedStyles.contactButton, { flex: 1, marginRight: 5 }]}
+                                    onPress={handleChezNous}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Ionicons name={section.buttons[0].icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                        <Text style={getConnectedStyles.buttonText}>
+                                            {section.buttons[0].text}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[getConnectedStyles.contactButton, { flex: 1, marginLeft: 5 }]}
+                                    onPress={handleChezNousDetails}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Ionicons name={section.buttons[1].icon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                        <Text style={getConnectedStyles.buttonText}>
+                                            {section.buttons[1].text}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
                             </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[getConnectedStyles.contactButton, { flex: 1, marginLeft: 5 }]}
-                            onPress={handleChezNousDetails}
-                        >
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Ionicons name="information-circle" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                                <Text style={getConnectedStyles.buttonText}>
-                                    View Details
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
+                        )}
                     </View>
-                </View>
-
-                <View style={getConnectedStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="heart" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={getConnectedStyles.sectionTitle}>Prayer Support</Text>
-                    </View>
-                    <Text style={getConnectedStyles.paragraph}>
-                        Do you need prayer or pastoral help? We're here to support you in your journey of faith.
-                    </Text>
-                    <TouchableOpacity
-                        style={getConnectedStyles.contactButton}
-                        onPress={handlePrayerRequest}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="chatbubble-ellipses" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={getConnectedStyles.buttonText}>
-                                Submit Prayer Request
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
+                ))}
             </ScrollView>
         </View>
     );

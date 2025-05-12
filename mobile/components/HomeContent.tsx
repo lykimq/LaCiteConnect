@@ -1,13 +1,63 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Dimensions, ActivityIndicator } from 'react-native';
 import { homeStyles } from '../styles/HomeContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import WebView from 'react-native-webview';
 import { STATIC_URLS } from '../config/staticData';
+import { contentService } from '../services/contentService';
 
 const { width } = Dimensions.get('window');
 
+// Define the home content interface
+interface HomeContent {
+    header: {
+        title: string;
+        subtitle: string;
+    };
+    sections: {
+        id: string;
+        icon: string;
+        title: string;
+        content: string;
+        buttonText?: string;
+        buttonIcon?: string;
+        subsections?: Array<{
+            title: string;
+            text?: string;
+            items?: string[];
+            itemIcon?: string;
+            itemIcons?: string[];
+        }>;
+    }[];
+}
+
 export const HomeContent = () => {
+    const [content, setContent] = useState<HomeContent | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        loadContent();
+    }, []);
+
+    const loadContent = async () => {
+        try {
+            setLoading(true);
+            const response = await contentService.getContent<HomeContent>('home');
+
+            if (response.success && response.data) {
+                setContent(response.data);
+            } else {
+                setError(response.error || 'Failed to load content');
+            }
+        } catch (err) {
+            console.error('Error loading home content:', err);
+            setError('An error occurred while loading content');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleFindUs = () => {
         Linking.openURL(STATIC_URLS.location);
     };
@@ -15,6 +65,28 @@ export const HomeContent = () => {
     const handleWatchOnline = () => {
         Linking.openURL(STATIC_URLS.youtube);
     };
+
+    if (loading) {
+        return (
+            <View style={[homeStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color="#FF9843" />
+            </View>
+        );
+    }
+
+    if (error || !content) {
+        return (
+            <View style={[homeStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 16, color: '#FF3B30' }}>{error || 'Content not available'}</Text>
+                <TouchableOpacity
+                    style={{ marginTop: 20, padding: 10, backgroundColor: '#FF9843', borderRadius: 8 }}
+                    onPress={loadContent}
+                >
+                    <Text style={{ color: '#FFFFFF' }}>Retry</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     return (
         <View style={homeStyles.container}>
@@ -24,133 +96,134 @@ export const HomeContent = () => {
             >
                 <View style={homeStyles.header}>
                     <Text style={homeStyles.title}>
-                        Our Sundays
+                        {content.header.title}
                     </Text>
                     <Text style={homeStyles.subtitle}>
-                        Join us for worship and fellowship
+                        {content.header.subtitle}
                     </Text>
                 </View>
 
-                <View style={homeStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="videocam" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={homeStyles.sectionTitle}>Our Sunday Service</Text>
-                    </View>
-                    <Text style={homeStyles.infoText}>
-                        Take a look into one of our Sundays to see what to expect when you join us!
-                    </Text>
-                    <View style={{
-                        marginTop: 15,
-                        width: '100%',
-                        height: 200,
-                        borderRadius: 8,
-                        overflow: 'hidden',
-                        backgroundColor: '#000',
-                    }}>
-                        <WebView
-                            source={{ uri: STATIC_URLS.youtube }}
-                            style={{ flex: 1, backgroundColor: '#000' }}
-                            allowsFullscreenVideo={true}
-                            javaScriptEnabled={true}
-                            domStorageEnabled={true}
-                        />
-                    </View>
-                </View>
-
-                <View style={homeStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="location" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={homeStyles.sectionTitle}>Join Us</Text>
-                    </View>
-                    <Text style={homeStyles.infoText}>
-                        Every Sunday at 10:30 AM{'\n'}
-                        Bilingual Service (English & French)
-                    </Text>
-                    <TouchableOpacity
-                        style={homeStyles.button}
-                        onPress={handleFindUs}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="map" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={homeStyles.buttonText}>
-                                24 Rue Antoine-Julien Hénard, 75012 Paris
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={homeStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="globe" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={homeStyles.sectionTitle}>Join Us Online</Text>
-                    </View>
-                    <Text style={homeStyles.infoText}>
-                        Can't make it in person? Join us online for our live stream service.
-                    </Text>
-                    <TouchableOpacity
-                        style={homeStyles.button}
-                        onPress={handleWatchOnline}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="videocam" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={homeStyles.buttonText}>Watch Live Stream</Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={homeStyles.cardContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                        <Ionicons name="information-circle" size={24} color="#FF9843" style={{ marginRight: 10 }} />
-                        <Text style={homeStyles.sectionTitle}>Things You May Want to Know</Text>
-                    </View>
-                    <View>
-                        <View style={{ marginBottom: 20 }}>
-                            <Text style={{ fontSize: 16, fontWeight: '600', color: '#2C3E50', marginBottom: 10 }}>Service Details</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                <Ionicons name="checkmark-circle" size={20} color="#FF9843" style={{ marginRight: 8 }} />
-                                <Text style={homeStyles.infoText}>Our services are in English and French</Text>
+                {content.sections.map((section, index) => {
+                    if (section.id === 'sundayService') {
+                        return (
+                            <View key={section.id} style={homeStyles.cardContainer}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
+                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                <Text style={homeStyles.infoText}>
+                                    {section.content}
+                                </Text>
+                                <View style={{
+                                    marginTop: 15,
+                                    width: '100%',
+                                    height: 200,
+                                    borderRadius: 8,
+                                    overflow: 'hidden',
+                                    backgroundColor: '#000',
+                                }}>
+                                    <WebView
+                                        source={{ uri: STATIC_URLS.youtube }}
+                                        style={{ flex: 1, backgroundColor: '#000' }}
+                                        allowsFullscreenVideo={true}
+                                        javaScriptEnabled={true}
+                                        domStorageEnabled={true}
+                                    />
+                                </View>
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                <Ionicons name="checkmark-circle" size={20} color="#FF9843" style={{ marginRight: 8 }} />
-                                <Text style={homeStyles.infoText}>We meet in person and online</Text>
+                        );
+                    } else if (section.id === 'joinUs') {
+                        return (
+                            <View key={section.id} style={homeStyles.cardContainer}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
+                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                <Text style={homeStyles.infoText}>
+                                    {section.content}
+                                </Text>
+                                <TouchableOpacity
+                                    style={homeStyles.button}
+                                    onPress={handleFindUs}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                        <Text style={homeStyles.buttonText}>
+                                            {section.buttonText}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                <Ionicons name="checkmark-circle" size={20} color="#FF9843" style={{ marginRight: 8 }} />
-                                <Text style={homeStyles.infoText}>Everyone is invited and welcome!</Text>
+                        );
+                    } else if (section.id === 'joinOnline') {
+                        return (
+                            <View key={section.id} style={homeStyles.cardContainer}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
+                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                <Text style={homeStyles.infoText}>
+                                    {section.content}
+                                </Text>
+                                <TouchableOpacity
+                                    style={homeStyles.button}
+                                    onPress={handleWatchOnline}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                        <Text style={homeStyles.buttonText}>{section.buttonText}</Text>
+                                    </View>
+                                </TouchableOpacity>
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                <Ionicons name="checkmark-circle" size={20} color="#FF9843" style={{ marginRight: 8 }} />
-                                <Text style={homeStyles.infoText}>Come as you are!</Text>
+                        );
+                    } else if (section.id === 'information' && section.subsections) {
+                        return (
+                            <View key={section.id} style={homeStyles.cardContainer}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
+                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                <View>
+                                    {section.subsections.map((subsection, subIndex) => (
+                                        <View key={`${section.id}-sub-${subIndex}`} style={{ marginBottom: 20 }}>
+                                            <Text style={{ fontSize: 16, fontWeight: '600', color: '#2C3E50', marginBottom: 10 }}>
+                                                {subsection.title}
+                                            </Text>
+                                            {subsection.text && (
+                                                <Text style={homeStyles.infoText}>
+                                                    {subsection.text}
+                                                </Text>
+                                            )}
+                                            {subsection.items && subsection.items.map((item, itemIndex) => (
+                                                <View key={`item-${itemIndex}`} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                                                    <Ionicons
+                                                        name={(subsection.itemIcons?.[itemIndex] || subsection.itemIcon || 'checkmark-circle') as any}
+                                                        size={20}
+                                                        color="#FF9843"
+                                                        style={{ marginRight: 8 }}
+                                                    />
+                                                    <Text style={homeStyles.infoText}>{item}</Text>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    ))}
+                                </View>
                             </View>
-                        </View>
-
-                        <View style={{ marginBottom: 20 }}>
-                            <Text style={{ fontSize: 16, fontWeight: '600', color: '#2C3E50', marginBottom: 10 }}>Children's Ministry</Text>
-                            <Text style={homeStyles.infoText}>
-                                We love children! We have a Parents' room for babies and a Sunday school program for kids (they are also welcome to stay in the main room with their parents).
-                            </Text>
-                        </View>
-
-                        <View style={{ marginBottom: 20 }}>
-                            <Text style={{ fontSize: 16, fontWeight: '600', color: '#2C3E50', marginBottom: 10 }}>Service Schedule</Text>
-                            <Text style={homeStyles.infoText}>
-                                Our services start at 10:30am and finish around 12pm and are composed of:
-                            </Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                <Ionicons name="musical-notes" size={20} color="#FF9843" style={{ marginRight: 8 }} />
-                                <Text style={homeStyles.infoText}>A time of worship and prayer</Text>
+                        );
+                    } else {
+                        return (
+                            <View key={section.id} style={homeStyles.cardContainer}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name={section.icon as any} size={24} color="#FF9843" style={{ marginRight: 10 }} />
+                                    <Text style={homeStyles.sectionTitle}>{section.title}</Text>
+                                </View>
+                                <Text style={homeStyles.infoText}>
+                                    {section.content}
+                                </Text>
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                <Ionicons name="book" size={20} color="#FF9843" style={{ marginRight: 8 }} />
-                                <Text style={homeStyles.infoText}>A time of teaching/preaching</Text>
-                            </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                <Ionicons name="people" size={20} color="#FF9843" style={{ marginRight: 8 }} />
-                                <Text style={homeStyles.infoText}>A time of connection/fellowship</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
+                        );
+                    }
+                })}
             </ScrollView>
         </View>
     );
