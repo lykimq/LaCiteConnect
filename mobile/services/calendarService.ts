@@ -221,12 +221,34 @@ export const calendarService = {
     processEventData(item: any): CalendarEvent {
         // Process the description to extract images and format text
         const description = item.description || '';
-        const formattedDescription = convertHtmlToFormattedText(description);
+
+        // Log the raw description for debugging
+        if (description.includes('drive.google.com')) {
+            console.log('Event with Google Drive link found:', item.summary);
+            console.log('Description excerpt:', description.substring(0, Math.min(300, description.length)));
+        }
+
+        // Extract images before converting HTML to formatted text
         const imageUrls = extractImagesFromHtml(description);
+
+        // Process formatted description for display
+        const formattedDescription = convertHtmlToFormattedText(description);
+
+        // Extract attachment links
         const attachments = extractAttachmentLinks(description);
 
         // Process location
         const formattedLocation = parseLocationString(item.location || '');
+
+        // Log extracted content
+        if (imageUrls.length > 0) {
+            console.log(`Extracted ${imageUrls.length} images from event: ${item.summary}`);
+            console.log('Image URLs:', imageUrls);
+        }
+
+        if (attachments.length > 0) {
+            console.log(`Extracted ${attachments.length} attachments from event: ${item.summary}`);
+        }
 
         return {
             id: item.id,
@@ -341,10 +363,27 @@ export const calendarService = {
 
                 // Extract event details using regex
                 const summary = this.extractICalProperty(eventData, 'SUMMARY');
-                const description = this.extractICalProperty(eventData, 'DESCRIPTION');
+                let description = this.extractICalProperty(eventData, 'DESCRIPTION');
                 const location = this.extractICalProperty(eventData, 'LOCATION');
                 const uid = this.extractICalProperty(eventData, 'UID');
                 const rrule = this.extractICalProperty(eventData, 'RRULE');
+
+                // Special handling for descriptions - decode escaped characters
+                if (description) {
+                    // Replace escaped characters
+                    description = description
+                        .replace(/\\n/g, '\n')
+                        .replace(/\\,/g, ',')
+                        .replace(/\\;/g, ';')
+                        .replace(/\\\\/g, '\\')
+                        .replace(/\\N/g, '\n');
+
+                    // Log if the description contains Google Drive links
+                    if (description.includes('drive.google.com')) {
+                        console.log(`Event ${i} (${summary}) has Google Drive link(s)`);
+                        console.log('Description excerpt:', description.substring(0, Math.min(300, description.length)));
+                    }
+                }
 
                 // Get start and end dates
                 let dtstart = this.extractICalProperty(eventData, 'DTSTART');
@@ -374,12 +413,23 @@ export const calendarService = {
                 }
 
                 // Process the description to extract images and format text
-                const formattedDescription = description ? convertHtmlToFormattedText(description) : undefined;
+                // Extract images before text formatting to ensure all URLs are captured
                 const imageUrls = description ? extractImagesFromHtml(description) : [];
+                const formattedDescription = description ? convertHtmlToFormattedText(description) : undefined;
                 const attachments = description ? extractAttachmentLinks(description) : [];
 
                 // Process location
                 const formattedLocation = location ? parseLocationString(location) : undefined;
+
+                // Log extracted content for debugging
+                if (imageUrls.length > 0) {
+                    console.log(`Extracted ${imageUrls.length} images from event: ${summary}`);
+                    console.log('Image URLs:', imageUrls);
+                }
+
+                if (attachments.length > 0) {
+                    console.log(`Extracted ${attachments.length} attachments from event: ${summary}`);
+                }
 
                 // Create basic event
                 const event: CalendarEvent = {

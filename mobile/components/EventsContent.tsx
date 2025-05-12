@@ -46,6 +46,10 @@ export const EventsContent = () => {
     const [holidaysError, setHolidaysError] = useState<string | null>(null);
     const [calendarError, setCalendarError] = useState<string | null>(null);
 
+    // State for expanded description modal
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+    const [showFullDescription, setShowFullDescription] = useState(false);
+
     // Month pagination state
     const currentDate = new Date();
     const [currentYear, setCurrentYear] = useState(currentDate.getFullYear());
@@ -176,6 +180,12 @@ export const EventsContent = () => {
         calendarService.openCalendarInBrowser();
     };
 
+    // Handle showing the full description in a modal
+    const handleViewFullDescription = (event: CalendarEvent) => {
+        setSelectedEvent(event);
+        setShowFullDescription(true);
+    };
+
     // Navigate to next month for events
     const nextMonth = () => {
         if (currentMonth === 11) {
@@ -248,6 +258,10 @@ export const EventsContent = () => {
 
     // Memoize filtered events to avoid re-filtering on every render
     const eventsForCurrentMonth = useMemo(() => {
+        // Get current date at midnight to compare properly
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         return events.filter(event => {
             const eventDate = event.start.dateTime
                 ? new Date(event.start.dateTime)
@@ -257,8 +271,10 @@ export const EventsContent = () => {
 
             if (!eventDate) return false;
 
+            // Filter by month/year and also check if the event date is not in the past
             return eventDate.getFullYear() === currentYear &&
-                eventDate.getMonth() === currentMonth;
+                eventDate.getMonth() === currentMonth &&
+                eventDate >= today;
         }).sort((a, b) => {
             const dateA = a.start.dateTime ? new Date(a.start.dateTime) : new Date(a.start.date || "");
             const dateB = b.start.dateTime ? new Date(b.start.dateTime) : new Date(b.start.date || "");
@@ -361,29 +377,43 @@ export const EventsContent = () => {
                 </TouchableOpacity>
             )}
 
-            {/* Display images if available */}
+            {/* Display images in an optimized gallery format */}
             {event.imageUrls && event.imageUrls.length > 0 && (
                 <View style={eventsStyles.eventImageContainer}>
                     <Image
                         source={{ uri: event.imageUrls[0] }}
                         style={eventsStyles.eventImage}
                         resizeMode="cover"
+                        onError={(e) => console.log(`Error loading image: ${event.imageUrls?.[0]}`, e.nativeEvent.error)}
                     />
                     {event.imageUrls.length > 1 && (
-                        <Text style={eventsStyles.moreImagesText}>
-                            +{event.imageUrls.length - 1} more
-                        </Text>
+                        <View style={eventsStyles.imageCountBadge}>
+                            <Text style={eventsStyles.moreImagesText}>
+                                +{event.imageUrls.length - 1}
+                            </Text>
+                        </View>
                     )}
                 </View>
             )}
 
-            {/* Display formatted description */}
+            {/* Display formatted description with better styling */}
             {event.formattedDescription && (
-                <Text style={eventsStyles.eventDescription}>
-                    {event.formattedDescription.length > 150
-                        ? `${event.formattedDescription.substring(0, 150)}...`
-                        : event.formattedDescription}
-                </Text>
+                <View style={eventsStyles.descriptionContainer}>
+                    <Text style={eventsStyles.eventDescription}>
+                        {event.formattedDescription.length > 150
+                            ? `${event.formattedDescription.substring(0, 150)}...`
+                            : event.formattedDescription}
+                    </Text>
+
+                    {event.formattedDescription.length > 150 && (
+                        <TouchableOpacity
+                            style={eventsStyles.readMoreButton}
+                            onPress={() => handleViewFullDescription(event)}
+                        >
+                            <Text style={eventsStyles.readMoreText}>Read More</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             )}
 
             {/* Display attachments if available */}
@@ -435,10 +465,10 @@ export const EventsContent = () => {
 
                 <TouchableOpacity
                     style={eventsStyles.secondaryButton}
-                    onPress={() => handleAddToDeviceCalendar(event)}
+                    onPress={() => Linking.openURL('https://fr.egliselacite.com/events2')}
                 >
-                    <Ionicons name="calendar-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                    <Text style={eventsStyles.secondaryButtonText}>Add to Device</Text>
+                    <Ionicons name="open-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
+                    <Text style={eventsStyles.secondaryButtonText}>View Details</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -787,6 +817,110 @@ export const EventsContent = () => {
                     </>
                 )}
             </ScrollView>
+
+            {/* Full Description Modal */}
+            {showFullDescription && selectedEvent && (
+                <View style={eventsStyles.descriptionModal}>
+                    <View style={eventsStyles.descriptionModalContent}>
+                        <View style={eventsStyles.descriptionModalHeader}>
+                            <Text style={eventsStyles.descriptionModalTitle}>{selectedEvent.summary}</Text>
+                            <TouchableOpacity
+                                style={eventsStyles.closeButton}
+                                onPress={() => setShowFullDescription(false)}
+                            >
+                                <Ionicons name="close" size={24} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={eventsStyles.modalScrollView}>
+                            {/* Display event date */}
+                            <Text style={eventsStyles.modalEventDate}>
+                                {formatEventDate(selectedEvent)}
+                            </Text>
+
+                            {/* Display location if available */}
+                            {selectedEvent.formattedLocation && (
+                                <TouchableOpacity
+                                    style={eventsStyles.eventLocation}
+                                    onPress={() => {
+                                        setShowFullDescription(false);
+                                        selectedEvent.formattedLocation?.mapUrl
+                                            ? Linking.openURL(selectedEvent.formattedLocation.mapUrl)
+                                            : handleOpenMap(selectedEvent.location || '');
+                                    }}
+                                >
+                                    <Ionicons name="location-outline" size={16} color="#666" />
+                                    <Text style={eventsStyles.eventLocationText}>
+                                        {selectedEvent.formattedLocation.address}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {/* Display all images in the modal */}
+                            {selectedEvent.imageUrls && selectedEvent.imageUrls.length > 0 && (
+                                <View style={eventsStyles.modalImagesContainer}>
+                                    {selectedEvent.imageUrls.map((imageUrl, index) => (
+                                        <Image
+                                            key={index}
+                                            source={{ uri: imageUrl }}
+                                            style={eventsStyles.modalImage}
+                                            resizeMode="cover"
+                                            onError={(e) => console.log(`Error loading image: ${imageUrl}`, e.nativeEvent.error)}
+                                        />
+                                    ))}
+                                </View>
+                            )}
+
+                            {/* Full description */}
+                            {selectedEvent.formattedDescription && (
+                                <Text style={eventsStyles.descriptionModalText}>
+                                    {selectedEvent.formattedDescription}
+                                </Text>
+                            )}
+
+                            {/* Attachments in modal */}
+                            {selectedEvent.attachments && selectedEvent.attachments.length > 0 && (
+                                <View style={eventsStyles.modalAttachmentsContainer}>
+                                    <Text style={eventsStyles.modalAttachmentsTitle}>Attachments:</Text>
+                                    {selectedEvent.attachments.map((attachment, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={eventsStyles.modalAttachmentItem}
+                                            onPress={() => {
+                                                Linking.openURL(attachment.url);
+                                            }}
+                                        >
+                                            <Ionicons name="document-outline" size={16} color="#666" />
+                                            <Text style={eventsStyles.modalAttachmentText}>
+                                                {attachment.title}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            )}
+                        </ScrollView>
+
+                        <View style={eventsStyles.modalButtonsContainer}>
+                            <TouchableOpacity
+                                style={eventsStyles.modalCloseButton}
+                                onPress={() => setShowFullDescription(false)}
+                            >
+                                <Text style={eventsStyles.buttonText}>Close</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={eventsStyles.modalActionButton}
+                                onPress={() => {
+                                    setShowFullDescription(false);
+                                    handleAddToCalendar(selectedEvent);
+                                }}
+                            >
+                                <Text style={eventsStyles.buttonText}>Add to Calendar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            )}
         </View>
     );
 };
