@@ -3,23 +3,16 @@
  * Handles HTML content in event descriptions
  */
 
+import { Platform } from 'react-native';
+
 /**
- * Extract image URLs from HTML content
- * Looks for <img> tags and Google Drive image links
+ * Extract Google Drive links from HTML content
+ * Looks for Google Drive file and folder links
  */
-export const extractImagesFromHtml = (html: string): string[] => {
+export const extractDriveLinksFromHtml = (html: string): string[] => {
     if (!html) return [];
 
-    const images: string[] = [];
-
-    // Extract <img> tags
-    const imgRegex = /<img[^>]+src="([^">]+)"/g;
-    let match: RegExpExecArray | null;
-    while ((match = imgRegex.exec(html)) !== null) {
-        if (match[1]) {
-            images.push(match[1]);
-        }
-    }
+    const driveLinks: string[] = [];
 
     // Look for Google Drive image links - enhanced pattern detection
     // Format 1: https://drive.google.com/file/d/FILE_ID/view
@@ -27,30 +20,27 @@ export const extractImagesFromHtml = (html: string): string[] => {
     // Format 3: https://drive.google.com/open?id=FILE_ID
     const driveRegex = /https:\/\/drive\.google\.com\/(?:file\/d\/|uc\?id=|open\?id=)([a-zA-Z0-9_-]+)(?:\/view|\b|&)/g;
 
-    match = null;
+    let match = null;
     while ((match = driveRegex.exec(html)) !== null) {
         const fileId = match[1];
         if (fileId) {
-            // Convert to direct image URL that works with Image component
-            images.push(`https://drive.google.com/uc?export=view&id=${fileId}`);
-            console.log(`Found Drive image: ${fileId}`);
+            // Convert to direct URL that works with linking
+            const directUrl = `https://drive.google.com/file/d/${fileId}/view`;
+            driveLinks.push(directUrl);
+            console.log(`Found Drive file: ${fileId}`);
         }
     }
 
-    // Look for Google Drive folder links that may contain images
-    // For folders, we can't directly get images but we can extract the folder ID for reference
+    // Look for Google Drive folder links
     const driveFolderRegex = /https:\/\/drive\.google\.com\/drive\/folders\/([a-zA-Z0-9_-]+)/g;
 
     match = null;
     while ((match = driveFolderRegex.exec(html)) !== null) {
         const folderId = match[1];
         if (folderId) {
-            // Use a placeholder image that indicates a folder of images
-            // In a real implementation, you might want to use the Google Drive API to list folder contents
+            const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+            driveLinks.push(folderUrl);
             console.log(`Found Drive folder: ${folderId}`);
-
-            // Add a special placeholder image URL that we can detect in the UI
-            images.push(`https://drive.google.com/thumbnail?id=${folderId}&authuser=0`);
         }
     }
 
@@ -65,9 +55,10 @@ export const extractImagesFromHtml = (html: string): string[] => {
         let fileIdMatch = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)\/|id=([a-zA-Z0-9_-]+)/);
         if (fileIdMatch) {
             const fileId = fileIdMatch[1] || fileIdMatch[2];
-            if (fileId && !images.some(url => url.includes(fileId))) {
-                images.push(`https://drive.google.com/uc?export=view&id=${fileId}`);
-                console.log(`Found Drive image in <a> tag: ${fileId}`);
+            if (fileId && !driveLinks.some(url => url.includes(fileId))) {
+                const directUrl = `https://drive.google.com/file/d/${fileId}/view`;
+                driveLinks.push(directUrl);
+                console.log(`Found Drive file in <a> tag: ${fileId}`);
             }
         }
 
@@ -75,25 +66,25 @@ export const extractImagesFromHtml = (html: string): string[] => {
         let folderIdMatch = driveUrl.match(/\/folders\/([a-zA-Z0-9_-]+)/);
         if (folderIdMatch) {
             const folderId = folderIdMatch[1];
-            if (folderId && !images.some(url => url.includes(folderId))) {
-                images.push(`https://drive.google.com/thumbnail?id=${folderId}&authuser=0`);
+            if (folderId && !driveLinks.some(url => url.includes(folderId))) {
+                const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+                driveLinks.push(folderUrl);
                 console.log(`Found Drive folder in <a> tag: ${folderId}`);
             }
         }
     }
 
     // For debugging
-    if (images.length > 0) {
-        console.log(`Found ${images.length} images in HTML content`);
+    if (driveLinks.length > 0) {
+        console.log(`Found ${driveLinks.length} Drive links in HTML content`);
     }
 
-    return images;
+    return driveLinks;
 };
 
 /**
  * Convert HTML to formatted plain text
  * Handles common HTML elements like <b>, <p>, <br>, etc.
- * Enhanced to preserve more formatting from HTML
  */
 export const convertHtmlToFormattedText = (html: string): string => {
     if (!html) return '';
@@ -131,9 +122,9 @@ export const convertHtmlToFormattedText = (html: string): string => {
     text = text.replace(/<p[^>]*>/gi, '');  // Remove opening <p> tags
 
     // Handle headings
-    text = text.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\n\n$1\n\n')
-        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n\n$1\n\n')
-        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n\n$1\n\n');
+    text = text.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\n\n*$1*\n\n')
+        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n\n*$1*\n\n')
+        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n\n*$1*\n\n');
 
     // Handle divs with spacing
     text = text.replace(/<div[^>]*>(.*?)<\/div>/gi, '$1\n');
@@ -144,7 +135,7 @@ export const convertHtmlToFormattedText = (html: string): string => {
     text = text.replace(/<ol[^>]*>(.*?)<\/ol>/gi, '$1\n');
 
     // Replace links with formatted text - keep the URL
-    text = text.replace(/<a[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/gi, '$2');
+    text = text.replace(/<a[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/gi, '$2 ($1)');
 
     // Remove all other HTML tags
     text = text.replace(/<[^>]*>/g, '');
@@ -196,6 +187,22 @@ const extractKeyValuePairs = (html: string): Array<{ key: string, value: string 
                 key: match[1].trim(),
                 value: match[2].trim()
             });
+        }
+    }
+
+    // Look for Key: Value pattern in text (common in event descriptions)
+    const textKeyRegex = /^([A-Za-z\s]+):\s*(.+)$/gm;
+    match = null;
+
+    while ((match = textKeyRegex.exec(html)) !== null) {
+        // Make sure we're not inside an HTML tag
+        if (match[0].indexOf('<') === -1 && match[0].indexOf('>') === -1) {
+            if (match[1] && match[2]) {
+                pairs.push({
+                    key: match[1].trim(),
+                    value: match[2].trim()
+                });
+            }
         }
     }
 
@@ -268,59 +275,58 @@ export const containsDriveLink = (text: string): boolean => {
 };
 
 /**
- * Extract calendar attachment links
- * Look for Google Calendar attachment references in the description
+ * Extract attachment links from HTML content
+ * Focuses on Google Drive links and regular attachments
  */
 export const extractAttachmentLinks = (description: string): Array<{ title: string, url: string }> => {
     if (!description) return [];
 
-    const links: Array<{ title: string, url: string }> = [];
+    const attachments: Array<{ title: string, url: string }> = [];
 
-    // Look for attachment patterns in Google Calendar descriptions
-    // Format: [title](url) - Markdown style links
-    const attachmentRegex = /\[([^\]]+)\]\s*\(([^)]+)\)/g;
-    let match: RegExpExecArray | null;
+    // Regular links in <a> tags
+    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
 
-    while ((match = attachmentRegex.exec(description)) !== null) {
-        if (match[1] && match[2]) {
-            links.push({
-                title: match[1],
-                url: match[2]
-            });
-        }
+    let match;
+    while ((match = linkRegex.exec(description)) !== null) {
+        const url = match[1];
+        const title = match[2].trim();
+
+        attachments.push({ title, url });
     }
 
-    // Also look for regular HTML links
-    const htmlLinkRegex = /<a[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/g;
-    let htmlMatch: RegExpExecArray | null;
+    // Links outside of <a> tags using pattern matching
+    const urlPatterns = [
+        // HTTP/HTTPS URLs
+        /https?:\/\/[^\s<>()"\[\]{}]+\.[^\s<>()"\[\]{}]+/g,
+        // Drive-specific URLs
+        /drive\.google\.com\/[^\s<>()"\[\]{}]+/g,
+        // Docs URLs
+        /docs\.google\.com\/[^\s<>()"\[\]{}]+/g
+    ];
 
-    while ((htmlMatch = htmlLinkRegex.exec(description)) !== null) {
-        // Always check if htmlMatch is not null before using it
-        if (htmlMatch) {
-            const url = htmlMatch[1];
-            const title = htmlMatch[2];
+    for (const pattern of urlPatterns) {
+        let matches;
+        while ((matches = pattern.exec(description)) !== null) {
+            const url = matches[0];
 
-            if (url && title) {
-                // Skip Google Drive links that we're already handling for images
-                if (!url.includes('drive.google.com') ||
-                    (!url.includes('/file/d/') && !url.includes('/folders/') && !url.includes('id='))) {
+            // Skip if this URL is already in attachments
+            if (attachments.some(a => a.url === url)) continue;
 
-                    // Check if this URL is already in the links array
-                    if (!links.some(link => link.url === url)) {
-                        links.push({
-                            title: title,
-                            url: url
-                        });
-                    }
-                }
+            // For other URLs, add as an attachment with the domain as title
+            try {
+                const domain = new URL(url).hostname.replace('www.', '');
+                attachments.push({
+                    title: `Link to ${domain}`,
+                    url
+                });
+            } catch {
+                attachments.push({
+                    title: 'Link',
+                    url
+                });
             }
         }
     }
 
-    // For debugging
-    if (links.length > 0) {
-        console.log(`Found ${links.length} attachment links in description`);
-    }
-
-    return links;
+    return attachments;
 };

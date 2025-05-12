@@ -166,6 +166,19 @@ export const eventsStyles = StyleSheet.create({
         borderRadius: 8,
         backgroundColor: '#f5f5f5',
     },
+    imageLoadingPlaceholder: {
+        width: '100%',
+        height: 160,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imageLoadingText: {
+        color: '#888',
+        fontSize: 14,
+        fontStyle: 'italic',
+    },
     imageCountBadge: {
         position: 'absolute',
         bottom: 8,
@@ -496,10 +509,10 @@ export const eventsStyles = StyleSheet.create({
         flex: 1,
         paddingRight: 10,
     },
-    closeButton: {
+    modalCloseIconButton: {
         padding: 5,
     },
-    modalScrollView: {
+    descriptionModalScrollView: {
         maxHeight: '70%',
     },
     modalEventDate: {
@@ -516,6 +529,35 @@ export const eventsStyles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 10,
         backgroundColor: '#f5f5f5',
+    },
+    modalImageLoadingPlaceholder: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        marginBottom: 10,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalImageLoadingText: {
+        color: '#888',
+        fontSize: 14,
+        fontStyle: 'italic',
+        textAlign: 'center',
+    },
+    imageErrorContainer: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        marginBottom: 10,
+        backgroundColor: '#f5f5f5',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imageErrorText: {
+        color: '#999',
+        fontSize: 14,
+        textAlign: 'center',
     },
     descriptionModalText: {
         fontSize: 16,
@@ -573,10 +615,51 @@ export const eventsStyles = StyleSheet.create({
         alignSelf: 'flex-start',
         marginTop: 5,
         paddingVertical: 5,
+        backgroundColor: '#FFF5E9',
+        paddingHorizontal: 10,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: '#FFE4C4',
     },
     readMoreText: {
         color: '#FF9843',
         fontSize: 14,
         fontWeight: '500',
+    },
+    modalPhotoAttachmentsContainer: {
+        marginTop: 16,
+        marginBottom: 12,
+        backgroundColor: '#FFF5E9',
+        padding: 12,
+        borderRadius: 8,
+    },
+    modalPhotoItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 5,
+        marginVertical: 3,
+        borderBottomWidth: 1,
+        borderBottomColor: '#FFE4C4',
+    },
+    modalImageWrapper: {
+        position: 'relative',
+        marginBottom: 10,
+    },
+    modalImageFallback: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(240, 240, 240, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: -1,
+    },
+    modalImageFallbackText: {
+        color: '#888',
+        fontSize: 14,
+        fontStyle: 'italic',
+        textAlign: 'center',
     },
 });

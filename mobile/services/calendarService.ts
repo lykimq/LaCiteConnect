@@ -3,7 +3,7 @@
  * Handles fetching events from a personal Google Calendar using iCal
  */
 import { Linking, Platform } from 'react-native';
-import { extractImagesFromHtml, convertHtmlToFormattedText, parseLocationString, extractAttachmentLinks } from '../utils/htmlUtils';
+import { extractDriveLinksFromHtml, convertHtmlToFormattedText, parseLocationString, extractAttachmentLinks } from '../utils/htmlUtils';
 import * as Notifications from 'expo-notifications';
 import * as Calendar from 'expo-calendar';
 
@@ -38,7 +38,6 @@ interface CalendarEvent {
     };
     recurrence?: boolean;
     isHoliday?: boolean;
-    imageUrls?: string[];  // URLs of images from the description
     attachments?: Array<{ title: string, url: string }>;  // Attachments in the description
     reminderSet?: boolean;  // Whether a reminder is set for this event
 }
@@ -228,9 +227,6 @@ export const calendarService = {
             console.log('Description excerpt:', description.substring(0, Math.min(300, description.length)));
         }
 
-        // Extract images before converting HTML to formatted text
-        const imageUrls = extractImagesFromHtml(description);
-
         // Process formatted description for display
         const formattedDescription = convertHtmlToFormattedText(description);
 
@@ -241,34 +237,31 @@ export const calendarService = {
         const formattedLocation = parseLocationString(item.location || '');
 
         // Log extracted content
-        if (imageUrls.length > 0) {
-            console.log(`Extracted ${imageUrls.length} images from event: ${item.summary}`);
-            console.log('Image URLs:', imageUrls);
-        }
-
         if (attachments.length > 0) {
             console.log(`Extracted ${attachments.length} attachments from event: ${item.summary}`);
         }
 
-        return {
-            id: item.id,
-            summary: item.summary || 'Untitled Event',
+        // Create the event object with all processed data
+        const event: CalendarEvent = {
+            id: item.id || `event-${new Date().getTime()}-${Math.random().toString(36).substring(2, 9)}`,
+            summary: item.summary || 'No title',
             description: description,
-            formattedDescription: formattedDescription,
-            location: item.location,
-            formattedLocation: formattedLocation,
+            formattedDescription: formattedDescription || '',
             start: {
-                dateTime: item.start.dateTime,
-                date: item.start.date
+                dateTime: item.start?.dateTime,
+                date: item.start?.date
             },
             end: {
-                dateTime: item.end.dateTime,
-                date: item.end.date
+                dateTime: item.end?.dateTime,
+                date: item.end?.date
             },
-            recurrence: item.recurrence ? true : false,
-            imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
-            attachments: attachments.length > 0 ? attachments : undefined
+            location: item.location,
+            formattedLocation: formattedLocation,
+            attachments: attachments.length > 0 ? attachments : undefined,
+            recurrence: item.recurrence ? true : false
         };
+
+        return event;
     },
 
     /**
@@ -412,9 +405,7 @@ export const calendarService = {
                     console.log(`Event ${i}: ${summary} - Date: ${startDate.toISOString()} (Month: ${month}, Year: ${year})`);
                 }
 
-                // Process the description to extract images and format text
-                // Extract images before text formatting to ensure all URLs are captured
-                const imageUrls = description ? extractImagesFromHtml(description) : [];
+                // Process the description to extract format text
                 const formattedDescription = description ? convertHtmlToFormattedText(description) : undefined;
                 const attachments = description ? extractAttachmentLinks(description) : [];
 
@@ -422,11 +413,6 @@ export const calendarService = {
                 const formattedLocation = location ? parseLocationString(location) : undefined;
 
                 // Log extracted content for debugging
-                if (imageUrls.length > 0) {
-                    console.log(`Extracted ${imageUrls.length} images from event: ${summary}`);
-                    console.log('Image URLs:', imageUrls);
-                }
-
                 if (attachments.length > 0) {
                     console.log(`Extracted ${attachments.length} attachments from event: ${summary}`);
                 }
@@ -442,7 +428,6 @@ export const calendarService = {
                     start: {},
                     end: {},
                     recurrence: !!rrule,
-                    imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
                     attachments: attachments.length > 0 ? attachments : undefined
                 };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
 import { eventsStyles } from '../styles/EventsContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime, isPastEvent } from '../utils/dateUtils';
@@ -30,10 +30,14 @@ interface CalendarEvent {
     };
     recurrence?: boolean;
     isHoliday?: boolean;
-    imageUrls?: string[];
     attachments?: Array<{ title: string, url: string }>;
     reminderSet?: boolean;
 }
+
+// Add this function before the EventsContent component to identify Google Drive attachments
+const isDriveAttachment = (url: string): boolean => {
+    return url.includes('drive.google.com');
+};
 
 export const EventsContent = () => {
     const [activeTab, setActiveTab] = useState('upcoming');
@@ -271,7 +275,7 @@ export const EventsContent = () => {
 
             if (!eventDate) return false;
 
-            // Filter by month/year and also check if the event date is not in the past
+            // Only show events in the current month AND in the future (today or later)
             return eventDate.getFullYear() === currentYear &&
                 eventDate.getMonth() === currentMonth &&
                 eventDate >= today;
@@ -337,142 +341,160 @@ export const EventsContent = () => {
         }
     };
 
-    const renderEventCard = (event: CalendarEvent) => (
-        <View key={event.id} style={eventsStyles.eventCard}>
-            <View style={eventsStyles.eventHeader}>
-                <Text style={eventsStyles.eventTitle}>
-                    {event.summary}
-                    {event.recurrence && <Text style={eventsStyles.recurringTag}> (Recurring)</Text>}
-                    {event.reminderSet && (
-                        <Ionicons name="notifications" size={16} color="#FF9843" style={{ marginLeft: 5 }} />
-                    )}
+    // Add this inside the component, with other handler functions
+    const handleViewAttachment = (attachmentUrl: string) => {
+        // Open attachment links directly in browser
+        Linking.openURL(attachmentUrl);
+    };
+
+    // Update the renderEventCard function to remove image display
+    const renderEventCard = (event: CalendarEvent) => {
+        // Check if this event has any Google Drive attachments
+        const hasDriveAttachments = event.attachments?.some(
+            attachment => isDriveAttachment(attachment.url)
+        );
+
+        // First Drive attachment link (for the View Files button)
+        const driveAttachment = event.attachments?.find(
+            attachment => isDriveAttachment(attachment.url)
+        );
+
+        return (
+            <View key={event.id} style={eventsStyles.eventCard}>
+                <View style={eventsStyles.eventHeader}>
+                    <Text style={eventsStyles.eventTitle}>
+                        {event.summary}
+                        {event.recurrence && <Text style={eventsStyles.recurringTag}> (Recurring)</Text>}
+                        {event.reminderSet && (
+                            <Ionicons name="notifications" size={16} color="#FF9843" style={{ marginLeft: 5 }} />
+                        )}
+                    </Text>
+                    <View style={eventsStyles.dateContainer}>
+                        <Text style={eventsStyles.dateText}>
+                            {event.start.dateTime
+                                ? new Date(event.start.dateTime).getDate()
+                                : event.start.date
+                                    ? new Date(event.start.date).getDate()
+                                    : ''}
+                        </Text>
+                    </View>
+                </View>
+
+                <Text style={eventsStyles.eventDate}>
+                    {formatEventDate(event)}
                 </Text>
-                <View style={eventsStyles.dateContainer}>
-                    <Text style={eventsStyles.dateText}>
-                        {event.start.dateTime
-                            ? new Date(event.start.dateTime).getDate()
-                            : event.start.date
-                                ? new Date(event.start.date).getDate()
-                                : ''}
-                    </Text>
-                </View>
-            </View>
 
-            <Text style={eventsStyles.eventDate}>
-                {formatEventDate(event)}
-            </Text>
-
-            {/* Display location with improved formatting */}
-            {event.formattedLocation && (
-                <TouchableOpacity
-                    style={eventsStyles.eventLocation}
-                    onPress={() => event.formattedLocation?.mapUrl
-                        ? Linking.openURL(event.formattedLocation.mapUrl)
-                        : handleOpenMap(event.location || '')}
-                >
-                    <Ionicons name="location-outline" size={14} color="#666" />
-                    <Text style={eventsStyles.eventLocationText}>
-                        {event.formattedLocation.address}
-                    </Text>
-                </TouchableOpacity>
-            )}
-
-            {/* Display images in an optimized gallery format */}
-            {event.imageUrls && event.imageUrls.length > 0 && (
-                <View style={eventsStyles.eventImageContainer}>
-                    <Image
-                        source={{ uri: event.imageUrls[0] }}
-                        style={eventsStyles.eventImage}
-                        resizeMode="cover"
-                        onError={(e) => console.log(`Error loading image: ${event.imageUrls?.[0]}`, e.nativeEvent.error)}
-                    />
-                    {event.imageUrls.length > 1 && (
-                        <View style={eventsStyles.imageCountBadge}>
-                            <Text style={eventsStyles.moreImagesText}>
-                                +{event.imageUrls.length - 1}
-                            </Text>
-                        </View>
-                    )}
-                </View>
-            )}
-
-            {/* Display formatted description with better styling */}
-            {event.formattedDescription && (
-                <View style={eventsStyles.descriptionContainer}>
-                    <Text style={eventsStyles.eventDescription}>
-                        {event.formattedDescription.length > 150
-                            ? `${event.formattedDescription.substring(0, 150)}...`
-                            : event.formattedDescription}
-                    </Text>
-
-                    {event.formattedDescription.length > 150 && (
-                        <TouchableOpacity
-                            style={eventsStyles.readMoreButton}
-                            onPress={() => handleViewFullDescription(event)}
-                        >
-                            <Text style={eventsStyles.readMoreText}>Read More</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            )}
-
-            {/* Display attachments if available */}
-            {event.attachments && event.attachments.length > 0 && (
-                <View style={eventsStyles.attachmentsContainer}>
-                    <Text style={eventsStyles.attachmentsTitle}>Attachments:</Text>
-                    {event.attachments.map((attachment, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={eventsStyles.attachmentItem}
-                            onPress={() => Linking.openURL(attachment.url)}
-                        >
-                            <Ionicons name="document-outline" size={14} color="#666" />
-                            <Text style={eventsStyles.attachmentText}>
-                                {attachment.title}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            )}
-
-            <View style={eventsStyles.buttonContainer}>
-                {event.location && (
+                {/* Display location with improved formatting */}
+                {event.formattedLocation && (
                     <TouchableOpacity
-                        style={eventsStyles.detailsButton}
-                        onPress={() => handleOpenMap(event.location || '')}
+                        style={eventsStyles.eventLocation}
+                        onPress={() => event.formattedLocation?.mapUrl
+                            ? Linking.openURL(event.formattedLocation.mapUrl)
+                            : handleOpenMap(event.location || '')}
                     >
-                        <Text style={eventsStyles.buttonText}>View Location</Text>
+                        <Ionicons name="location-outline" size={14} color="#666" />
+                        <Text style={eventsStyles.eventLocationText}>
+                            {event.formattedLocation.address}
+                        </Text>
                     </TouchableOpacity>
                 )}
 
-                <TouchableOpacity
-                    style={eventsStyles.registerButton}
-                    onPress={() => handleAddToCalendar(event)}
-                >
-                    <Text style={eventsStyles.buttonText}>Add to Calendar</Text>
-                </TouchableOpacity>
-            </View>
+                {/* Display formatted description with better styling */}
+                {event.formattedDescription && (
+                    <View style={eventsStyles.descriptionContainer}>
+                        <Text style={eventsStyles.eventDescription}>
+                            {event.formattedDescription.length > 150
+                                ? `${event.formattedDescription.substring(0, 150)}...`
+                                : event.formattedDescription}
+                        </Text>
 
-            {/* Additional action buttons */}
-            <View style={eventsStyles.additionalButtonsContainer}>
-                <TouchableOpacity
-                    style={eventsStyles.secondaryButton}
-                    onPress={() => handleAddReminder(event)}
-                >
-                    <Ionicons name="notifications-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                    <Text style={eventsStyles.secondaryButtonText}>Set Reminder</Text>
-                </TouchableOpacity>
+                        {event.formattedDescription.length > 150 && (
+                            <TouchableOpacity
+                                style={eventsStyles.readMoreButton}
+                                onPress={() => handleViewFullDescription(event)}
+                            >
+                                <Text style={eventsStyles.readMoreText}>Read More</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
 
-                <TouchableOpacity
-                    style={eventsStyles.secondaryButton}
-                    onPress={() => Linking.openURL('https://fr.egliselacite.com/events2')}
-                >
-                    <Ionicons name="open-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
-                    <Text style={eventsStyles.secondaryButtonText}>View Details</Text>
-                </TouchableOpacity>
+                {/* Display attachments if available */}
+                {event.attachments && event.attachments.length > 0 && (
+                    <View style={eventsStyles.attachmentsContainer}>
+                        <Text style={eventsStyles.attachmentsTitle}>Attachments:</Text>
+                        {event.attachments.map((attachment, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={eventsStyles.attachmentItem}
+                                onPress={() => Linking.openURL(attachment.url)}
+                            >
+                                <Ionicons
+                                    name={
+                                        isDriveAttachment(attachment.url)
+                                            ? "document-outline"
+                                            : "link-outline"
+                                    }
+                                    size={14}
+                                    color="#666"
+                                />
+                                <Text style={eventsStyles.attachmentText}>
+                                    {attachment.title}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
+
+                <View style={eventsStyles.buttonContainer}>
+                    {event.location && (
+                        <TouchableOpacity
+                            style={eventsStyles.detailsButton}
+                            onPress={() => handleOpenMap(event.location || '')}
+                        >
+                            <Text style={eventsStyles.buttonText}>View Location</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity
+                        style={eventsStyles.registerButton}
+                        onPress={() => handleAddToCalendar(event)}
+                    >
+                        <Text style={eventsStyles.buttonText}>Add to Calendar</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Additional action buttons */}
+                <View style={eventsStyles.additionalButtonsContainer}>
+                    <TouchableOpacity
+                        style={eventsStyles.secondaryButton}
+                        onPress={() => handleAddReminder(event)}
+                    >
+                        <Ionicons name="notifications-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
+                        <Text style={eventsStyles.secondaryButtonText}>Set Reminder</Text>
+                    </TouchableOpacity>
+
+                    {driveAttachment ? (
+                        <TouchableOpacity
+                            style={eventsStyles.secondaryButton}
+                            onPress={() => handleViewAttachment(driveAttachment.url)}
+                        >
+                            <Ionicons name="document-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
+                            <Text style={eventsStyles.secondaryButtonText}>View Files</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity
+                            style={eventsStyles.secondaryButton}
+                            onPress={() => Linking.openURL('https://fr.egliselacite.com/events2')}
+                        >
+                            <Ionicons name="open-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
+                            <Text style={eventsStyles.secondaryButtonText}>View Details</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
-        </View>
-    );
+        );
+    };
 
     const renderHolidayCard = (holiday: CalendarEvent) => (
         <View key={holiday.id} style={eventsStyles.holidayCard}>
@@ -825,14 +847,14 @@ export const EventsContent = () => {
                         <View style={eventsStyles.descriptionModalHeader}>
                             <Text style={eventsStyles.descriptionModalTitle}>{selectedEvent.summary}</Text>
                             <TouchableOpacity
-                                style={eventsStyles.closeButton}
+                                style={eventsStyles.modalCloseIconButton}
                                 onPress={() => setShowFullDescription(false)}
                             >
                                 <Ionicons name="close" size={24} color="#666" />
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView style={eventsStyles.modalScrollView}>
+                        <ScrollView style={eventsStyles.descriptionModalScrollView}>
                             {/* Display event date */}
                             <Text style={eventsStyles.modalEventDate}>
                                 {formatEventDate(selectedEvent)}
@@ -856,21 +878,6 @@ export const EventsContent = () => {
                                 </TouchableOpacity>
                             )}
 
-                            {/* Display all images in the modal */}
-                            {selectedEvent.imageUrls && selectedEvent.imageUrls.length > 0 && (
-                                <View style={eventsStyles.modalImagesContainer}>
-                                    {selectedEvent.imageUrls.map((imageUrl, index) => (
-                                        <Image
-                                            key={index}
-                                            source={{ uri: imageUrl }}
-                                            style={eventsStyles.modalImage}
-                                            resizeMode="cover"
-                                            onError={(e) => console.log(`Error loading image: ${imageUrl}`, e.nativeEvent.error)}
-                                        />
-                                    ))}
-                                </View>
-                            )}
-
                             {/* Full description */}
                             {selectedEvent.formattedDescription && (
                                 <Text style={eventsStyles.descriptionModalText}>
@@ -878,26 +885,28 @@ export const EventsContent = () => {
                                 </Text>
                             )}
 
-                            {/* Attachments in modal */}
-                            {selectedEvent.attachments && selectedEvent.attachments.length > 0 && (
-                                <View style={eventsStyles.modalAttachmentsContainer}>
-                                    <Text style={eventsStyles.modalAttachmentsTitle}>Attachments:</Text>
-                                    {selectedEvent.attachments.map((attachment, index) => (
-                                        <TouchableOpacity
-                                            key={index}
-                                            style={eventsStyles.modalAttachmentItem}
-                                            onPress={() => {
-                                                Linking.openURL(attachment.url);
-                                            }}
-                                        >
-                                            <Ionicons name="document-outline" size={16} color="#666" />
-                                            <Text style={eventsStyles.modalAttachmentText}>
-                                                {attachment.title}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            )}
+                            {/* File attachments section */}
+                            {selectedEvent.attachments && selectedEvent.attachments.some(
+                                attachment => isDriveAttachment(attachment.url)
+                            ) && (
+                                    <View style={eventsStyles.modalPhotoAttachmentsContainer}>
+                                        <Text style={eventsStyles.modalAttachmentsTitle}>Files:</Text>
+                                        {selectedEvent.attachments
+                                            .filter(attachment => isDriveAttachment(attachment.url))
+                                            .map((attachment, index) => (
+                                                <TouchableOpacity
+                                                    key={index}
+                                                    style={eventsStyles.modalPhotoItem}
+                                                    onPress={() => Linking.openURL(attachment.url)}
+                                                >
+                                                    <Ionicons name="document-outline" size={16} color="#FF9843" />
+                                                    <Text style={[eventsStyles.modalAttachmentText, { color: '#FF9843' }]}>
+                                                        {attachment.title}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                    </View>
+                                )}
                         </ScrollView>
 
                         <View style={eventsStyles.modalButtonsContainer}>
