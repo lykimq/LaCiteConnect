@@ -25,6 +25,14 @@ export const GetConnectedContent = () => {
         Linking.openURL(STATIC_URLS.chezNousDetails);
     };
 
+    const handleSocialMedia = (url: string) => {
+        Linking.openURL(url);
+    };
+
+    const handleEmail = () => {
+        Linking.openURL('mailto:salut@egliselacite.com');
+    };
+
     return (
         <View style={getConnectedStyles.container}>
             <ScrollView
@@ -56,6 +64,84 @@ export const GetConnectedContent = () => {
                             <Ionicons name="paper-plane" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
                             <Text style={getConnectedStyles.buttonText}>
                                 Subscribe Now
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={getConnectedStyles.cardContainer}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                        <Ionicons name="share-social" size={24} color="#FF9843" style={{ marginRight: 10 }} />
+                        <Text style={getConnectedStyles.sectionTitle}>Connect On Social Media</Text>
+                    </View>
+                    <Text style={getConnectedStyles.paragraph}>
+                        Follow us on social media to stay connected with La Cité community and see regular updates.
+                    </Text>
+
+                    <TouchableOpacity
+                        style={getConnectedStyles.contactButton}
+                        onPress={handleEmail}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="mail-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={getConnectedStyles.buttonText}>
+                                salut@egliselacite.com
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <View style={{ marginTop: 10 }} />
+
+                    <TouchableOpacity
+                        style={getConnectedStyles.contactButton}
+                        onPress={() => handleSocialMedia('https://www.instagram.com/laciteparis/')}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="logo-instagram" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={getConnectedStyles.buttonText}>
+                                @laciteparis
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <View style={{ marginTop: 10 }} />
+
+                    <TouchableOpacity
+                        style={getConnectedStyles.contactButton}
+                        onPress={() => handleSocialMedia('https://www.facebook.com/laciteparis/')}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="logo-facebook" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={getConnectedStyles.buttonText}>
+                                La Cité Paris
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <View style={{ marginTop: 10 }} />
+
+                    <TouchableOpacity
+                        style={getConnectedStyles.contactButton}
+                        onPress={() => handleSocialMedia('https://www.youtube.com/channel/UC-0imDK8zeP8lEBTEjiCx2A')}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="logo-youtube" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={getConnectedStyles.buttonText}>
+                                Eglise La Cité
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <View style={{ marginTop: 10 }} />
+
+                    <TouchableOpacity
+                        style={getConnectedStyles.contactButton}
+                        onPress={() => handleSocialMedia('https://soundcloud.com/egliselacite/tracks')}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="cloud" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={getConnectedStyles.buttonText}>
+                                Soundcloud
                             </Text>
                         </View>
                     </TouchableOpacity>
