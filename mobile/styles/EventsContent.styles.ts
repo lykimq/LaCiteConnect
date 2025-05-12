@@ -84,6 +84,12 @@ export const eventsStyles = StyleSheet.create({
         marginBottom: 5,
         flex: 1,
     },
+    recurringTag: {
+        fontSize: 14,
+        fontWeight: 'normal',
+        color: '#FF9843',
+        fontStyle: 'italic',
+    },
     dateContainer: {
         backgroundColor: '#FFE4C4',
         borderRadius: 5,

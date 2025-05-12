@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
 import { eventsStyles } from '../styles/EventsContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime, isPastEvent } from '../utils/dateUtils';
@@ -23,12 +23,14 @@ interface CalendarEvent {
         date?: string;
     };
     location?: string;
+    recurrence?: boolean;
 }
 
 export const EventsContent = () => {
     const [activeTab, setActiveTab] = useState('upcoming');
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [calendarError, setCalendarError] = useState<string | null>(null);
 
@@ -41,7 +43,7 @@ export const EventsContent = () => {
             setLoading(true);
             setError(null);
             const data = await calendarService.getEvents();
-            console.log(`Fetched ${data.length} events from calendar`);
+            console.log(`Fetched ${data.length} events from calendar service`);
 
             // Ensure each event has a unique ID by adding an index if needed
             const eventsWithUniqueIds = data.map((event, index) => {
@@ -52,13 +54,44 @@ export const EventsContent = () => {
                 };
             });
 
+            // Debug log to check events by month
+            const monthsInEvents = new Map();
+            eventsWithUniqueIds.forEach(event => {
+                let eventDate;
+                if (event.start.dateTime) {
+                    eventDate = new Date(event.start.dateTime);
+                } else if (event.start.date) {
+                    eventDate = new Date(event.start.date);
+                } else {
+                    return;
+                }
+
+                const month = eventDate.getMonth();
+                const year = eventDate.getFullYear();
+                const monthYear = `${year}-${month + 1}`;
+
+                if (!monthsInEvents.has(monthYear)) {
+                    monthsInEvents.set(monthYear, 1);
+                } else {
+                    monthsInEvents.set(monthYear, monthsInEvents.get(monthYear) + 1);
+                }
+            });
+
+            console.log('Months in events:', Object.fromEntries([...monthsInEvents.entries()].sort()));
+
             setEvents(eventsWithUniqueIds);
         } catch (err) {
             console.error('Error fetching events:', err);
             setError('Failed to load events. Please try again later.');
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchEvents();
     };
 
     const formatEventDate = (event: CalendarEvent) => {
@@ -85,29 +118,36 @@ export const EventsContent = () => {
         calendarService.openCalendarInBrowser();
     };
 
-    // Filter upcoming events (current date and forward)
-    const upcomingEvents = events.filter(event => {
-        const eventDate = event.start.dateTime ? new Date(event.start.dateTime) :
-            event.start.date ? new Date(event.start.date) : null;
-        if (!eventDate) return false;
-        // Include today's events as upcoming
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return eventDate >= today;
-    });
+    // Memoize filtered events to avoid re-filtering on every render
+    const { upcomingEvents, pastEvents } = useMemo(() => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
 
-    // Filter past events (before current date)
-    const pastEvents = events.filter(event => {
-        const eventDate = event.start.dateTime ? new Date(event.start.dateTime) :
-            event.start.date ? new Date(event.start.date) : null;
-        if (!eventDate) return false;
-        // Exclude today's events from past
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return eventDate < today;
-    });
+        const upcoming: CalendarEvent[] = [];
+        const past: CalendarEvent[] = [];
 
-    // Group events by month
+        events.forEach(event => {
+            const eventDate = event.start.dateTime
+                ? new Date(event.start.dateTime)
+                : event.start.date
+                    ? new Date(event.start.date)
+                    : null;
+
+            if (!eventDate) return;
+
+            if (eventDate >= now) {
+                upcoming.push(event);
+            } else {
+                past.push(event);
+            }
+        });
+
+        console.log(`Filtered ${upcoming.length} upcoming events and ${past.length} past events`);
+
+        return { upcomingEvents: upcoming, pastEvents: past };
+    }, [events]);
+
+    // Group events by month and year
     const groupEventsByMonth = (eventsList: CalendarEvent[]) => {
         const grouped: { [key: string]: CalendarEvent[] } = {};
 
@@ -137,7 +177,10 @@ export const EventsContent = () => {
     const renderEventCard = (event: CalendarEvent) => (
         <View key={event.id} style={eventsStyles.eventCard}>
             <View style={eventsStyles.eventHeader}>
-                <Text style={eventsStyles.eventTitle}>{event.summary}</Text>
+                <Text style={eventsStyles.eventTitle}>
+                    {event.summary}
+                    {event.recurrence && <Text style={eventsStyles.recurringTag}> (Recurring)</Text>}
+                </Text>
                 <View style={eventsStyles.dateContainer}>
                     <Text style={eventsStyles.dateText}>
                         {event.start.dateTime
@@ -183,7 +226,27 @@ export const EventsContent = () => {
         const groupedEvents = groupEventsByMonth(eventsList);
         const monthKeys = Object.keys(groupedEvents);
 
+        // Log months for debugging
+        console.log('Months to display:', monthKeys.join(', '));
+
+        // If no months are found
+        if (monthKeys.length === 0) {
+            return (
+                <View style={eventsStyles.noEventsContainer}>
+                    <Ionicons name="calendar-outline" size={40} color="#ccc" />
+                    <Text style={eventsStyles.noEventsText}>
+                        No events found
+                    </Text>
+                </View>
+            );
+        }
+
         // Sort months chronologically
+        const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
         monthKeys.sort((a, b) => {
             const monthA = a.split(' ')[0];
             const yearA = parseInt(a.split(' ')[1]);
@@ -196,17 +259,20 @@ export const EventsContent = () => {
             }
 
             // If years are the same, compare months
-            const months = [
-                'January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'
-            ];
             return months.indexOf(monthA) - months.indexOf(monthB);
         });
 
         return monthKeys.map(month => (
             <View key={month} style={eventsStyles.monthGroup}>
                 <Text style={eventsStyles.sectionTitle}>{month}</Text>
-                {groupedEvents[month].map(renderEventCard)}
+                {/* Sort events within the month by day */}
+                {groupedEvents[month]
+                    .sort((a, b) => {
+                        const dateA = a.start.dateTime ? new Date(a.start.dateTime) : new Date(a.start.date || "");
+                        const dateB = b.start.dateTime ? new Date(b.start.dateTime) : new Date(b.start.date || "");
+                        return dateA.getTime() - dateB.getTime();
+                    })
+                    .map(renderEventCard)}
             </View>
         ));
     };
@@ -216,6 +282,13 @@ export const EventsContent = () => {
             <ScrollView
                 style={eventsStyles.scrollView}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#FF9843']}
+                    />
+                }
             >
                 <View style={eventsStyles.header}>
                     <Text style={eventsStyles.title}>
@@ -288,35 +361,8 @@ export const EventsContent = () => {
                     </View>
                 ) : (
                     <>
-                        {activeTab === 'upcoming' && (
-                            <>
-                                {upcomingEvents.length > 0 ? (
-                                    renderGroupedEvents(upcomingEvents)
-                                ) : (
-                                    <View style={eventsStyles.noEventsContainer}>
-                                        <Ionicons name="calendar-outline" size={40} color="#ccc" />
-                                        <Text style={eventsStyles.noEventsText}>
-                                            No upcoming events
-                                        </Text>
-                                    </View>
-                                )}
-                            </>
-                        )}
-
-                        {activeTab === 'past' && (
-                            <>
-                                {pastEvents.length > 0 ? (
-                                    renderGroupedEvents(pastEvents)
-                                ) : (
-                                    <View style={eventsStyles.noEventsContainer}>
-                                        <Ionicons name="calendar-outline" size={40} color="#ccc" />
-                                        <Text style={eventsStyles.noEventsText}>
-                                            No past events
-                                        </Text>
-                                    </View>
-                                )}
-                            </>
-                        )}
+                        {activeTab === 'upcoming' && renderGroupedEvents(upcomingEvents)}
+                        {activeTab === 'past' && renderGroupedEvents(pastEvents)}
                     </>
                 )}
 

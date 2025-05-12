@@ -17,6 +17,7 @@ interface CalendarEvent {
         date?: string;
     };
     location?: string;
+    recurrence?: boolean;
 }
 
 // Personal calendar ID
@@ -28,12 +29,67 @@ const ICAL_URL = 'https://calendar.google.com/calendar/ical/lykimq%40gmail.com/p
 // Calendar embed URL with parameters for better view
 const EMBED_URL = 'https://calendar.google.com/calendar/embed?src=lykimq%40gmail.com&ctz=Europe%2FParis&mode=MONTH&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=1';
 
+// Alternative public calendar REST API URL
+const API_URL = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs&timeMin=${new Date().toISOString()}&maxResults=100&singleEvents=true&orderBy=startTime`;
+
 export const calendarService = {
     /**
      * Get personal calendar events
      */
     async getEvents(): Promise<CalendarEvent[]> {
-        return this.fetchICalEvents(ICAL_URL);
+        try {
+            // Try using Google Calendar API first
+            console.log('Attempting to fetch from Google Calendar API');
+            try {
+                const apiEvents = await this.fetchFromGoogleApi();
+                if (apiEvents && apiEvents.length > 0) {
+                    console.log(`Successfully fetched ${apiEvents.length} events from API`);
+                    return apiEvents;
+                }
+            } catch (apiError) {
+                console.error('API fetch failed, falling back to iCal', apiError);
+            }
+
+            // Fall back to iCal if API fails
+            return this.fetchICalEvents(ICAL_URL);
+        } catch (error) {
+            console.error('All event fetch methods failed', error);
+            // Return empty array to avoid crashing the app
+            return [];
+        }
+    },
+
+    /**
+     * Attempt to fetch events from Google Calendar API
+     */
+    async fetchFromGoogleApi(): Promise<CalendarEvent[]> {
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.items || !Array.isArray(data.items)) {
+            throw new Error('Invalid API response format');
+        }
+
+        return data.items.map((item: any) => ({
+            id: item.id,
+            summary: item.summary || 'Untitled Event',
+            description: item.description,
+            location: item.location,
+            start: {
+                dateTime: item.start.dateTime,
+                date: item.start.date
+            },
+            end: {
+                dateTime: item.end.dateTime,
+                date: item.end.date
+            },
+            recurrence: item.recurrence ? true : false
+        }));
     },
 
     /**
@@ -65,16 +121,11 @@ export const calendarService = {
     parseICalData(icalData: string): CalendarEvent[] {
         try {
             const events: CalendarEvent[] = [];
-            // Calculate date 24 months from now instead of just 12
-            const twoYearsFromNow = new Date();
-            twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
-
-            // Get events from 1 year ago (to include past events)
-            const oneYearAgo = new Date();
-            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            console.log('Parsing iCal data...');
 
             // Simple regex-based parsing for iCal format
             const eventBlocks = icalData.split('BEGIN:VEVENT');
+            console.log(`Found ${eventBlocks.length - 1} event blocks in iCal data`);
 
             // Skip the first entry as it's the header
             for (let i = 1; i < eventBlocks.length; i++) {
@@ -90,32 +141,55 @@ export const calendarService = {
                 const description = this.extractICalProperty(eventData, 'DESCRIPTION');
                 const location = this.extractICalProperty(eventData, 'LOCATION');
                 const uid = this.extractICalProperty(eventData, 'UID');
+                const rrule = this.extractICalProperty(eventData, 'RRULE');
 
                 // Get start and end dates
-                const dtstart = this.extractICalProperty(eventData, 'DTSTART');
-                const dtend = this.extractICalProperty(eventData, 'DTEND');
+                let dtstart = this.extractICalProperty(eventData, 'DTSTART');
+                let dtend = this.extractICalProperty(eventData, 'DTEND');
 
-                // Skip events that are too far in the future (more than 2 years) or too far in the past (more than 1 year)
-                const startDate = this.parseICalDate(dtstart);
-                if (startDate) {
-                    if (startDate > twoYearsFromNow) continue;
-                    if (startDate < oneYearAgo) continue;
+                // Handle additional date format variations
+                if (!dtstart) {
+                    dtstart = this.extractICalProperty(eventData, 'DTSTART;VALUE=DATE');
+                }
+                if (!dtend) {
+                    dtend = this.extractICalProperty(eventData, 'DTEND;VALUE=DATE');
                 }
 
+                // Skip if we couldn't find a start date
+                if (!dtstart) {
+                    console.log(`Event ${i} (${summary}) skipped - no start date found`);
+                    continue;
+                }
+
+                const startDate = this.parseICalDate(dtstart);
+
+                // Only log, but include all events regardless of date
+                if (startDate) {
+                    const month = startDate.getMonth() + 1; // 0-indexed to 1-indexed
+                    const year = startDate.getFullYear();
+                    console.log(`Event ${i}: ${summary} - Date: ${startDate.toISOString()} (Month: ${month}, Year: ${year})`);
+                }
+
+                // Create basic event
                 const event: CalendarEvent = {
                     id: uid || `event-${i}`,
                     summary: summary || 'Untitled Event',
                     description: description || undefined,
                     location: location || undefined,
                     start: {},
-                    end: {}
+                    end: {},
+                    recurrence: !!rrule
                 };
 
                 // Process date format
                 if (dtstart) {
                     // Check if it's an all-day event (no time component)
-                    if (dtstart.length === 8) {
-                        const formattedDate = `${dtstart.substring(0, 4)}-${dtstart.substring(4, 6)}-${dtstart.substring(6, 8)}`;
+                    if (dtstart.length === 8 || dtstart.indexOf('T') === -1) {
+                        // Ensure proper formatting for date-only events
+                        const year = dtstart.substring(0, 4);
+                        const month = dtstart.substring(4, 6);
+                        const day = dtstart.substring(6, 8);
+                        const formattedDate = `${year}-${month}-${day}`;
                         event.start.date = formattedDate;
                     } else {
                         event.start.dateTime = this.formatICalDateTime(dtstart);
@@ -123,15 +197,117 @@ export const calendarService = {
                 }
 
                 if (dtend) {
-                    if (dtend.length === 8) {
-                        const formattedDate = `${dtend.substring(0, 4)}-${dtend.substring(4, 6)}-${dtend.substring(6, 8)}`;
+                    if (dtend.length === 8 || dtend.indexOf('T') === -1) {
+                        // Ensure proper formatting for date-only events
+                        const year = dtend.substring(0, 4);
+                        const month = dtend.substring(4, 6);
+                        const day = dtend.substring(6, 8);
+                        const formattedDate = `${year}-${month}-${day}`;
                         event.end.date = formattedDate;
                     } else {
                         event.end.dateTime = this.formatICalDateTime(dtend);
                     }
+                } else if (event.start.date) {
+                    // Default end date to same as start for all-day events
+                    event.end.date = event.start.date;
+                } else if (event.start.dateTime) {
+                    // Default end time to 1 hour after start
+                    const endTime = new Date(event.start.dateTime);
+                    endTime.setHours(endTime.getHours() + 1);
+                    event.end.dateTime = endTime.toISOString();
                 }
 
+                // Add the event
                 events.push(event);
+
+                // Handle recurring events - add next 10 occurrences for repeating events
+                if (rrule && startDate) {
+                    const now = new Date();
+                    now.setHours(0, 0, 0, 0);
+
+                    // Naive implementation of simple recurring events
+                    // For weekly events
+                    if (rrule.includes('FREQ=WEEKLY')) {
+                        for (let j = 1; j <= 10; j++) {
+                            const futureDate = new Date(startDate);
+                            futureDate.setDate(futureDate.getDate() + (j * 7));
+
+                            // Only add future occurrences
+                            if (futureDate >= now) {
+                                const recurringEvent: CalendarEvent = {
+                                    ...event,
+                                    id: `${event.id}_recur_${j}`,
+                                    summary: `${event.summary}${event.recurrence ? ' (Recurring)' : ''}`,
+                                    start: {},
+                                    end: {}
+                                };
+
+                                if (event.start.dateTime) {
+                                    recurringEvent.start.dateTime = futureDate.toISOString();
+                                } else if (event.start.date) {
+                                    const futureDateStr = futureDate.toISOString().split('T')[0];
+                                    recurringEvent.start.date = futureDateStr;
+                                }
+
+                                // Calculate end date/time based on duration of original event
+                                if (event.end.dateTime && event.start.dateTime) {
+                                    const originalStart = new Date(event.start.dateTime);
+                                    const originalEnd = new Date(event.end.dateTime);
+                                    const duration = originalEnd.getTime() - originalStart.getTime();
+
+                                    const futureEndDate = new Date(futureDate.getTime() + duration);
+                                    recurringEvent.end.dateTime = futureEndDate.toISOString();
+                                } else if (event.end.date && event.start.date) {
+                                    const futureDateStr = futureDate.toISOString().split('T')[0];
+                                    recurringEvent.end.date = futureDateStr;
+                                }
+
+                                events.push(recurringEvent);
+                            }
+                        }
+                    }
+
+                    // For monthly events
+                    if (rrule.includes('FREQ=MONTHLY')) {
+                        for (let j = 1; j <= 10; j++) {
+                            const futureDate = new Date(startDate);
+                            futureDate.setMonth(futureDate.getMonth() + j);
+
+                            // Only add future occurrences
+                            if (futureDate >= now) {
+                                const recurringEvent: CalendarEvent = {
+                                    ...event,
+                                    id: `${event.id}_recur_${j}`,
+                                    summary: `${event.summary}${event.recurrence ? ' (Recurring)' : ''}`,
+                                    start: {},
+                                    end: {}
+                                };
+
+                                if (event.start.dateTime) {
+                                    recurringEvent.start.dateTime = futureDate.toISOString();
+                                } else if (event.start.date) {
+                                    const futureDateStr = futureDate.toISOString().split('T')[0];
+                                    recurringEvent.start.date = futureDateStr;
+                                }
+
+                                // Calculate end date/time based on duration of original event
+                                if (event.end.dateTime && event.start.dateTime) {
+                                    const originalStart = new Date(event.start.dateTime);
+                                    const originalEnd = new Date(event.end.dateTime);
+                                    const duration = originalEnd.getTime() - originalStart.getTime();
+
+                                    const futureEndDate = new Date(futureDate.getTime() + duration);
+                                    recurringEvent.end.dateTime = futureEndDate.toISOString();
+                                } else if (event.end.date && event.start.date) {
+                                    const futureDateStr = futureDate.toISOString().split('T')[0];
+                                    recurringEvent.end.date = futureDateStr;
+                                }
+
+                                events.push(recurringEvent);
+                            }
+                        }
+                    }
+                }
             }
 
             // Sort events by start date
@@ -141,7 +317,25 @@ export const calendarService = {
                 return dateA.getTime() - dateB.getTime();
             });
 
-            console.log(`Parsed ${events.length} calendar events in total`);
+            // Log months found
+            const months = new Set();
+            events.forEach(event => {
+                const eventDate = event.start.dateTime
+                    ? new Date(event.start.dateTime)
+                    : event.start.date
+                        ? new Date(event.start.date)
+                        : null;
+
+                if (eventDate) {
+                    const month = eventDate.getMonth() + 1; // 0-indexed to 1-indexed
+                    const year = eventDate.getFullYear();
+                    months.add(`${year}-${month}`);
+                }
+            });
+
+            console.log('Months found in events:', [...months].sort().join(', '));
+            console.log(`Parsed ${events.length} calendar events in total (including expanded recurring events)`);
+
             return events;
         } catch (error) {
             console.error('Error parsing iCal data:', error);
@@ -153,7 +347,8 @@ export const calendarService = {
      * Extract a property from an iCal event string
      */
     extractICalProperty(eventData: string, property: string): string | null {
-        const regex = new RegExp(`${property}(?:[;][^:]*)?:([^\\r\\n]+)`, 'i');
+        // More flexible regex to handle various property formats
+        const regex = new RegExp(`${property}(?:;[^:]*)?:([^\\r\\n]+)`, 'i');
         const match = eventData.match(regex);
         return match ? match[1] : null;
     },
@@ -164,36 +359,37 @@ export const calendarService = {
     parseICalDate(icalDate: string | null): Date | null {
         if (!icalDate) return null;
 
+        // Clean up the date string
+        const cleanDate = icalDate.replace(/[^0-9TZ]/g, '');
+
         // Handle date-only format (YYYYMMDD)
-        if (icalDate.length === 8) {
-            const year = parseInt(icalDate.substring(0, 4));
-            const month = parseInt(icalDate.substring(4, 6)) - 1; // JS months are 0-indexed
-            const day = parseInt(icalDate.substring(6, 8));
+        if (cleanDate.length === 8 || !cleanDate.includes('T')) {
+            const year = parseInt(cleanDate.substring(0, 4));
+            const month = parseInt(cleanDate.substring(4, 6)) - 1; // JS months are 0-indexed
+            const day = parseInt(cleanDate.substring(6, 8));
             return new Date(year, month, day);
         }
 
         // Handle datetime format (YYYYMMDDTHHmmssZ)
-        if (icalDate.includes('T')) {
-            // Remove any non-numeric chars except T and Z
-            const cleaned = icalDate.replace(/[^0-9TZ]/g, '');
-            const year = parseInt(cleaned.substring(0, 4));
-            const month = parseInt(cleaned.substring(4, 6)) - 1;
-            const day = parseInt(cleaned.substring(6, 8));
+        if (cleanDate.includes('T')) {
+            const year = parseInt(cleanDate.substring(0, 4));
+            const month = parseInt(cleanDate.substring(4, 6)) - 1;
+            const day = parseInt(cleanDate.substring(6, 8));
 
             // Check if there's enough characters for time
             let hour = 0, minute = 0, second = 0;
-            if (cleaned.length >= 11) {
-                hour = parseInt(cleaned.substring(9, 11));
-                if (cleaned.length >= 13) {
-                    minute = parseInt(cleaned.substring(11, 13));
-                    if (cleaned.length >= 15) {
-                        second = parseInt(cleaned.substring(13, 15));
+            if (cleanDate.length >= 11) {
+                hour = parseInt(cleanDate.substring(9, 11));
+                if (cleanDate.length >= 13) {
+                    minute = parseInt(cleanDate.substring(11, 13));
+                    if (cleanDate.length >= 15) {
+                        second = parseInt(cleanDate.substring(13, 15));
                     }
                 }
             }
 
             // Check if it's UTC time (ends with Z)
-            if (cleaned.endsWith('Z')) {
+            if (cleanDate.endsWith('Z')) {
                 return new Date(Date.UTC(year, month, day, hour, minute, second));
             }
 
@@ -209,29 +405,30 @@ export const calendarService = {
     formatICalDateTime(icalDate: string): string {
         if (!icalDate) return new Date().toISOString();
 
+        // Clean up the date string
+        const cleanDate = icalDate.replace(/[^0-9TZ]/g, '');
+
         // Handle datetime format (YYYYMMDDTHHmmssZ)
-        if (icalDate.includes('T')) {
-            // Remove any non-numeric chars except T and Z
-            const cleaned = icalDate.replace(/[^0-9TZ]/g, '');
-            const year = parseInt(cleaned.substring(0, 4));
-            const month = parseInt(cleaned.substring(4, 6)) - 1;
-            const day = parseInt(cleaned.substring(6, 8));
+        if (cleanDate.includes('T')) {
+            const year = parseInt(cleanDate.substring(0, 4));
+            const month = parseInt(cleanDate.substring(4, 6)) - 1;
+            const day = parseInt(cleanDate.substring(6, 8));
 
             // Check if there's enough characters for time
             let hour = 0, minute = 0, second = 0;
-            if (cleaned.length >= 11) {
-                hour = parseInt(cleaned.substring(9, 11));
-                if (cleaned.length >= 13) {
-                    minute = parseInt(cleaned.substring(11, 13));
-                    if (cleaned.length >= 15) {
-                        second = parseInt(cleaned.substring(13, 15));
+            if (cleanDate.length >= 11) {
+                hour = parseInt(cleanDate.substring(9, 11));
+                if (cleanDate.length >= 13) {
+                    minute = parseInt(cleanDate.substring(11, 13));
+                    if (cleanDate.length >= 15) {
+                        second = parseInt(cleanDate.substring(13, 15));
                     }
                 }
             }
 
             // Check if it's UTC time (ends with Z)
             let date;
-            if (cleaned.endsWith('Z')) {
+            if (cleanDate.endsWith('Z')) {
                 date = new Date(Date.UTC(year, month, day, hour, minute, second));
             } else {
                 date = new Date(year, month, day, hour, minute, second);
@@ -241,9 +438,9 @@ export const calendarService = {
         }
 
         // Handle date-only format (YYYYMMDD)
-        const year = parseInt(icalDate.substring(0, 4));
-        const month = parseInt(icalDate.substring(4, 6)) - 1;
-        const day = parseInt(icalDate.substring(6, 8));
+        const year = parseInt(cleanDate.substring(0, 4));
+        const month = parseInt(cleanDate.substring(4, 6)) - 1;
+        const day = parseInt(cleanDate.substring(6, 8));
         const date = new Date(year, month, day);
         return date.toISOString();
     },
