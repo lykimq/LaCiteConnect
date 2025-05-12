@@ -265,7 +265,9 @@ export const HomeContent = () => {
                     />
                 }
             >
-                <View style={styles.heroSection}>
+                <View style={styles.header}>
+                    <Ionicons name="home" size={60} color={themeColors.primary} />
+                    <View style={styles.headerDivider} />
                     <Text style={styles.title}>
                         {content.header.title}
                     </Text>

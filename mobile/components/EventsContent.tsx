@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime, isPastEvent } from '../utils/dateUtils';
 import { calendarService } from '../services/calendarService';
@@ -11,6 +11,21 @@ import { createEventsStyles } from '../styles/ThemedStyles';
 
 // Get screen dimensions for WebView sizing
 const { width } = Dimensions.get('window');
+
+// View modes
+type ViewMode = 'calendar' | 'list' | 'timeline';
+
+// Add new types for sorting and filtering
+type SortOrder = 'asc' | 'desc';
+type EventCategory = 'all' | 'upcoming' | 'past' | 'thisWeek' | 'thisMonth';
+type SortBy = 'date' | 'title' | 'location';
+
+interface FilterOptions {
+    category: EventCategory;
+    sortBy: SortBy;
+    sortOrder: SortOrder;
+    searchQuery: string;
+}
 
 // Event interface
 interface CalendarEvent {
@@ -77,6 +92,14 @@ interface EventsContent {
         refreshHolidaysText: string;
         tryAgainText: string;
         openCalendarText: string;
+        calendarViewText: string;
+        listViewText: string;
+        timelineViewText: string;
+        filterText: string;
+        todayText: string;
+        upcomingText: string;
+        pastText: string;
+        allText: string;
     };
     months: string[];
 }
@@ -87,7 +110,24 @@ const isDriveAttachment = (url: string): boolean => {
 };
 
 export const EventsContent = () => {
+    const { themeColors } = useTheme();
+    const styles = useThemedStyles(createEventsStyles);
+    const currentDate = new Date();
+
+    // Content state
+    const [content, setContent] = useState<EventsContent | null>(null);
+    const [contentLoading, setContentLoading] = useState<boolean>(true);
+    const [contentError, setContentError] = useState<string | null>(null);
+
+    // View state
     const [activeTab, setActiveTab] = useState('upcoming');
+    const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [timeFilter, setTimeFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
+    const [selectedListPeriod, setSelectedListPeriod] = useState<'quick' | 'month'>('quick');
+    const [selectedQuickPeriod, setSelectedQuickPeriod] = useState<'all' | 'today' | 'tomorrow' | 'week' | 'month'>('all');
+
+    // Events state
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [holidays, setHolidays] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -96,33 +136,163 @@ export const EventsContent = () => {
     const [error, setError] = useState<string | null>(null);
     const [holidaysError, setHolidaysError] = useState<string | null>(null);
     const [calendarError, setCalendarError] = useState<string | null>(null);
-    const { themeColors } = useTheme();
-    const styles = useThemedStyles(createEventsStyles);
 
-    // Content state for UI strings
-    const [content, setContent] = useState<EventsContent | null>(null);
-    const [contentLoading, setContentLoading] = useState<boolean>(true);
-    const [contentError, setContentError] = useState<string | null>(null);
-
-    // State for expanded description modal
+    // Modal state
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [showFullDescription, setShowFullDescription] = useState(false);
 
     // Month pagination state
-    const currentDate = new Date();
     const [currentYear, setCurrentYear] = useState(currentDate.getFullYear());
     const [currentMonth, setCurrentMonth] = useState(currentDate.getMonth());
     const [showMonthPicker, setShowMonthPicker] = useState(false);
-
-    // Holiday month pagination
     const [holidayYear, setHolidayYear] = useState(currentDate.getFullYear());
     const [holidayMonth, setHolidayMonth] = useState(currentDate.getMonth());
     const [showHolidayMonthPicker, setShowHolidayMonthPicker] = useState(false);
+
+    // Filter options state
+    const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+        category: 'upcoming',
+        sortBy: 'date',
+        sortOrder: 'asc',
+        searchQuery: ''
+    });
+
+    // Enhanced filtering and sorting logic
+    const filteredAndSortedEvents = useMemo(() => {
+        const now = new Date();
+        const thisWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const thisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        let filtered = events.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+
+            // Category filtering
+            switch (filterOptions.category) {
+                case 'upcoming':
+                    return eventDate >= now;
+                case 'past':
+                    return eventDate < now;
+                case 'thisWeek':
+                    return eventDate >= now && eventDate <= thisWeek;
+                case 'thisMonth':
+                    return eventDate >= now && eventDate <= thisMonth;
+                default:
+                    return true;
+            }
+        });
+
+        // Search filtering
+        if (filterOptions.searchQuery) {
+            const query = filterOptions.searchQuery.toLowerCase();
+            filtered = filtered.filter(event =>
+                event.summary.toLowerCase().includes(query) ||
+                event.description?.toLowerCase().includes(query) ||
+                event.location?.toLowerCase().includes(query)
+            );
+        }
+
+        // Sorting
+        filtered.sort((a, b) => {
+            let aValue: string | number;
+            let bValue: string | number;
+
+            switch (filterOptions.sortBy) {
+                case 'date':
+                    aValue = new Date(a.start.dateTime || a.start.date || '').getTime();
+                    bValue = new Date(b.start.dateTime || b.start.date || '').getTime();
+                    break;
+                case 'title':
+                    aValue = a.summary.toLowerCase();
+                    bValue = b.summary.toLowerCase();
+                    break;
+                case 'location':
+                    aValue = (a.location || '').toLowerCase();
+                    bValue = (b.location || '').toLowerCase();
+                    break;
+                default:
+                    aValue = '';
+                    bValue = '';
+            }
+
+            if (filterOptions.sortOrder === 'asc') {
+                return aValue > bValue ? 1 : -1;
+            } else {
+                return aValue < bValue ? 1 : -1;
+            }
+        });
+
+        return filtered;
+    }, [events, filterOptions]);
+
+    // List view filtered events
+    const listViewFilteredEvents = useMemo(() => {
+        const now = new Date();
+        const today = new Date(now.setHours(0, 0, 0, 0));
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+        if (selectedListPeriod === 'quick') {
+            switch (selectedQuickPeriod) {
+                case 'today':
+                    return filteredAndSortedEvents.filter(event => {
+                        const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                        return eventDate.toDateString() === today.toDateString();
+                    });
+                case 'tomorrow':
+                    return filteredAndSortedEvents.filter(event => {
+                        const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                        return eventDate.toDateString() === tomorrow.toDateString();
+                    });
+                case 'week':
+                    return filteredAndSortedEvents.filter(event => {
+                        const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                        return eventDate > today && eventDate <= nextWeek;
+                    });
+                case 'month':
+                    return filteredAndSortedEvents.filter(event => {
+                        const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                        return eventDate > today && eventDate <= nextMonth;
+                    });
+                default:
+                    return filteredAndSortedEvents;
+            }
+        } else {
+            // Month view
+            return filteredAndSortedEvents.filter(event => {
+                const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
+            });
+        }
+    }, [filteredAndSortedEvents, selectedListPeriod, selectedQuickPeriod, currentMonth, currentYear]);
 
     // Load content from JSON
     useEffect(() => {
         loadContent();
     }, []);
+
+    // Initial data fetch
+    useEffect(() => {
+        fetchEvents(currentYear, currentMonth);
+        fetchHolidays(holidayYear, holidayMonth);
+    }, []);
+
+    // Fetch events when month/year changes
+    useEffect(() => {
+        if (activeTab === 'upcoming') {
+            fetchEvents(currentYear, currentMonth);
+        }
+    }, [currentYear, currentMonth, activeTab]);
+
+    // Fetch holidays when month/year changes
+    useEffect(() => {
+        if (activeTab === 'holidays') {
+            fetchHolidays(holidayYear, holidayMonth);
+        }
+    }, [holidayYear, holidayMonth, activeTab]);
 
     const loadContent = async () => {
         try {
@@ -142,25 +312,6 @@ export const EventsContent = () => {
         }
     };
 
-    useEffect(() => {
-        fetchEvents();
-        fetchHolidays();
-    }, []);
-
-    // Fetch events for the current month when month/year changes
-    useEffect(() => {
-        if (activeTab === 'upcoming') {
-            fetchEvents(currentYear, currentMonth);
-        }
-    }, [currentYear, currentMonth]);
-
-    // Fetch holidays for the selected month when it changes
-    useEffect(() => {
-        if (activeTab === 'holidays') {
-            fetchHolidays(holidayYear, holidayMonth);
-        }
-    }, [holidayYear, holidayMonth]);
-
     const fetchEvents = async (year?: number, month?: number) => {
         try {
             setLoading(true);
@@ -168,39 +319,10 @@ export const EventsContent = () => {
             const data = await calendarService.getEvents(year, month);
             console.log(`Fetched ${data.length} events from calendar service`);
 
-            // Ensure each event has a unique ID by adding an index if needed
-            const eventsWithUniqueIds = data.map((event, index) => {
-                // If the ID already exists, append the index to make it unique
-                return {
-                    ...event,
-                    id: `${event.id}_${index}`
-                };
-            });
-
-            // Debug log to check events by month
-            const monthsInEvents = new Map();
-            eventsWithUniqueIds.forEach(event => {
-                let eventDate;
-                if (event.start.dateTime) {
-                    eventDate = new Date(event.start.dateTime);
-                } else if (event.start.date) {
-                    eventDate = new Date(event.start.date);
-                } else {
-                    return;
-                }
-
-                const month = eventDate.getMonth();
-                const year = eventDate.getFullYear();
-                const monthYear = `${year}-${month + 1}`;
-
-                if (!monthsInEvents.has(monthYear)) {
-                    monthsInEvents.set(monthYear, 1);
-                } else {
-                    monthsInEvents.set(monthYear, monthsInEvents.get(monthYear) + 1);
-                }
-            });
-
-            console.log('Months in events:', Object.fromEntries([...monthsInEvents.entries()].sort()));
+            const eventsWithUniqueIds = data.map((event, index) => ({
+                ...event,
+                id: `${event.id}_${index}`
+            }));
 
             setEvents(eventsWithUniqueIds);
         } catch (err) {
@@ -234,6 +356,486 @@ export const EventsContent = () => {
             fetchEvents(currentYear, currentMonth);
         } else {
             fetchHolidays(holidayYear, holidayMonth);
+        }
+    };
+
+    // Render view mode selector with improved labels
+    const renderViewModeSelector = () => (
+        <View style={styles.viewModeContainer}>
+            <TouchableOpacity
+                style={[styles.viewModeButton, viewMode === 'calendar' && styles.activeViewModeButton]}
+                onPress={() => setViewMode('calendar')}
+            >
+                <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color={viewMode === 'calendar' ? '#FFFFFF' : themeColors.text}
+                />
+                <Text style={[styles.viewModeText, viewMode === 'calendar' && styles.activeViewModeText]}>
+                    Calendar
+                </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.viewModeButton, viewMode === 'list' && styles.activeViewModeButton]}
+                onPress={() => setViewMode('list')}
+            >
+                <Ionicons
+                    name="list-outline"
+                    size={20}
+                    color={viewMode === 'list' ? '#FFFFFF' : themeColors.text}
+                />
+                <Text style={[styles.viewModeText, viewMode === 'list' && styles.activeViewModeText]}>
+                    Simple List
+                </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.viewModeButton, viewMode === 'timeline' && styles.activeViewModeButton]}
+                onPress={() => setViewMode('timeline')}
+            >
+                <Ionicons
+                    name="star-outline"
+                    size={20}
+                    color={viewMode === 'timeline' ? '#FFFFFF' : themeColors.text}
+                />
+                <Text style={[styles.viewModeText, viewMode === 'timeline' && styles.activeViewModeText]}>
+                    Featured
+                </Text>
+            </TouchableOpacity>
+        </View>
+    );
+
+    // Render filter button
+    const renderFilterButton = () => (
+        <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setShowFilterModal(true)}
+        >
+            <Ionicons name="filter-outline" size={20} color={themeColors.text} />
+            <Text style={styles.filterButtonText}>{content?.ui.filterText || 'Filter'}</Text>
+        </TouchableOpacity>
+    );
+
+    // Render enhanced filter modal
+    const renderFilterModal = () => (
+        <Modal
+            visible={showFilterModal}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowFilterModal(false)}
+        >
+            <View style={styles.modalOverlay}>
+                <View style={styles.filterModalContent}>
+                    <View style={styles.filterModalHeader}>
+                        <Text style={styles.filterModalTitle}>Filter & Sort Events</Text>
+                    </View>
+
+                    {/* Search Input */}
+                    <View style={styles.searchContainer}>
+                        <Ionicons name="search" size={20} color={themeColors.text} style={styles.searchIcon} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search events..."
+                            value={filterOptions.searchQuery}
+                            onChangeText={(text) => setFilterOptions(prev => ({ ...prev, searchQuery: text }))}
+                            placeholderTextColor={themeColors.text + '80'}
+                        />
+                    </View>
+
+                    {/* Category Filter */}
+                    <Text style={styles.filterSectionTitle}>Show Events</Text>
+                    <View style={styles.filterOptions}>
+                        {[
+                            { value: 'all', label: 'All Events' },
+                            { value: 'upcoming', label: 'Upcoming' },
+                            { value: 'thisWeek', label: 'This Week' },
+                            { value: 'thisMonth', label: 'This Month' },
+                            { value: 'past', label: 'Past Events' }
+                        ].map(option => (
+                            <TouchableOpacity
+                                key={option.value}
+                                style={[
+                                    styles.filterOption,
+                                    filterOptions.category === option.value && styles.activeFilterOption
+                                ]}
+                                onPress={() => setFilterOptions(prev => ({ ...prev, category: option.value as EventCategory }))}
+                            >
+                                <Text style={[
+                                    styles.filterOptionText,
+                                    filterOptions.category === option.value && styles.activeFilterOptionText
+                                ]}>
+                                    {option.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    {/* Sort Options */}
+                    <Text style={styles.filterSectionTitle}>Sort By</Text>
+                    <View style={styles.sortOptions}>
+                        <View style={styles.sortRow}>
+                            <Text style={styles.sortLabel}>Sort by:</Text>
+                            <View style={styles.sortButtons}>
+                                {[
+                                    { value: 'date', label: 'Date' },
+                                    { value: 'title', label: 'Title' },
+                                    { value: 'location', label: 'Location' }
+                                ].map(option => (
+                                    <TouchableOpacity
+                                        key={option.value}
+                                        style={[
+                                            styles.sortButton,
+                                            filterOptions.sortBy === option.value && styles.activeSortButton
+                                        ]}
+                                        onPress={() => setFilterOptions(prev => ({ ...prev, sortBy: option.value as SortBy }))}
+                                    >
+                                        <Text style={[
+                                            styles.sortButtonText,
+                                            filterOptions.sortBy === option.value && styles.activeSortButtonText
+                                        ]}>
+                                            {option.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+                        <View style={styles.sortRow}>
+                            <Text style={styles.sortLabel}>Order:</Text>
+                            <View style={styles.sortButtons}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.sortButton,
+                                        filterOptions.sortOrder === 'asc' && styles.activeSortButton
+                                    ]}
+                                    onPress={() => setFilterOptions(prev => ({ ...prev, sortOrder: 'asc' }))}
+                                >
+                                    <Ionicons
+                                        name="arrow-up"
+                                        size={16}
+                                        color={filterOptions.sortOrder === 'asc' ? '#FFFFFF' : themeColors.text}
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.sortButton,
+                                        filterOptions.sortOrder === 'desc' && styles.activeSortButton
+                                    ]}
+                                    onPress={() => setFilterOptions(prev => ({ ...prev, sortOrder: 'desc' }))}
+                                >
+                                    <Ionicons
+                                        name="arrow-down"
+                                        size={16}
+                                        color={filterOptions.sortOrder === 'desc' ? '#FFFFFF' : themeColors.text}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Apply Button */}
+                    <TouchableOpacity
+                        style={styles.applyButton}
+                        onPress={() => setShowFilterModal(false)}
+                    >
+                        <Text style={styles.applyButtonText}>Apply Filters</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
+
+    // Render calendar view
+    const renderCalendarView = () => (
+        <View style={styles.calendarContainer}>
+            <WebView
+                source={{ uri: calendarService.getCalendarEmbedUrl() }}
+                style={styles.calendar}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                onError={(e) => {
+                    setCalendarError(content?.ui.calendarErrorText || 'Failed to load calendar view. Please try again later.');
+                    console.error('WebView error:', e.nativeEvent);
+                }}
+            />
+            {calendarError && (
+                <Text style={styles.errorText}>{calendarError}</Text>
+            )}
+        </View>
+    );
+
+    // Render list view with enhanced organization
+    const renderListView = () => (
+        <View style={styles.listContainer}>
+            {/* Period Selector */}
+            <View style={styles.periodSelectorContainer}>
+                <View style={styles.periodTypeSelector}>
+                    <TouchableOpacity
+                        style={[
+                            styles.periodTypeButton,
+                            selectedListPeriod === 'quick' && styles.activePeriodTypeButton
+                        ]}
+                        onPress={() => setSelectedListPeriod('quick')}
+                    >
+                        <Text style={[
+                            styles.periodTypeText,
+                            selectedListPeriod === 'quick' && styles.activePeriodTypeText
+                        ]}>Quick View</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[
+                            styles.periodTypeButton,
+                            selectedListPeriod === 'month' && styles.activePeriodTypeButton
+                        ]}
+                        onPress={() => setSelectedListPeriod('month')}
+                    >
+                        <Text style={[
+                            styles.periodTypeText,
+                            selectedListPeriod === 'month' && styles.activePeriodTypeText
+                        ]}>Month View</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {selectedListPeriod === 'quick' ? (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.quickPeriodSelector}
+                    >
+                        {[
+                            { value: 'all', label: 'All Events' },
+                            { value: 'today', label: 'Today' },
+                            { value: 'tomorrow', label: 'Tomorrow' },
+                            { value: 'week', label: 'Next 7 Days' },
+                            { value: 'month', label: 'Next 30 Days' }
+                        ].map(period => (
+                            <TouchableOpacity
+                                key={period.value}
+                                style={[
+                                    styles.quickPeriodButton,
+                                    selectedQuickPeriod === period.value && styles.activeQuickPeriodButton
+                                ]}
+                                onPress={() => setSelectedQuickPeriod(period.value as any)}
+                            >
+                                <Text style={[
+                                    styles.quickPeriodText,
+                                    selectedQuickPeriod === period.value && styles.activeQuickPeriodText
+                                ]}>{period.label}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                ) : (
+                    <View style={styles.monthSelector}>
+                        <TouchableOpacity
+                            style={styles.monthNavigationButton}
+                            onPress={prevMonth}
+                        >
+                            <Ionicons name="chevron-back" size={24} color={themeColors.text} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.currentMonthButton}
+                            onPress={() => setShowMonthPicker(true)}
+                        >
+                            <Text style={styles.currentMonthText}>
+                                {getCurrentMonthYearString()}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.monthNavigationButton}
+                            onPress={nextMonth}
+                        >
+                            <Ionicons name="chevron-forward" size={24} color={themeColors.text} />
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </View>
+
+            {/* Events List */}
+            {listViewFilteredEvents.map(event => renderEventCard(event))}
+            {listViewFilteredEvents.length === 0 && (
+                <View style={styles.noEventsContainer}>
+                    <Text style={styles.noEventsText}>
+                        {content?.ui.noEventsText || 'No events found'}
+                    </Text>
+                </View>
+            )}
+
+            {/* Month Picker Modal */}
+            {showMonthPicker && renderMonthPicker()}
+        </View>
+    );
+
+    // Render featured events view
+    const renderFeaturedView = () => {
+        const now = new Date();
+        const upcomingEvents = filteredAndSortedEvents.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+            return eventDate >= now;
+        });
+
+        // Group events by time periods
+        const today = new Date(now.setHours(0, 0, 0, 0));
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+        const todayEvents = upcomingEvents.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+            return eventDate.toDateString() === today.toDateString();
+        });
+
+        const tomorrowEvents = upcomingEvents.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+            return eventDate.toDateString() === tomorrow.toDateString();
+        });
+
+        const nextSevenDaysEvents = upcomingEvents.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+            return eventDate > tomorrow && eventDate <= nextWeek;
+        });
+
+        const nextMonthEvents = upcomingEvents.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+            return eventDate > nextWeek && eventDate <= nextMonth;
+        });
+
+        const futureEvents = upcomingEvents.filter(event => {
+            const eventDate = new Date(event.start.dateTime || event.start.date || '');
+            return eventDate > nextMonth;
+        });
+
+        return (
+            <View style={styles.featuredContainer}>
+                {todayEvents.length > 0 && (
+                    <View style={styles.featuredSection}>
+                        <View style={styles.featuredHeader}>
+                            <Ionicons name="today-outline" size={24} color={themeColors.primary} />
+                            <Text style={styles.featuredTitle}>Today</Text>
+                        </View>
+                        {todayEvents.map(event => renderFeaturedEventCard(event))}
+                    </View>
+                )}
+
+                {tomorrowEvents.length > 0 && (
+                    <View style={styles.featuredSection}>
+                        <View style={styles.featuredHeader}>
+                            <Ionicons name="sunny-outline" size={24} color={themeColors.primary} />
+                            <Text style={styles.featuredTitle}>Tomorrow</Text>
+                        </View>
+                        {tomorrowEvents.map(event => renderFeaturedEventCard(event))}
+                    </View>
+                )}
+
+                {nextSevenDaysEvents.length > 0 && (
+                    <View style={styles.featuredSection}>
+                        <View style={styles.featuredHeader}>
+                            <Ionicons name="calendar-outline" size={24} color={themeColors.primary} />
+                            <Text style={styles.featuredTitle}>Next 7 Days</Text>
+                        </View>
+                        {nextSevenDaysEvents.map(event => renderFeaturedEventCard(event))}
+                    </View>
+                )}
+
+                {nextMonthEvents.length > 0 && (
+                    <View style={styles.featuredSection}>
+                        <View style={styles.featuredHeader}>
+                            <Ionicons name="calendar" size={24} color={themeColors.primary} />
+                            <Text style={styles.featuredTitle}>Next 30 Days</Text>
+                        </View>
+                        {nextMonthEvents.map(event => renderFeaturedEventCard(event))}
+                    </View>
+                )}
+
+                {futureEvents.length > 0 && (
+                    <View style={styles.featuredSection}>
+                        <View style={styles.featuredHeader}>
+                            <Ionicons name="star" size={24} color={themeColors.primary} />
+                            <Text style={styles.featuredTitle}>Coming Up</Text>
+                        </View>
+                        {futureEvents.map(event => renderFeaturedEventCard(event))}
+                    </View>
+                )}
+
+                {upcomingEvents.length === 0 && (
+                    <View style={styles.noEventsContainer}>
+                        <Text style={styles.noEventsText}>
+                            {content?.ui.noEventsText || 'No upcoming events found'}
+                        </Text>
+                    </View>
+                )}
+            </View>
+        );
+    };
+
+    // Render featured event card
+    const renderFeaturedEventCard = (event: CalendarEvent) => {
+        const eventDate = new Date(event.start.dateTime || event.start.date || '');
+        const isToday = eventDate.toDateString() === new Date().toDateString();
+        const isTomorrow = eventDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+
+        return (
+            <View key={event.id} style={styles.featuredEventCard}>
+                <View style={styles.featuredEventHeader}>
+                    <View style={styles.featuredDateContainer}>
+                        <Text style={styles.featuredDateDay}>
+                            {eventDate.getDate()}
+                        </Text>
+                        <Text style={styles.featuredDateMonth}>
+                            {eventDate.toLocaleString('default', { month: 'short' })}
+                        </Text>
+                    </View>
+                    <View style={styles.featuredEventInfo}>
+                        <Text style={styles.featuredEventTitle}>
+                            {event.summary}
+                        </Text>
+                        <Text style={styles.featuredEventTime}>
+                            {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatDate(eventDate)}
+                            {event.start.dateTime && ` • ${formatTime(eventDate)}`}
+                        </Text>
+                        {event.location && (
+                            <View style={styles.featuredEventLocation}>
+                                <Ionicons name="location-outline" size={14} color={themeColors.text} />
+                                <Text style={styles.featuredEventLocationText}>
+                                    {event.location}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                </View>
+                <View style={styles.featuredEventActions}>
+                    <TouchableOpacity
+                        style={styles.featuredActionButton}
+                        onPress={() => handleAddToCalendar(event)}
+                    >
+                        <Ionicons name="calendar-outline" size={16} color={themeColors.primary} />
+                        <Text style={styles.featuredActionText}>Add to Calendar</Text>
+                    </TouchableOpacity>
+                    {event.location && (
+                        <TouchableOpacity
+                            style={styles.featuredActionButton}
+                            onPress={() => handleOpenMap(event.location || '')}
+                        >
+                            <Ionicons name="map-outline" size={16} color={themeColors.primary} />
+                            <Text style={styles.featuredActionText}>View Location</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+        );
+    };
+
+    // Update the renderView function to use the new featured view
+    const renderView = () => {
+        switch (viewMode) {
+            case 'calendar':
+                return renderCalendarView();
+            case 'list':
+                return renderListView();
+            case 'timeline':
+                return renderFeaturedView();
+            default:
+                return renderCalendarView();
         }
     };
 
@@ -397,214 +999,6 @@ export const EventsContent = () => {
         );
     };
 
-    // Render current month events
-    const renderCurrentMonthEvents = () => {
-        if (loading) {
-            return (
-                <View style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 20,
-                    backgroundColor: themeColors.card,
-                    borderRadius: 8,
-                    marginVertical: 10
-                }}>
-                    <ActivityIndicator size="large" color={themeColors.primary} />
-                    <Text style={{
-                        fontSize: 16,
-                        color: themeColors.text,
-                        opacity: 0.7,
-                        textAlign: 'center',
-                        marginVertical: 15
-                    }}>
-                        {content?.ui.loadingText || 'Loading events...'}
-                    </Text>
-                </View>
-            );
-        }
-
-        if (error) {
-            return (
-                <View style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 20,
-                    backgroundColor: themeColors.card,
-                    borderRadius: 8,
-                    marginVertical: 10
-                }}>
-                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
-                    <Text style={{
-                        fontSize: 16,
-                        color: themeColors.text,
-                        opacity: 0.7,
-                        textAlign: 'center',
-                        marginVertical: 15
-                    }}>
-                        {error}
-                    </Text>
-                    <TouchableOpacity
-                        style={{
-                            backgroundColor: themeColors.primary,
-                            paddingVertical: 10,
-                            paddingHorizontal: 15,
-                            borderRadius: 8,
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                        onPress={() => fetchEvents(currentYear, currentMonth)}
-                    >
-                        <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>
-                            {content?.ui.tryAgainText || 'Try Again'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            );
-        }
-
-        if (events.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date || '');
-            return (
-                eventDate.getMonth() === currentMonth &&
-                eventDate.getFullYear() === currentYear
-            );
-        }).length === 0) {
-            return (
-                <View style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 20,
-                    backgroundColor: themeColors.card,
-                    borderRadius: 8,
-                    marginVertical: 10
-                }}>
-                    <Ionicons name="calendar-outline" size={40} color="#ccc" />
-                    <Text style={{
-                        fontSize: 16,
-                        color: themeColors.text,
-                        opacity: 0.7,
-                        textAlign: 'center',
-                        marginVertical: 15
-                    }}>
-                        {content?.ui.noEventsText || 'No events found for'} {getCurrentMonthYearString()}
-                    </Text>
-                </View>
-            );
-        }
-
-        return events.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date || '');
-            return (
-                eventDate.getMonth() === currentMonth &&
-                eventDate.getFullYear() === currentYear
-            );
-        }).map(renderEventCard);
-    };
-
-    // Render French holidays for current month
-    const renderCurrentMonthHolidays = () => {
-        if (holidaysLoading) {
-            return (
-                <View style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 20,
-                    backgroundColor: themeColors.card,
-                    borderRadius: 8,
-                    marginVertical: 10
-                }}>
-                    <ActivityIndicator size="large" color={themeColors.primary} />
-                    <Text style={{
-                        fontSize: 16,
-                        color: themeColors.text,
-                        opacity: 0.7,
-                        textAlign: 'center',
-                        marginVertical: 15
-                    }}>
-                        {content?.ui.loadingText || 'Loading holidays...'}
-                    </Text>
-                </View>
-            );
-        }
-
-        if (holidaysError) {
-            return (
-                <View style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 20,
-                    backgroundColor: themeColors.card,
-                    borderRadius: 8,
-                    marginVertical: 10
-                }}>
-                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
-                    <Text style={{
-                        fontSize: 16,
-                        color: themeColors.text,
-                        opacity: 0.7,
-                        textAlign: 'center',
-                        marginVertical: 15
-                    }}>
-                        {holidaysError}
-                    </Text>
-                    <TouchableOpacity
-                        style={{
-                            backgroundColor: themeColors.primary,
-                            paddingVertical: 10,
-                            paddingHorizontal: 15,
-                            borderRadius: 8,
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                        onPress={() => fetchHolidays(holidayYear, holidayMonth)}
-                    >
-                        <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>
-                            {content?.ui.tryAgainText || 'Try Again'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            );
-        }
-
-        if (holidays.filter(holiday => {
-            const holidayDate = new Date(holiday.start.dateTime || holiday.start.date || '');
-            return (
-                holidayDate.getMonth() === holidayMonth &&
-                holidayDate.getFullYear() === holidayYear
-            );
-        }).length === 0) {
-            return (
-                <View style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 20,
-                    backgroundColor: themeColors.card,
-                    borderRadius: 8,
-                    marginVertical: 10
-                }}>
-                    <Ionicons name="calendar-outline" size={40} color="#ccc" />
-                    <Text style={{
-                        fontSize: 16,
-                        color: themeColors.text,
-                        opacity: 0.7,
-                        textAlign: 'center',
-                        marginVertical: 15
-                    }}>
-                        {content?.ui.noHolidaysText || 'No holidays found for'} {getHolidayMonthYearString()}
-                    </Text>
-                </View>
-            );
-        }
-
-        return holidays.filter(holiday => {
-            const holidayDate = new Date(holiday.start.dateTime || holiday.start.date || '');
-            return (
-                holidayDate.getMonth() === holidayMonth &&
-                holidayDate.getFullYear() === holidayYear
-            );
-        }).map(renderHolidayCard);
-    };
-
     // Render event card
     const renderEventCard = (event: CalendarEvent) => {
         // Check if this event has any Google Drive attachments
@@ -754,67 +1148,8 @@ export const EventsContent = () => {
         );
     };
 
-    // Render holiday card
-    const renderHolidayCard = (holiday: CalendarEvent) => (
-        <View key={holiday.id} style={styles.holidayCard}>
-            <View style={styles.eventHeader}>
-                <Text style={styles.holidayTitle}>{holiday.summary}</Text>
-                <View style={styles.dateContainer}>
-                    <Text style={styles.dateText}>
-                        {holiday.start.date
-                            ? new Date(holiday.start.date).getDate()
-                            : ''}
-                    </Text>
-                </View>
-            </View>
-            <View style={styles.holidayTag}>
-                <Text style={styles.holidayTagText}>{content?.ui.publicHolidayText || 'Public Holiday'}</Text>
-            </View>
-            <Text style={styles.holidayDate}>
-                {holiday.start.date ? formatDate(new Date(holiday.start.date)) : ''}
-            </Text>
-            {holiday.description && (
-                <Text style={styles.eventDescription}>{holiday.description}</Text>
-            )}
-            <TouchableOpacity
-                style={styles.registerButton}
-                onPress={() => handleAddToCalendar(holiday)}
-            >
-                <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
-            </TouchableOpacity>
-        </View>
-    );
-
-    // Handle loading and error states for content
-    if (contentLoading) {
-        return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={themeColors.primary} />
-            </View>
-        );
-    }
-
-    // If there's an error loading content, show an error message
-    if (contentError || !content) {
-        return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 16, color: '#FF3B30' }}>{contentError || 'Content not available'}</Text>
-                <TouchableOpacity
-                    style={{ marginTop: 20, padding: 10, backgroundColor: themeColors.primary, borderRadius: 8 }}
-                    onPress={loadContent}
-                >
-                    <Text style={{ color: '#FFFFFF' }}>Retry</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
-
-    // Add this function before the return statement
+    // Add handleSetReminder function
     const handleSetReminder = (event: CalendarEvent) => {
-        // Here you would implement actual reminder functionality
-        // This is just a placeholder implementation
-
-        // Update the event in state to show it has a reminder set
         const updatedEvents = events.map(e => {
             if (e.id === event.id) {
                 return { ...e, reminderSet: true };
@@ -823,10 +1158,136 @@ export const EventsContent = () => {
         });
 
         setEvents(updatedEvents);
-
-        // Show feedback to user (in a real app, you'd use a proper notification system)
         alert(content?.ui.reminderSetText || 'Reminder set for this event');
     };
+
+    // Render full description modal
+    const renderFullDescriptionModal = () => {
+        if (!selectedEvent) return null;
+
+        return (
+            <View style={styles.descriptionModal}>
+                <View style={styles.descriptionModalContent}>
+                    <View style={styles.descriptionModalHeader}>
+                        <Text style={styles.descriptionModalTitle}>{selectedEvent.summary}</Text>
+                        <TouchableOpacity
+                            style={styles.modalCloseIconButton}
+                            onPress={() => setShowFullDescription(false)}
+                        >
+                            <Ionicons name="close" size={24} color="#666" />
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView style={styles.descriptionModalScrollView}>
+                        <Text style={styles.modalEventDate}>
+                            {formatEventDate(selectedEvent)}
+                        </Text>
+
+                        {selectedEvent.formattedLocation && (
+                            <TouchableOpacity
+                                style={styles.eventLocation}
+                                onPress={() => {
+                                    setShowFullDescription(false);
+                                    selectedEvent.formattedLocation?.mapUrl
+                                        ? Linking.openURL(selectedEvent.formattedLocation.mapUrl)
+                                        : handleOpenMap(selectedEvent.location || '');
+                                }}
+                            >
+                                <Ionicons name="location-outline" size={16} color="#666" />
+                                <Text style={styles.eventLocationText}>
+                                    {selectedEvent.formattedLocation.address}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {selectedEvent.formattedDescription && (
+                            <Text style={styles.descriptionModalText}>
+                                {selectedEvent.formattedDescription}
+                            </Text>
+                        )}
+
+                        {selectedEvent.attachments && selectedEvent.attachments.some(
+                            attachment => isDriveAttachment(attachment.url)
+                        ) && (
+                                <View style={styles.modalPhotoAttachmentsContainer}>
+                                    <Text style={styles.modalAttachmentsTitle}>{content?.ui.viewAttachmentText || 'Files:'}:</Text>
+                                    {selectedEvent.attachments
+                                        .filter(attachment => isDriveAttachment(attachment.url))
+                                        .map((attachment, index) => (
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={styles.modalPhotoItem}
+                                                onPress={() => Linking.openURL(attachment.url)}
+                                            >
+                                                <Ionicons name="document-outline" size={16} color={themeColors.primary} />
+                                                <Text style={[styles.modalAttachmentText, { color: themeColors.primary }]}>
+                                                    {attachment.title}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                </View>
+                            )}
+                    </ScrollView>
+
+                    <View style={styles.modalButtonsContainer}>
+                        <TouchableOpacity
+                            style={styles.modalCloseButton}
+                            onPress={() => setShowFullDescription(false)}
+                        >
+                            <Text style={styles.buttonText}>{content?.ui.closeText || 'Close'}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.modalActionButton}
+                            onPress={() => {
+                                setShowFullDescription(false);
+                                handleAddToCalendar(selectedEvent);
+                            }}
+                        >
+                            <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        );
+    };
+
+    // Render loading state
+    if (contentLoading || loading) {
+        return (
+            <View style={[styles.container, styles.loadingContainer]}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
+                <Text style={styles.errorText}>
+                    {content?.ui.loadingText || 'Loading events...'}
+                </Text>
+            </View>
+        );
+    }
+
+    // Render error state
+    if (contentError || error) {
+        return (
+            <View style={[styles.container, styles.loadingContainer]}>
+                <Text style={styles.errorText}>
+                    {contentError || error || 'An error occurred'}
+                </Text>
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => {
+                        if (contentError) {
+                            loadContent();
+                        } else {
+                            fetchEvents(currentYear, currentMonth);
+                        }
+                    }}
+                >
+                    <Text style={styles.buttonText}>
+                        {content?.ui.tryAgainText || 'Try Again'}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -842,6 +1303,8 @@ export const EventsContent = () => {
                 }
             >
                 <View style={styles.header}>
+                    <Ionicons name="calendar" size={60} color={themeColors.primary} />
+                    <View style={styles.headerDivider} />
                     <Text style={styles.title}>
                         {content?.header.title || 'Events'}
                     </Text>
@@ -850,248 +1313,21 @@ export const EventsContent = () => {
                     </Text>
                 </View>
 
-                {/* Calendar View - Always visible */}
-                <View style={styles.calendarContainer}>
-                    <WebView
-                        source={{ uri: calendarService.getCalendarEmbedUrl() }}
-                        style={styles.calendar}
-                        javaScriptEnabled={true}
-                        domStorageEnabled={true}
-                        onError={(e) => {
-                            setCalendarError(content?.ui.calendarErrorText || 'Failed to load calendar view. Please try again later.');
-                            console.error('WebView error:', e.nativeEvent);
-                        }}
-                    />
-                    {calendarError && (
-                        <Text style={styles.errorText}>{calendarError}</Text>
-                    )}
-                </View>
+                {/* View Mode Selector */}
+                {renderViewModeSelector()}
 
-                <TouchableOpacity
-                    style={styles.detailsButton}
-                    onPress={handleOpenCalendar}
-                >
-                    <Ionicons name="open-outline" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={styles.buttonText}>{content?.ui.openCalendarText || 'Open Calendar in Browser'}</Text>
-                </TouchableOpacity>
+                {/* Filter Button */}
+                {renderFilterButton()}
 
-                <View style={styles.tabContainer}>
-                    <TouchableOpacity
-                        style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
-                        onPress={() => setActiveTab('upcoming')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'upcoming' && styles.activeTabText]}>
-                            {content?.tabs[0]?.label || 'Church Events'}
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.tab, activeTab === 'holidays' && styles.activeTab]}
-                        onPress={() => {
-                            setActiveTab('holidays');
-                            if (holidays.length === 0) {
-                                fetchHolidays(holidayYear, holidayMonth);
-                            }
-                        }}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'holidays' && styles.activeTabText]}>
-                            {content?.tabs[1]?.label || 'French Holidays'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
+                {/* Main Content View */}
+                {renderView()}
 
-                {activeTab === 'upcoming' && (
-                    <>
-                        {/* Month navigation */}
-                        <View style={styles.monthNavigation}>
-                            <TouchableOpacity
-                                style={styles.monthNavigationButton}
-                                onPress={prevMonth}
-                            >
-                                <Ionicons name="chevron-back" size={24} color="#666" />
-                            </TouchableOpacity>
+                {/* Filter Modal */}
+                {renderFilterModal()}
 
-                            <TouchableOpacity
-                                style={styles.yearPickerButton}
-                                onPress={() => setShowMonthPicker(!showMonthPicker)}
-                            >
-                                <Text style={styles.currentMonthDisplay}>
-                                    {getCurrentMonthYearString()}
-                                </Text>
-                                <Ionicons
-                                    name={showMonthPicker ? "chevron-up" : "chevron-down"}
-                                    size={16}
-                                    color="#666"
-                                    style={{ marginLeft: 5 }}
-                                />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.monthNavigationButton}
-                                onPress={nextMonth}
-                            >
-                                <Ionicons name="chevron-forward" size={24} color="#666" />
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Month picker */}
-                        {showMonthPicker && renderMonthPicker()}
-
-                        {/* Events for current month */}
-                        {renderCurrentMonthEvents()}
-
-                        <TouchableOpacity
-                            style={styles.refreshButton}
-                            onPress={() => fetchEvents(currentYear, currentMonth)}
-                        >
-                            <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={styles.buttonText}>{content?.ui.refreshEventsText || 'Refresh Events'}</Text>
-                        </TouchableOpacity>
-                    </>
-                )}
-
-                {activeTab === 'holidays' && (
-                    <>
-                        {/* Month navigation for holidays */}
-                        <View style={styles.monthNavigation}>
-                            <TouchableOpacity
-                                style={styles.monthNavigationButton}
-                                onPress={prevHolidayMonth}
-                            >
-                                <Ionicons name="chevron-back" size={24} color="#666" />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.yearPickerButton}
-                                onPress={() => setShowHolidayMonthPicker(!showHolidayMonthPicker)}
-                            >
-                                <Text style={styles.currentMonthDisplay}>
-                                    {getHolidayMonthYearString()}
-                                </Text>
-                                <Ionicons
-                                    name={showHolidayMonthPicker ? "chevron-up" : "chevron-down"}
-                                    size={16}
-                                    color="#666"
-                                    style={{ marginLeft: 5 }}
-                                />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.monthNavigationButton}
-                                onPress={nextHolidayMonth}
-                            >
-                                <Ionicons name="chevron-forward" size={24} color="#666" />
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Month picker for holidays */}
-                        {showHolidayMonthPicker && renderHolidayMonthPicker()}
-
-                        <Text style={styles.sectionTitle}>{content?.tabs[1]?.label || 'French Public Holidays'}</Text>
-
-                        {/* Holidays for current month */}
-                        {renderCurrentMonthHolidays()}
-
-                        <TouchableOpacity
-                            style={styles.refreshButton}
-                            onPress={() => fetchHolidays(holidayYear, holidayMonth)}
-                        >
-                            <Ionicons name="refresh" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={styles.buttonText}>{content?.ui.refreshHolidaysText || 'Refresh Holidays'}</Text>
-                        </TouchableOpacity>
-                    </>
-                )}
+                {/* Full Description Modal */}
+                {showFullDescription && selectedEvent && renderFullDescriptionModal()}
             </ScrollView>
-
-            {/* Full Description Modal */}
-            {showFullDescription && selectedEvent && (
-                <View style={styles.descriptionModal}>
-                    <View style={styles.descriptionModalContent}>
-                        <View style={styles.descriptionModalHeader}>
-                            <Text style={styles.descriptionModalTitle}>{selectedEvent.summary}</Text>
-                            <TouchableOpacity
-                                style={styles.modalCloseIconButton}
-                                onPress={() => setShowFullDescription(false)}
-                            >
-                                <Ionicons name="close" size={24} color="#666" />
-                            </TouchableOpacity>
-                        </View>
-
-                        <ScrollView style={styles.descriptionModalScrollView}>
-                            {/* Display event date */}
-                            <Text style={styles.modalEventDate}>
-                                {formatEventDate(selectedEvent)}
-                            </Text>
-
-                            {/* Display location if available */}
-                            {selectedEvent.formattedLocation && (
-                                <TouchableOpacity
-                                    style={styles.eventLocation}
-                                    onPress={() => {
-                                        setShowFullDescription(false);
-                                        selectedEvent.formattedLocation?.mapUrl
-                                            ? Linking.openURL(selectedEvent.formattedLocation.mapUrl)
-                                            : handleOpenMap(selectedEvent.location || '');
-                                    }}
-                                >
-                                    <Ionicons name="location-outline" size={16} color="#666" />
-                                    <Text style={styles.eventLocationText}>
-                                        {selectedEvent.formattedLocation.address}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-
-                            {/* Full description */}
-                            {selectedEvent.formattedDescription && (
-                                <Text style={styles.descriptionModalText}>
-                                    {selectedEvent.formattedDescription}
-                                </Text>
-                            )}
-
-                            {/* File attachments section */}
-                            {selectedEvent.attachments && selectedEvent.attachments.some(
-                                attachment => isDriveAttachment(attachment.url)
-                            ) && (
-                                    <View style={styles.modalPhotoAttachmentsContainer}>
-                                        <Text style={styles.modalAttachmentsTitle}>{content?.ui.viewAttachmentText || 'Files:'}:</Text>
-                                        {selectedEvent.attachments
-                                            .filter(attachment => isDriveAttachment(attachment.url))
-                                            .map((attachment, index) => (
-                                                <TouchableOpacity
-                                                    key={index}
-                                                    style={styles.modalPhotoItem}
-                                                    onPress={() => Linking.openURL(attachment.url)}
-                                                >
-                                                    <Ionicons name="document-outline" size={16} color={themeColors.primary} />
-                                                    <Text style={[styles.modalAttachmentText, { color: themeColors.primary }]}>
-                                                        {attachment.title}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                    </View>
-                                )}
-                        </ScrollView>
-
-                        <View style={styles.modalButtonsContainer}>
-                            <TouchableOpacity
-                                style={styles.modalCloseButton}
-                                onPress={() => setShowFullDescription(false)}
-                            >
-                                <Text style={styles.buttonText}>{content?.ui.closeText || 'Close'}</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.modalActionButton}
-                                onPress={() => {
-                                    setShowFullDescription(false);
-                                    handleAddToCalendar(selectedEvent);
-                                }}
-                            >
-                                <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            )}
         </View>
     );
 };

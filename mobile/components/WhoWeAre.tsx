@@ -274,6 +274,8 @@ export const WhoWeAreContent = () => {
                 contentContainerStyle={styles.scrollViewContent}
             >
                 <View style={styles.header}>
+                    <Ionicons name="people-circle" size={60} color={themeColors.primary} />
+                    <View style={styles.headerDivider} />
                     <Text style={styles.title}>
                         {content.header.title}
                     </Text>
