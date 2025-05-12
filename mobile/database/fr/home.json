@@ -48,6 +48,16 @@
             "Garderie: 0-3 ans"
           ],
           "itemIcon": "happy"
+        },
+        {
+          "title": "Déroulement du Service",
+          "text": "Nos services commencent à 10h30 et se terminent vers 12h00. Ils sont composés de :",
+          "items": [
+            "Un temps de louange et de prière",
+            "Un temps d'enseignement/prédication",
+            "Un temps de communion fraternelle"
+          ],
+          "itemIcons": ["musical-notes", "book", "people"]
         }
       ]
     }

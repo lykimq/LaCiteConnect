@@ -134,11 +134,19 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
         fontWeight: '600',
         color: colors.text,
         marginBottom: 10,
+        flexShrink: 1,
+        flexWrap: 'wrap',
     },
     itemRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         marginBottom: 8,
+        paddingRight: 10,
+    },
+    itemIcon: {
+        marginRight: 8,
+        marginTop: 2,
+        flexShrink: 0,
     },
 });
 

@@ -111,9 +111,14 @@ export const HomeContent = () => {
                     if (section.id === 'sundayService') {
                         return (
                             <View key={section.id} style={styles.cardContainer}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 }}>
+                                    <Ionicons
+                                        name={section.icon as any}
+                                        size={24}
+                                        color={themeColors.primary}
+                                        style={{ marginRight: 10, marginTop: 2, flexShrink: 0 }}
+                                    />
+                                    <Text style={[styles.sectionTitle, { flex: 1 }]}>{section.title}</Text>
                                 </View>
                                 <Text style={styles.infoText}>
                                     {section.content}
@@ -140,9 +145,14 @@ export const HomeContent = () => {
                     if (section.id === 'findUs') {
                         return (
                             <View key={section.id} style={styles.cardContainer}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 }}>
+                                    <Ionicons
+                                        name={section.icon as any}
+                                        size={24}
+                                        color={themeColors.primary}
+                                        style={{ marginRight: 10, marginTop: 2, flexShrink: 0 }}
+                                    />
+                                    <Text style={[styles.sectionTitle, { flex: 1 }]}>{section.title}</Text>
                                 </View>
                                 <Text style={styles.infoText}>
                                     {section.content}
@@ -151,8 +161,13 @@ export const HomeContent = () => {
                                     style={styles.button}
                                     onPress={handleFindUs}
                                 >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Ionicons
+                                            name={section.buttonIcon as any}
+                                            size={20}
+                                            color="#FFFFFF"
+                                            style={{ marginRight: 8, flexShrink: 0 }}
+                                        />
                                         <Text style={styles.buttonText}>
                                             {section.buttonText}
                                         </Text>
@@ -164,9 +179,14 @@ export const HomeContent = () => {
                     if (section.id === 'watchOnline') {
                         return (
                             <View key={section.id} style={styles.cardContainer}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 }}>
+                                    <Ionicons
+                                        name={section.icon as any}
+                                        size={24}
+                                        color={themeColors.primary}
+                                        style={{ marginRight: 10, marginTop: 2, flexShrink: 0 }}
+                                    />
+                                    <Text style={[styles.sectionTitle, { flex: 1 }]}>{section.title}</Text>
                                 </View>
                                 <Text style={styles.infoText}>
                                     {section.content}
@@ -175,8 +195,13 @@ export const HomeContent = () => {
                                     style={styles.button}
                                     onPress={handleWatchOnline}
                                 >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Ionicons
+                                            name={section.buttonIcon as any}
+                                            size={20}
+                                            color="#FFFFFF"
+                                            style={{ marginRight: 8, flexShrink: 0 }}
+                                        />
                                         <Text style={styles.buttonText}>{section.buttonText}</Text>
                                     </View>
                                 </TouchableOpacity>
@@ -186,9 +211,14 @@ export const HomeContent = () => {
                     if (section.subsections) {
                         return (
                             <View key={section.id} style={styles.cardContainer}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 }}>
+                                    <Ionicons
+                                        name={section.icon as any}
+                                        size={24}
+                                        color={themeColors.primary}
+                                        style={{ marginRight: 10, marginTop: 2, flexShrink: 0 }}
+                                    />
+                                    <Text style={[styles.sectionTitle, { flex: 1 }]}>{section.title}</Text>
                                 </View>
                                 <View>
                                     {section.subsections.map((subsection, subIndex) => (
@@ -207,9 +237,9 @@ export const HomeContent = () => {
                                                         name={(subsection.itemIcons?.[itemIndex] || subsection.itemIcon || 'checkmark-circle') as any}
                                                         size={20}
                                                         color={themeColors.primary}
-                                                        style={{ marginRight: 8 }}
+                                                        style={styles.itemIcon}
                                                     />
-                                                    <Text style={styles.infoText}>{item}</Text>
+                                                    <Text style={[styles.infoText, { marginBottom: 0, flex: 1 }]}>{item}</Text>
                                                 </View>
                                             ))}
                                         </View>
@@ -220,9 +250,14 @@ export const HomeContent = () => {
                     } else {
                         return (
                             <View key={section.id} style={styles.cardContainer}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                                    <Ionicons name={section.icon as any} size={24} color={themeColors.primary} style={{ marginRight: 10 }} />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 }}>
+                                    <Ionicons
+                                        name={section.icon as any}
+                                        size={24}
+                                        color={themeColors.primary}
+                                        style={{ marginRight: 10, marginTop: 2, flexShrink: 0 }}
+                                    />
+                                    <Text style={[styles.sectionTitle, { flex: 1 }]}>{section.title}</Text>
                                 </View>
                                 <Text style={styles.infoText}>
                                     {section.content}
