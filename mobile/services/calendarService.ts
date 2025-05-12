@@ -2,12 +2,27 @@
  * Calendar Service
  * Handles fetching events from a personal Google Calendar using iCal
  */
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
+import { extractImagesFromHtml, convertHtmlToFormattedText, parseLocationString, extractAttachmentLinks } from '../utils/htmlUtils';
+import * as Notifications from 'expo-notifications';
+import * as Calendar from 'expo-calendar';
+
+// Configure notifications
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+    }),
+});
 
 interface CalendarEvent {
     id: string;
     summary: string;
     description?: string;
+    formattedDescription?: string;  // Description with HTML formatting removed
     start: {
         dateTime?: string;
         date?: string;
@@ -17,8 +32,15 @@ interface CalendarEvent {
         date?: string;
     };
     location?: string;
+    formattedLocation?: {  // Parsed location information
+        address: string;
+        mapUrl?: string;
+    };
     recurrence?: boolean;
     isHoliday?: boolean;
+    imageUrls?: string[];  // URLs of images from the description
+    attachments?: Array<{ title: string, url: string }>;  // Attachments in the description
+    reminderSet?: boolean;  // Whether a reminder is set for this event
 }
 
 // Personal calendar ID
@@ -127,7 +149,9 @@ export const calendarService = {
                 id: item.id,
                 summary: item.summary || 'Holiday',
                 description: item.description || 'French Public Holiday',
+                formattedDescription: 'French Public Holiday',
                 location: 'France',
+                formattedLocation: { address: 'France' },
                 start: {
                     dateTime: item.start.dateTime,
                     date: item.start.date
@@ -192,6 +216,40 @@ export const calendarService = {
     },
 
     /**
+     * Process event data from API response
+     */
+    processEventData(item: any): CalendarEvent {
+        // Process the description to extract images and format text
+        const description = item.description || '';
+        const formattedDescription = convertHtmlToFormattedText(description);
+        const imageUrls = extractImagesFromHtml(description);
+        const attachments = extractAttachmentLinks(description);
+
+        // Process location
+        const formattedLocation = parseLocationString(item.location || '');
+
+        return {
+            id: item.id,
+            summary: item.summary || 'Untitled Event',
+            description: description,
+            formattedDescription: formattedDescription,
+            location: item.location,
+            formattedLocation: formattedLocation,
+            start: {
+                dateTime: item.start.dateTime,
+                date: item.start.date
+            },
+            end: {
+                dateTime: item.end.dateTime,
+                date: item.end.date
+            },
+            recurrence: item.recurrence ? true : false,
+            imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+            attachments: attachments.length > 0 ? attachments : undefined
+        };
+    },
+
+    /**
      * Attempt to fetch events from Google Calendar API with optional filtering
      */
     async fetchFromGoogleApi(year?: number, month?: number): Promise<CalendarEvent[]> {
@@ -217,21 +275,7 @@ export const calendarService = {
             throw new Error('Invalid API response format');
         }
 
-        return data.items.map((item: any) => ({
-            id: item.id,
-            summary: item.summary || 'Untitled Event',
-            description: item.description,
-            location: item.location,
-            start: {
-                dateTime: item.start.dateTime,
-                date: item.start.date
-            },
-            end: {
-                dateTime: item.end.dateTime,
-                date: item.end.date
-            },
-            recurrence: item.recurrence ? true : false
-        }));
+        return data.items.map((item: any) => this.processEventData(item));
     },
 
     /**
@@ -275,7 +319,7 @@ export const calendarService = {
     },
 
     /**
-     * Parse iCal data manually
+     * Parse iCal data manually with enhanced processing
      */
     parseICalData(icalData: string): CalendarEvent[] {
         try {
@@ -329,15 +373,27 @@ export const calendarService = {
                     console.log(`Event ${i}: ${summary} - Date: ${startDate.toISOString()} (Month: ${month}, Year: ${year})`);
                 }
 
+                // Process the description to extract images and format text
+                const formattedDescription = description ? convertHtmlToFormattedText(description) : undefined;
+                const imageUrls = description ? extractImagesFromHtml(description) : [];
+                const attachments = description ? extractAttachmentLinks(description) : [];
+
+                // Process location
+                const formattedLocation = location ? parseLocationString(location) : undefined;
+
                 // Create basic event
                 const event: CalendarEvent = {
                     id: uid || `event-${i}`,
                     summary: summary || 'Untitled Event',
                     description: description || undefined,
+                    formattedDescription: formattedDescription,
                     location: location || undefined,
+                    formattedLocation: formattedLocation,
                     start: {},
                     end: {},
-                    recurrence: !!rrule
+                    recurrence: !!rrule,
+                    imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+                    attachments: attachments.length > 0 ? attachments : undefined
                 };
 
                 // Process date format
@@ -652,5 +708,120 @@ export const calendarService = {
         Linking.openURL(EMBED_URL).catch(err => {
             console.error('Error opening calendar in browser:', err);
         });
+    },
+
+    /**
+     * Add a reminder for an event
+     * Uses expo-notifications to schedule local notifications
+     */
+    async addEventReminder(event: CalendarEvent, minutesBefore: number = 30): Promise<boolean> {
+        try {
+            console.log(`Setting reminder for ${event.summary} ${minutesBefore} minutes before`);
+
+            // Request permissions first
+            const { status } = await Notifications.requestPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Notification permission not granted');
+                return false;
+            }
+
+            const eventDate = event.start.dateTime
+                ? new Date(event.start.dateTime)
+                : event.start.date
+                    ? new Date(event.start.date)
+                    : null;
+
+            if (!eventDate) {
+                console.error('Cannot set reminder: Invalid event date');
+                return false;
+            }
+
+            // Calculate the notification time (minutes before event)
+            const reminderTime = new Date(eventDate.getTime() - (minutesBefore * 60 * 1000));
+
+            // Don't schedule if the reminder time is in the past
+            if (reminderTime <= new Date()) {
+                console.log('Reminder time is in the past, not scheduling');
+                return false;
+            }
+
+            // Create the notification content
+            const notificationContent = {
+                title: event.summary,
+                body: `Event starting in ${minutesBefore} minutes${event.formattedLocation ? ` at ${event.formattedLocation.address}` : ''}`,
+                data: { eventId: event.id }
+            };
+
+            // Schedule notification using @ts-ignore to bypass type checking issues
+            // @ts-ignore
+            const notificationId = await Notifications.scheduleNotificationAsync({
+                content: notificationContent,
+                trigger: {
+                    type: Notifications.SchedulableTriggerInputTypes.DATE,
+                    date: reminderTime
+                },
+            });
+
+            console.log(`Reminder set for: ${eventDate.toLocaleString()}, notification ID: ${notificationId}`);
+            return true;
+        } catch (error) {
+            console.error('Error setting reminder:', error);
+            return false;
+        }
+    },
+
+    /**
+     * Add event to device calendar
+     * Uses expo-calendar to add events to the device's calendar
+     */
+    async addToDeviceCalendar(event: CalendarEvent): Promise<boolean> {
+        try {
+            console.log(`Adding ${event.summary} to device calendar`);
+
+            // Request calendar permissions
+            const { status } = await Calendar.requestCalendarPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Calendar permission not granted');
+                return false;
+            }
+
+            // Get available calendars
+            const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+
+            // Find default calendar
+            let defaultCalendarId;
+
+            // On iOS, find first writable calendar
+            if (Platform.OS === 'ios') {
+                const defaultCalendar = calendars.find(cal => cal.allowsModifications);
+                defaultCalendarId = defaultCalendar?.id;
+            }
+            // On Android, find first calendar owned by the user
+            else {
+                const defaultCalendar = calendars.find(cal => cal.accessLevel === Calendar.CalendarAccessLevel.OWNER);
+                defaultCalendarId = defaultCalendar?.id;
+            }
+
+            if (!defaultCalendarId) {
+                console.error('No writable calendar found');
+                return false;
+            }
+
+            // Create the event in the device calendar
+            const eventId = await Calendar.createEventAsync(defaultCalendarId, {
+                title: event.summary,
+                startDate: event.start.dateTime ? new Date(event.start.dateTime) : new Date(event.start.date || ''),
+                endDate: event.end.dateTime ? new Date(event.end.dateTime) : new Date(event.end.date || ''),
+                notes: event.formattedDescription || event.description,
+                location: event.formattedLocation?.address || event.location,
+                alarms: [{ relativeOffset: -30 }] // Default 30-minute reminder
+            });
+
+            console.log(`Event added to device calendar with ID: ${eventId}`);
+            return true;
+        } catch (error) {
+            console.error('Error adding to device calendar:', error);
+            return false;
+        }
     }
 };

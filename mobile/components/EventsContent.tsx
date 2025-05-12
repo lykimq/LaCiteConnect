@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl, Image } from 'react-native';
 import { eventsStyles } from '../styles/EventsContent.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime, isPastEvent } from '../utils/dateUtils';
@@ -14,6 +14,7 @@ interface CalendarEvent {
     id: string;
     summary: string;
     description?: string;
+    formattedDescription?: string;
     start: {
         dateTime?: string;
         date?: string;
@@ -23,8 +24,15 @@ interface CalendarEvent {
         date?: string;
     };
     location?: string;
+    formattedLocation?: {
+        address: string;
+        mapUrl?: string;
+    };
     recurrence?: boolean;
     isHoliday?: boolean;
+    imageUrls?: string[];
+    attachments?: Array<{ title: string, url: string }>;
+    reminderSet?: boolean;
 }
 
 export const EventsContent = () => {
@@ -278,12 +286,50 @@ export const EventsContent = () => {
         });
     }, [holidays, holidayYear, holidayMonth]);
 
+    // Add a reminder for an event
+    const handleAddReminder = async (event: CalendarEvent) => {
+        try {
+            const success = await calendarService.addEventReminder(event);
+            if (success) {
+                // Update the event state to show reminder is set
+                const updatedEvents = events.map(e =>
+                    e.id === event.id ? { ...e, reminderSet: true } : e
+                );
+                setEvents(updatedEvents);
+                alert('Reminder set for this event');
+            } else {
+                alert('Failed to set reminder. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error adding reminder:', error);
+            alert('Error adding reminder');
+        }
+    };
+
+    // Add event to device calendar
+    const handleAddToDeviceCalendar = async (event: CalendarEvent) => {
+        try {
+            const success = await calendarService.addToDeviceCalendar(event);
+            if (success) {
+                alert('Event added to your device calendar');
+            } else {
+                alert('Failed to add to calendar. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error adding to device calendar:', error);
+            alert('Error adding to calendar');
+        }
+    };
+
     const renderEventCard = (event: CalendarEvent) => (
         <View key={event.id} style={eventsStyles.eventCard}>
             <View style={eventsStyles.eventHeader}>
                 <Text style={eventsStyles.eventTitle}>
                     {event.summary}
                     {event.recurrence && <Text style={eventsStyles.recurringTag}> (Recurring)</Text>}
+                    {event.reminderSet && (
+                        <Ionicons name="notifications" size={16} color="#FF9843" style={{ marginLeft: 5 }} />
+                    )}
                 </Text>
                 <View style={eventsStyles.dateContainer}>
                     <Text style={eventsStyles.dateText}>
@@ -295,17 +341,70 @@ export const EventsContent = () => {
                     </Text>
                 </View>
             </View>
+
             <Text style={eventsStyles.eventDate}>
                 {formatEventDate(event)}
             </Text>
-            {event.location && (
-                <Text style={eventsStyles.eventLocation}>
-                    <Ionicons name="location-outline" size={14} color="#666" /> {event.location}
+
+            {/* Display location with improved formatting */}
+            {event.formattedLocation && (
+                <TouchableOpacity
+                    style={eventsStyles.eventLocation}
+                    onPress={() => event.formattedLocation?.mapUrl
+                        ? Linking.openURL(event.formattedLocation.mapUrl)
+                        : handleOpenMap(event.location || '')}
+                >
+                    <Ionicons name="location-outline" size={14} color="#666" />
+                    <Text style={eventsStyles.eventLocationText}>
+                        {event.formattedLocation.address}
+                    </Text>
+                </TouchableOpacity>
+            )}
+
+            {/* Display images if available */}
+            {event.imageUrls && event.imageUrls.length > 0 && (
+                <View style={eventsStyles.eventImageContainer}>
+                    <Image
+                        source={{ uri: event.imageUrls[0] }}
+                        style={eventsStyles.eventImage}
+                        resizeMode="cover"
+                    />
+                    {event.imageUrls.length > 1 && (
+                        <Text style={eventsStyles.moreImagesText}>
+                            +{event.imageUrls.length - 1} more
+                        </Text>
+                    )}
+                </View>
+            )}
+
+            {/* Display formatted description */}
+            {event.formattedDescription && (
+                <Text style={eventsStyles.eventDescription}>
+                    {event.formattedDescription.length > 150
+                        ? `${event.formattedDescription.substring(0, 150)}...`
+                        : event.formattedDescription}
                 </Text>
             )}
-            {event.description && (
-                <Text style={eventsStyles.eventDescription}>{event.description}</Text>
+
+            {/* Display attachments if available */}
+            {event.attachments && event.attachments.length > 0 && (
+                <View style={eventsStyles.attachmentsContainer}>
+                    <Text style={eventsStyles.attachmentsTitle}>Attachments:</Text>
+                    {event.attachments.map((attachment, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            style={eventsStyles.attachmentItem}
+                            onPress={() => Linking.openURL(attachment.url)}
+                        >
+                            <Ionicons name="document-outline" size={14} color="#666" />
+                            <Text style={eventsStyles.attachmentText}>
+                                {attachment.title}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
             )}
+
             <View style={eventsStyles.buttonContainer}>
                 {event.location && (
                     <TouchableOpacity
@@ -315,11 +414,31 @@ export const EventsContent = () => {
                         <Text style={eventsStyles.buttonText}>View Location</Text>
                     </TouchableOpacity>
                 )}
+
                 <TouchableOpacity
                     style={eventsStyles.registerButton}
                     onPress={() => handleAddToCalendar(event)}
                 >
                     <Text style={eventsStyles.buttonText}>Add to Calendar</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Additional action buttons */}
+            <View style={eventsStyles.additionalButtonsContainer}>
+                <TouchableOpacity
+                    style={eventsStyles.secondaryButton}
+                    onPress={() => handleAddReminder(event)}
+                >
+                    <Ionicons name="notifications-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
+                    <Text style={eventsStyles.secondaryButtonText}>Set Reminder</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={eventsStyles.secondaryButton}
+                    onPress={() => handleAddToDeviceCalendar(event)}
+                >
+                    <Ionicons name="calendar-outline" size={14} color="#FF9843" style={{ marginRight: 5 }} />
+                    <Text style={eventsStyles.secondaryButtonText}>Add to Device</Text>
                 </TouchableOpacity>
             </View>
         </View>

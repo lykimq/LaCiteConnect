@@ -146,9 +146,15 @@ export const eventsStyles = StyleSheet.create({
         marginBottom: 8,
     },
     eventLocation: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    eventLocationText: {
         fontSize: 14,
         color: '#666',
-        marginBottom: 8,
+        marginLeft: 5,
+        textDecorationLine: 'underline',
     },
     eventDescription: {
         fontSize: 15,
@@ -156,11 +162,69 @@ export const eventsStyles = StyleSheet.create({
         lineHeight: 22,
         marginBottom: 12,
     },
+    eventImageContainer: {
+        marginVertical: 10,
+        position: 'relative',
+    },
     eventImage: {
         width: '100%',
         height: 160,
         borderRadius: 8,
-        marginVertical: 10,
+        backgroundColor: '#f5f5f5',
+    },
+    moreImagesText: {
+        position: 'absolute',
+        bottom: 8,
+        right: 8,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        color: '#fff',
+        fontSize: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 4,
+    },
+    attachmentsContainer: {
+        marginTop: 10,
+        marginBottom: 8,
+    },
+    attachmentsTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#666',
+        marginBottom: 5,
+    },
+    attachmentItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 3,
+    },
+    attachmentText: {
+        fontSize: 14,
+        color: '#FF9843',
+        marginLeft: 8,
+        textDecorationLine: 'underline',
+    },
+    additionalButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 8,
+    },
+    secondaryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 8,
+        backgroundColor: '#FFF5E9',
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#FFE4C4',
+        flex: 1,
+        justifyContent: 'center',
+        marginHorizontal: 2,
+    },
+    secondaryButtonText: {
+        fontSize: 12,
+        color: '#FF9843',
+        fontWeight: '500',
     },
     buttonContainer: {
         flexDirection: 'row',
@@ -278,7 +342,6 @@ export const eventsStyles = StyleSheet.create({
         color: '#FF9843',
         fontWeight: 'bold',
     },
-    // Month group styles
     monthGroup: {
         marginBottom: 20,
     },
@@ -304,7 +367,6 @@ export const eventsStyles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
     },
-    // Month navigation
     monthNavigation: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -389,5 +451,36 @@ export const eventsStyles = StyleSheet.create({
     monthPickerTextActive: {
         fontWeight: 'bold',
         color: '#FF9843',
+    },
+    descriptionModal: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    descriptionModalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
+        width: '90%',
+        maxHeight: '80%',
+    },
+    descriptionModalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 15,
+    },
+    descriptionModalText: {
+        fontSize: 15,
+        lineHeight: 22,
+        color: '#333',
+    },
+    descriptionModalCloseButton: {
+        backgroundColor: '#FF9843',
+        borderRadius: 8,
+        padding: 10,
+        alignItems: 'center',
+        marginTop: 20,
     },
 });
