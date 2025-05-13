@@ -885,7 +885,7 @@ export const EventsContent = () => {
                     {event.detailsUrl && (
                         <TouchableOpacity
                             style={styles.featuredActionButton}
-                            onPress={() => Linking.openURL(event.detailsUrl || '')}
+                            onPress={() => handleViewDetailUrl(event)}
                         >
                             <Ionicons name="open-outline" size={16} color={themeColors.primary} />
                             <Text style={styles.featuredActionText}>
@@ -934,6 +934,30 @@ export const EventsContent = () => {
 
     const handleOpenCalendar = () => {
         calendarService.openCalendarInBrowser();
+    };
+
+    // Handle URL opening for event details with error handling
+    const handleViewDetailUrl = (event: CalendarEvent) => {
+        try {
+            // If we have a details URL, use it
+            if (event.detailsUrl) {
+                console.log('Opening event details URL:', event.detailsUrl);
+                Linking.openURL(event.detailsUrl);
+            } else {
+                // Fallback to the default events page
+                console.log('No details URL found, opening default events page');
+                Linking.openURL('https://fr.egliselacite.com/events2');
+            }
+        } catch (error) {
+            console.error('Error opening URL:', error);
+            // If there's an error, try the default events page
+            Linking.openURL('https://fr.egliselacite.com/events2')
+                .catch(err => {
+                    console.error('Error opening default URL:', err);
+                    // Show an error message to the user
+                    alert('Could not open the event details. Please try again later.');
+                });
+        }
     };
 
     // Handle showing the full description in a modal
@@ -1229,7 +1253,7 @@ export const EventsContent = () => {
                     ) : (
                         <TouchableOpacity
                             style={styles.secondaryButton}
-                            onPress={() => Linking.openURL(event.detailsUrl || 'https://fr.egliselacite.com/events2')}
+                            onPress={() => handleViewDetailUrl(event)}
                         >
                             <Ionicons name="open-outline" size={14} color={themeColors.primary} style={{ marginRight: 5 }} />
                             <Text style={styles.secondaryButtonText}>{content?.ui.viewDetailsText || 'View Details'}</Text>
@@ -1351,27 +1375,40 @@ export const EventsContent = () => {
                         </ScrollView>
 
                         <View style={styles.modalButtonsContainer}>
-                            <TouchableOpacity
-                                style={[styles.modalActionButton, { backgroundColor: themeColors.primary }]}
-                                onPress={() => {
-                                    setShowFullDescription(false);
-                                    handleAddToCalendar(selectedEvent);
-                                }}
-                            >
-                                <Ionicons name="calendar-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                                <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
-                            </TouchableOpacity>
+                            {selectedEvent.detailsUrl ? (
+                                <View style={styles.modalButtonsRow}>
+                                    <TouchableOpacity
+                                        style={[styles.modalActionButton, { backgroundColor: themeColors.primary, flex: 1, marginRight: 8 }]}
+                                        onPress={() => {
+                                            setShowFullDescription(false);
+                                            handleAddToCalendar(selectedEvent);
+                                        }}
+                                    >
+                                        <Ionicons name="calendar-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                                        <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
+                                    </TouchableOpacity>
 
-                            {selectedEvent.detailsUrl && (
+                                    <TouchableOpacity
+                                        style={[styles.modalActionButton, { backgroundColor: themeColors.secondary, flex: 1, marginLeft: 8 }]}
+                                        onPress={() => {
+                                            setShowFullDescription(false);
+                                            handleViewDetailUrl(selectedEvent);
+                                        }}
+                                    >
+                                        <Ionicons name="open-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                                        <Text style={styles.buttonText}>{content?.ui.viewDetailsText || 'View Details'}</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
                                 <TouchableOpacity
-                                    style={[styles.modalActionButton, { backgroundColor: themeColors.secondary, marginLeft: 10 }]}
+                                    style={[styles.modalActionButton, { backgroundColor: themeColors.primary }]}
                                     onPress={() => {
                                         setShowFullDescription(false);
-                                        Linking.openURL(selectedEvent.detailsUrl || '');
+                                        handleAddToCalendar(selectedEvent);
                                     }}
                                 >
-                                    <Ionicons name="open-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                                    <Text style={styles.buttonText}>{content?.ui.viewDetailsText || 'View Details'}</Text>
+                                    <Ionicons name="calendar-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                                    <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
                                 </TouchableOpacity>
                             )}
                         </View>

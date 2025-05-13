@@ -880,10 +880,14 @@ export const createEventsStyles = (colors: any) => StyleSheet.create({
         flex: 1,
     },
     modalButtonsContainer: {
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-        paddingTop: 6,
-        marginTop: 2,
+        marginTop: 20,
+        flexDirection: 'column',
+        width: '100%',
+    },
+    modalButtonsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
     },
     modalActionButton: {
         flexDirection: 'row',

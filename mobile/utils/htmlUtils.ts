@@ -333,18 +333,118 @@ export const extractAttachmentLinks = (description: string): Array<{ title: stri
 
 /**
  * Extract "Details:" URL from event description
- * Specifically looks for URLs that appear after the word "Details:"
+ * Specifically looks for URLs that appear after keywords indicating event details
+ * or direct links to event pages on egliselacite.com domains
  */
 export const extractDetailsUrl = (description: string): string | null => {
     if (!description) return null;
 
-    // Look for "Details:" followed by a URL
-    const detailsRegex = /Details:?\s*(https?:\/\/[^\s\n]+)/i;
-    const match = description.match(detailsRegex);
+    // Clean and normalize the description to handle various formatting issues
+    const normalizedDescription = description
+        .replace(/\r\n/g, '\n')  // Normalize line breaks
+        .replace(/\s+/g, ' ')    // Normalize multiple spaces
+        .trim();
 
-    if (match && match[1]) {
-        return match[1].trim();
+    try {
+        // First priority: Look specifically for egliselacite.com event details URLs
+        const eventDetailUrlPattern = /(https?:\/\/(?:www\.)?(?:fr\.)?egliselacite\.com\/event-details[^\s\n<>]+)/i;
+        const eventUrlMatch = normalizedDescription.match(eventDetailUrlPattern);
+
+        if (eventUrlMatch && eventUrlMatch[1]) {
+            const url = cleanUrl(eventUrlMatch[1]);
+            console.log('Found event details URL via direct pattern match:', url);
+            return url;
+        }
+
+        // Second approach: look for common patterns like "Details:" followed by a URL
+        const keywordPattern = /(?:(?:link\s*)?details|more\s*info|information|for\s*details|learn\s*more|find out more|event\s*details)[:\s-]*\s*(https?:\/\/[^\s\n<>]+)/i;
+        const match = normalizedDescription.match(keywordPattern);
+
+        if (match && match[1]) {
+            const url = cleanUrl(match[1]);
+            console.log('Found event details URL via keyword pattern:', url);
+            return url;
+        }
+
+        // Third approach: look for URLs containing event-specific keywords
+        const eventUrlPattern = /(https?:\/\/[^\s\n<>]*(?:event|registration|signup|details)[^\s\n<>]*)/i;
+        const secondMatch = normalizedDescription.match(eventUrlPattern);
+
+        if (secondMatch && secondMatch[1]) {
+            const url = cleanUrl(secondMatch[1]);
+            console.log('Found event details URL via URL content pattern:', url);
+            return url;
+        }
+
+        // Fourth approach: look for URLs after a line break following "Details" on its own line
+        const detailsLinePattern = /details:?\s*\n+\s*(https?:\/\/[^\s\n<>]+)/i;
+        const thirdMatch = normalizedDescription.match(detailsLinePattern);
+
+        if (thirdMatch && thirdMatch[1]) {
+            const url = cleanUrl(thirdMatch[1]);
+            console.log('Found event details URL via line break pattern:', url);
+            return url;
+        }
+
+        // Last attempt: look for any egliselacite.com domain URL that might be relevant
+        const domainPattern = /(https?:\/\/(?:www\.)?(?:fr\.)?egliselacite\.com\/[^\s\n<>]+)/i;
+        const fourthMatch = normalizedDescription.match(domainPattern);
+
+        if (fourthMatch && fourthMatch[1]) {
+            const url = cleanUrl(fourthMatch[1]);
+            console.log('Found event details URL via domain match:', url);
+            return url;
+        }
+    } catch (error) {
+        console.error('Error extracting details URL:', error);
     }
 
     return null;
+};
+
+/**
+ * Helper function to clean and validate URLs
+ */
+const cleanUrl = (url: string): string => {
+    // Remove any trailing characters that aren't part of the URL
+    let cleanedUrl = url.trim();
+
+    // Fix common issues with URLs
+    cleanedUrl = cleanedUrl
+        .replace(/[.,;:]+$/, '')  // Remove punctuation at end
+        .replace(/'|"|>|<|\)|\(|\]|\[/g, ''); // Remove quotes, brackets
+
+    // Handle HTML entity-encoded URLs
+    cleanedUrl = cleanedUrl
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+
+    // If the URL is from egliselacite.com but doesn't have the event-details path, fix it
+    if (cleanedUrl.match(/egliselacite\.com\/(?!event-details)/i) &&
+        !cleanedUrl.includes('/event-details')) {
+        console.log('Fixing URL to include event-details path:', cleanedUrl);
+        // Try to extract the last part of the URL to use as the event ID
+        const parts = cleanedUrl.split('/');
+        const eventId = parts[parts.length - 1];
+        if (eventId && eventId.length > 0) {
+            // Reconstruct with the event-details format
+            const domain = cleanedUrl.includes('fr.egliselacite') ?
+                'https://fr.egliselacite.com' : 'https://www.egliselacite.com';
+            cleanedUrl = `${domain}/event-details/${eventId}`;
+        }
+    }
+
+    // Ensure the URL is properly encoded
+    try {
+        // Use URL constructor to validate and potentially fix the URL
+        const urlObj = new URL(cleanedUrl);
+        // Return the properly formatted URL
+        return urlObj.toString();
+    } catch (e) {
+        console.error('Invalid URL detected, returning original:', cleanedUrl);
+        return cleanedUrl; // Return the original cleaned URL if parsing fails
+    }
 };
