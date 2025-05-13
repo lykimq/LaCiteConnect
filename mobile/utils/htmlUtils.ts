@@ -332,12 +332,18 @@ export const extractAttachmentLinks = (description: string): Array<{ title: stri
 };
 
 /**
- * Extract "Details:" URL from event description
- * Specifically looks for URLs that appear after keywords indicating event details
- * or direct links to event pages on egliselacite.com domains
+ * Extract "Details:" URL from event description with language preferences
+ * Prioritizes URLs based on current language setting
+ * @param description The event description text
+ * @param currentLanguage The current language code ('en' or 'fr')
  */
-export const extractDetailsUrl = (description: string): string | null => {
-    if (!description) return null;
+export const extractDetailsUrl = (description: string, currentLanguage: string = 'en'): string | null => {
+    if (!description) {
+        console.log('[htmlUtils] extractDetailsUrl called with empty description');
+        return null;
+    }
+
+    console.log(`[htmlUtils] extractDetailsUrl called with language: ${currentLanguage}`);
 
     // Clean and normalize the description to handle various formatting issues
     const normalizedDescription = description
@@ -346,60 +352,150 @@ export const extractDetailsUrl = (description: string): string | null => {
         .trim();
 
     try {
-        // First priority: Look specifically for egliselacite.com event details URLs
-        const eventDetailUrlPattern = /(https?:\/\/(?:www\.)?(?:fr\.)?egliselacite\.com\/event-details[^\s\n<>]+)/i;
-        const eventUrlMatch = normalizedDescription.match(eventDetailUrlPattern);
+        // Extract all URLs from the description
+        const allUrls: string[] = [];
+        const urlPattern = /(https?:\/\/[^\s\n<>]+)/ig;
+        let urlMatch;
 
-        if (eventUrlMatch && eventUrlMatch[1]) {
-            const url = cleanUrl(eventUrlMatch[1]);
-            console.log('Found event details URL via direct pattern match:', url);
-            return url;
+        while ((urlMatch = urlPattern.exec(normalizedDescription)) !== null) {
+            if (urlMatch && urlMatch[1]) {
+                allUrls.push(urlMatch[1]);
+            }
         }
 
-        // Second approach: look for common patterns like "Details:" followed by a URL
-        const keywordPattern = /(?:(?:link\s*)?details|more\s*info|information|for\s*details|learn\s*more|find out more|event\s*details)[:\s-]*\s*(https?:\/\/[^\s\n<>]+)/i;
-        const match = normalizedDescription.match(keywordPattern);
-
-        if (match && match[1]) {
-            const url = cleanUrl(match[1]);
-            console.log('Found event details URL via keyword pattern:', url);
-            return url;
+        // Log the number of URLs found
+        if (allUrls.length === 0) {
+            console.log('[htmlUtils] No URLs found in description');
+            return null;
         }
 
-        // Third approach: look for URLs containing event-specific keywords
-        const eventUrlPattern = /(https?:\/\/[^\s\n<>]*(?:event|registration|signup|details)[^\s\n<>]*)/i;
-        const secondMatch = normalizedDescription.match(eventUrlPattern);
+        // Clean all URLs
+        const cleanedUrls = allUrls.map(url => cleanUrl(url));
+        console.log(`[htmlUtils] Found ${cleanedUrls.length} URLs in event description`);
 
-        if (secondMatch && secondMatch[1]) {
-            const url = cleanUrl(secondMatch[1]);
-            console.log('Found event details URL via URL content pattern:', url);
-            return url;
+        // First, separate URLs by language domain
+        const englishDomainUrls: string[] = [];
+        const frenchDomainUrls: string[] = [];
+        const otherUrls: string[] = [];
+
+        // Sort URLs into categories
+        for (const url of cleanedUrls) {
+            try {
+                // Test if it's a French domain URL (has fr. subdomain)
+                if (/^https?:\/\/fr\.egliselacite\.com\//i.test(url)) {
+                    frenchDomainUrls.push(url);
+                    console.log('[htmlUtils] French domain URL:', url);
+                }
+                // Test if it's an English domain URL (www. or no subdomain)
+                else if (/^https?:\/\/(?:www\.)?egliselacite\.com\//i.test(url) &&
+                    !/^https?:\/\/fr\.egliselacite\.com\//i.test(url)) {
+                    englishDomainUrls.push(url);
+                    console.log('[htmlUtils] English domain URL:', url);
+                }
+                // Any other URL
+                else {
+                    otherUrls.push(url);
+                }
+            } catch (err) {
+                console.error('[htmlUtils] Error categorizing URL:', url, err);
+                // Continue processing other URLs
+            }
         }
 
-        // Fourth approach: look for URLs after a line break following "Details" on its own line
-        const detailsLinePattern = /details:?\s*\n+\s*(https?:\/\/[^\s\n<>]+)/i;
-        const thirdMatch = normalizedDescription.match(detailsLinePattern);
+        console.log(`[htmlUtils] URL breakdown - French: ${frenchDomainUrls.length}, English: ${englishDomainUrls.length}, Other: ${otherUrls.length}`);
+        console.log(`[htmlUtils] Current language setting: ${currentLanguage}`);
 
-        if (thirdMatch && thirdMatch[1]) {
-            const url = cleanUrl(thirdMatch[1]);
-            console.log('Found event details URL via line break pattern:', url);
-            return url;
+        // Calculate the target domain and backup domain based on language
+        const primaryDomainUrls = currentLanguage === 'fr' ? frenchDomainUrls : englishDomainUrls;
+        const backupDomainUrls = currentLanguage === 'fr' ? englishDomainUrls : frenchDomainUrls;
+        const targetDomain = currentLanguage === 'fr' ? 'fr.egliselacite.com' : 'www.egliselacite.com';
+
+        console.log(`[htmlUtils] Target domain based on language: ${targetDomain}`);
+        console.log(`[htmlUtils] Primary domain URLs count: ${primaryDomainUrls.length}`);
+        console.log(`[htmlUtils] Backup domain URLs count: ${backupDomainUrls.length}`);
+
+        // Find the best URL from any category
+        let bestUrl = null;
+
+        // 1. First priority: Try to find event-details URL in the preferred language
+        for (const url of primaryDomainUrls) {
+            if (url.includes('/event-details/')) {
+                console.log(`[htmlUtils] Selected ${currentLanguage} event-details URL:`, url);
+                bestUrl = url;
+                break;
+            }
         }
 
-        // Last attempt: look for any egliselacite.com domain URL that might be relevant
-        const domainPattern = /(https?:\/\/(?:www\.)?(?:fr\.)?egliselacite\.com\/[^\s\n<>]+)/i;
-        const fourthMatch = normalizedDescription.match(domainPattern);
-
-        if (fourthMatch && fourthMatch[1]) {
-            const url = cleanUrl(fourthMatch[1]);
-            console.log('Found event details URL via domain match:', url);
-            return url;
+        // If we still don't have a URL, check other categories
+        if (!bestUrl) {
+            // 2. Second priority: Try to find any event-details URL in the other language
+            for (const url of backupDomainUrls) {
+                if (url.includes('/event-details/')) {
+                    console.log(`[htmlUtils] Using ${currentLanguage === 'fr' ? 'English' : 'French'} URL as fallback:`, url);
+                    bestUrl = url;
+                    break;
+                }
+            }
         }
+
+        // 3. Third priority: Try to find any URL in the preferred language
+        if (!bestUrl && primaryDomainUrls.length > 0) {
+            console.log(`[htmlUtils] Using any ${currentLanguage} domain URL as fallback:`, primaryDomainUrls[0]);
+            bestUrl = primaryDomainUrls[0];
+        }
+
+        // 4. Fourth priority: Try any URL from the other language
+        if (!bestUrl && backupDomainUrls.length > 0) {
+            console.log(`[htmlUtils] Using any ${currentLanguage === 'fr' ? 'English' : 'French'} domain URL as final fallback:`, backupDomainUrls[0]);
+            bestUrl = backupDomainUrls[0];
+        }
+
+        // 5. Final fallback: Use any URL from the description
+        if (!bestUrl && cleanedUrls.length > 0) {
+            console.log('[htmlUtils] Using first URL as absolute final fallback:', cleanedUrls[0]);
+            bestUrl = cleanedUrls[0];
+        }
+
+        // IMPORTANT: Enforce language-appropriate domain regardless of the URL found
+        if (bestUrl) {
+            try {
+                // Parse the URL to get the path
+                const urlObj = new URL(bestUrl);
+                const path = urlObj.pathname + urlObj.search;
+
+                // Create a new URL with the correct domain based on language
+                const domain = currentLanguage === 'fr' ? 'fr.egliselacite.com' : 'www.egliselacite.com';
+                const finalUrl = `https://${domain}${path}`;
+
+                console.log(`[htmlUtils] FORCING language-appropriate domain:`);
+                console.log(`[htmlUtils] Original URL: ${bestUrl}`);
+                console.log(`[htmlUtils] Language-enforced URL: ${finalUrl}`);
+
+                return finalUrl;
+            } catch (urlError) {
+                console.error('[htmlUtils] Error enforcing language domain:', urlError);
+                // Fall back to original URL if parsing fails
+                return bestUrl;
+            }
+        }
+
+        console.log('[htmlUtils] No valid URLs found in description');
+        return null;
+
     } catch (error) {
-        console.error('Error extracting details URL:', error);
+        console.error('[htmlUtils] Error extracting details URL:', error);
+        // Even if there's an error in the extraction process, try to return any URL we can find
+        try {
+            const quickMatch = description.match(/(https?:\/\/[^\s\n<>]+)/i);
+            if (quickMatch && quickMatch[1]) {
+                console.log('[htmlUtils] Error recovery - found URL:', quickMatch[1]);
+                return quickMatch[1];
+            }
+        } catch (e) {
+            // Ignore errors in the fallback extraction
+        }
+        return null;
     }
-
-    return null;
 };
 
 /**

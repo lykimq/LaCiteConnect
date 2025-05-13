@@ -19,7 +19,14 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.laciteconnect.app",
       "infoPlist": {
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "LSApplicationQueriesSchemes": [
+          "http",
+          "https"
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       },
       "locales": {
         "en": "./database/locales/ios/en.json",
@@ -32,13 +39,48 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.laciteconnect.app"
+      "package": "com.laciteconnect.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "*.egliselacite.com",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "https",
+              "host": "www.egliselacite.com",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "https",
+              "host": "fr.egliselacite.com",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "scheme": "com.laciteconnect",
-    "plugins": [],
+    "plugins": [
+      [
+        "expo-web-browser",
+        {
+          "packageName": "com.laciteconnect.app",
+          "experimentalLauncherActivity": true
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "la-cite-connect"
@@ -46,7 +88,10 @@
     },
     "localization": {
       "defaultLanguage": "en",
-      "supportedLanguages": ["en", "fr"],
+      "supportedLanguages": [
+        "en",
+        "fr"
+      ],
       "fallbackLanguage": "en"
     }
   }

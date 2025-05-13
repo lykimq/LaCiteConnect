@@ -8,6 +8,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createHomeStyles } from '../styles/ThemedStyles';
 import { Platform } from 'react-native';
+import { openUrlWithCorrectDomain, openGenericUrl } from '../utils/urlUtils';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -93,6 +95,7 @@ export const HomeContent = () => {
     const [error, setError] = useState<string | null>(null);
     const { themeColors, theme } = useTheme();
     const styles = useThemedStyles(createHomeStyles);
+    const { currentLanguage } = useLanguage();
 
     useEffect(() => {
         loadContent();
@@ -125,11 +128,11 @@ export const HomeContent = () => {
     }, []);
 
     const handleFindUs = () => {
-        Linking.openURL(STATIC_URLS.location);
+        openGenericUrl(STATIC_URLS.location);
     };
 
     const handleWatchOnline = () => {
-        Linking.openURL(STATIC_URLS.youtubeDirectLink);
+        openGenericUrl(STATIC_URLS.youtubeDirectLink);
     };
 
     // Display skeleton loading UI

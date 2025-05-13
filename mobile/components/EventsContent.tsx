@@ -8,6 +8,14 @@ import WebView from 'react-native-webview';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createEventsStyles } from '../styles/ThemedStyles';
+import { useLanguage } from '../contexts/LanguageContext';
+import { openUrlWithCorrectDomain } from '../utils/urlUtils';
+import * as WebBrowser from 'expo-web-browser';
+
+// Helper function that uses our centralized URL handling utility
+const openUrlWithLanguageCheck = (url: string, language: string) => {
+    return openUrlWithCorrectDomain(url, language);
+};
 
 // Get screen dimensions for WebView sizing
 const { width, height } = Dimensions.get('window');
@@ -156,9 +164,13 @@ const isDriveAttachment = (url: string): boolean => {
 export const EventsContent = () => {
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
+    const { currentLanguage } = useLanguage();
     const currentDate = new Date();
     const buttonRef = useRef(null);
     const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+    // Track previous language to detect changes
+    const prevLanguageRef = useRef(currentLanguage);
 
     // Content state
     const [content, setContent] = useState<EventsContent | null>(null);
@@ -315,10 +327,62 @@ export const EventsContent = () => {
         }
     }, [filteredAndSortedEvents, selectedListPeriod, selectedQuickPeriod, currentMonth, currentYear]);
 
+    // Effect to handle language changes
+    useEffect(() => {
+        // Check if language has changed
+        if (prevLanguageRef.current !== currentLanguage) {
+            console.log(`[EventsContent] Language changed from ${prevLanguageRef.current} to ${currentLanguage}, updating URLs`);
+
+            // Force log the current state to help diagnose issues
+            console.log(`[EventsContent] Current events count: ${events.length}`);
+            console.log(`[EventsContent] Has cached events in calendar service: ${calendarService.cachedEvents.length > 0}`);
+
+            // Set loading state to true while processing language change
+            setLoading(true);
+
+            // Update calendar service language
+            calendarService.updateLanguage(currentLanguage)
+                .then(() => {
+                    console.log(`[EventsContent] Calendar service language updated successfully`);
+
+                    // Force fetch events to guarantee we get updated URLs
+                    fetchEvents(currentYear, currentMonth)
+                        .then(() => {
+                            console.log('[EventsContent] Events reloaded with updated language URLs');
+
+                            // Verify URLs match current language after reload
+                            const randomEvent = events.length > 0 ? events[0] : null;
+                            if (randomEvent && randomEvent.detailsUrl) {
+                                const matchesLanguage = currentLanguage === 'fr' ?
+                                    randomEvent.detailsUrl.includes('fr.egliselacite.com') :
+                                    !randomEvent.detailsUrl.includes('fr.egliselacite.com');
+
+                                console.log(`[EventsContent] Sample event URL after reload: ${randomEvent.detailsUrl}`);
+                                console.log(`[EventsContent] URL matches current language (${currentLanguage})? ${matchesLanguage}`);
+                            }
+
+                            // Set loading to false when done
+                            setLoading(false);
+                        })
+                        .catch(error => {
+                            console.error('[EventsContent] Error reloading events after language change:', error);
+                            setLoading(false);
+                        });
+                })
+                .catch(error => {
+                    console.error('[EventsContent] Error updating calendar service language:', error);
+                    setLoading(false);
+                });
+
+            // Update the reference
+            prevLanguageRef.current = currentLanguage;
+        }
+    }, [currentLanguage, currentYear, currentMonth]);
+
     // Load content from JSON
     useEffect(() => {
         loadContent();
-    }, []);
+    }, [currentLanguage]); // Also reload content when language changes
 
     // Initial data fetch
     useEffect(() => {
@@ -590,23 +654,29 @@ export const EventsContent = () => {
     );
 
     // Render calendar view
-    const renderCalendarView = () => (
-        <View style={styles.calendarContainer}>
-            <WebView
-                source={{ uri: calendarService.getCalendarEmbedUrl() }}
-                style={styles.calendar}
-                javaScriptEnabled={true}
-                domStorageEnabled={true}
-                onError={(e) => {
-                    setCalendarError(content?.ui.calendarErrorText || 'Failed to load calendar view. Please try again later.');
-                    console.error('WebView error:', e.nativeEvent);
-                }}
-            />
-            {calendarError && (
-                <Text style={styles.errorText}>{calendarError}</Text>
-            )}
-        </View>
-    );
+    const renderCalendarView = () => {
+        // Get the calendar URL and ensure it matches current language
+        const calendarUrl = calendarService.getCalendarEmbedUrl();
+        console.log(`[renderCalendarView] Using calendar embed URL: ${calendarUrl}`);
+
+        return (
+            <View style={styles.calendarContainer}>
+                <WebView
+                    source={{ uri: calendarUrl }}
+                    style={styles.calendar}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    onError={(e) => {
+                        setCalendarError(content?.ui.calendarErrorText || 'Failed to load calendar view. Please try again later.');
+                        console.error('WebView error:', e.nativeEvent);
+                    }}
+                />
+                {calendarError && (
+                    <Text style={styles.errorText}>{calendarError}</Text>
+                )}
+            </View>
+        );
+    };
 
     // Render list view with enhanced organization
     const renderListView = () => (
@@ -915,7 +985,7 @@ export const EventsContent = () => {
     const formatEventDate = (event: CalendarEvent) => {
         if (event.start.date) {
             // This is an all-day event
-            return `${formatDate(new Date(event.start.date))} (${content?.ui.allDayText || 'All day'})`;
+            return `${formatDate(new Date(event.start.date))} • ${content?.ui.allDayText || 'All Day'}`;
         } else if (event.start.dateTime) {
             // This is a timed event
             return `${formatDate(new Date(event.start.dateTime))} • ${formatTime(new Date(event.start.dateTime))} - ${formatTime(new Date(event.end.dateTime || ''))}`;
@@ -924,39 +994,76 @@ export const EventsContent = () => {
     };
 
     const handleOpenMap = (location: string) => {
-        Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(location)}`);
+        const mapUrl = `https://maps.google.com/?q=${encodeURIComponent(location)}`;
+        // We don't need language check for map URLs, but using our helper for consistency
+        openUrlWithLanguageCheck(mapUrl, currentLanguage);
     };
 
     const handleAddToCalendar = (event: CalendarEvent) => {
         const url = calendarService.generateAddToCalendarUrl(event);
-        Linking.openURL(url);
+        // Calendar URLs don't need language check, but using our helper for consistency
+        openUrlWithLanguageCheck(url, currentLanguage);
     };
 
     const handleOpenCalendar = () => {
-        calendarService.openCalendarInBrowser();
+        // Pass to our language-aware URL opener
+        const embedUrl = calendarService.getCalendarEmbedUrl();
+        openUrlWithLanguageCheck(embedUrl, currentLanguage);
     };
 
-    // Handle URL opening for event details with error handling
+    // Update handleViewDetailUrl to use our simplified approach
     const handleViewDetailUrl = (event: CalendarEvent) => {
         try {
-            // If we have a details URL, use it
-            if (event.detailsUrl) {
-                console.log('Opening event details URL:', event.detailsUrl);
-                Linking.openURL(event.detailsUrl);
+            console.log(`------- VIEW DETAILS DEBUGGING -------`);
+            console.log(`1. View Details clicked for event "${event.summary}" with language ${currentLanguage}`);
+
+            // Get the event detail URL from the calendar service
+            // This will already handle finding the correct language URL
+            const detailUrl = calendarService.getEventDetailsUrl(event);
+            console.log(`2. Got URL from calendarService: ${detailUrl || 'none'}`);
+
+            if (detailUrl) {
+                console.log(`3. Opening URL: ${detailUrl}`);
+
+                // Use our URL opener which will ensure correct domain
+                openUrlWithCorrectDomain(detailUrl, currentLanguage)
+                    .then(() => {
+                        console.log(`4. Successfully opened URL`);
+                    })
+                    .catch(err => {
+                        console.error(`4. Error opening URL:`, err);
+                        showFallbackUrl();
+                    });
             } else {
-                // Fallback to the default events page
-                console.log('No details URL found, opening default events page');
-                Linking.openURL('https://fr.egliselacite.com/events2');
+                console.error('2. No URL could be generated for event');
+                showFallbackUrl();
+            }
+            console.log(`------- END VIEW DETAILS DEBUGGING -------`);
+
+            function showFallbackUrl() {
+                console.log(`5. Using fallback URL`);
+
+                // Simple fallback to events page in correct language
+                const fallbackUrl = currentLanguage === 'fr'
+                    ? 'https://fr.egliselacite.com/events'
+                    : 'https://www.egliselacite.com/events';
+
+                console.log(`6. Opening fallback URL: ${fallbackUrl}`);
+
+                openUrlWithCorrectDomain(fallbackUrl, currentLanguage)
+                    .catch(fallbackErr => {
+                        console.error('7. Error opening fallback URL:', fallbackErr);
+                        showErrorAlert();
+                    });
+            }
+
+            function showErrorAlert() {
+                console.log('8. All URL opening attempts failed, showing error alert');
+                alert(content?.ui.viewDetailsText ? `${content.ui.viewDetailsText} - Error` : 'Could not open the event details. Please try again later.');
             }
         } catch (error) {
-            console.error('Error opening URL:', error);
-            // If there's an error, try the default events page
-            Linking.openURL('https://fr.egliselacite.com/events2')
-                .catch(err => {
-                    console.error('Error opening default URL:', err);
-                    // Show an error message to the user
-                    alert('Could not open the event details. Please try again later.');
-                });
+            console.error('Unexpected error in handleViewDetailUrl:', error);
+            alert(content?.ui.viewDetailsText ? `${content.ui.viewDetailsText} - Error` : 'Could not open the event details. Please try again later.');
         }
     };
 
@@ -1034,7 +1141,7 @@ export const EventsContent = () => {
     };
 
     const handleViewAttachment = (attachmentUrl: string) => {
-        Linking.openURL(attachmentUrl);
+        openUrlWithLanguageCheck(attachmentUrl, currentLanguage);
     };
 
     // Render month picker for events
@@ -1159,7 +1266,7 @@ export const EventsContent = () => {
                     <TouchableOpacity
                         style={styles.eventLocation}
                         onPress={() => event.formattedLocation?.mapUrl
-                            ? Linking.openURL(event.formattedLocation.mapUrl)
+                            ? openUrlWithLanguageCheck(event.formattedLocation.mapUrl, currentLanguage)
                             : handleOpenMap(event.location || '')}
                     >
                         <Ionicons name="location-outline" size={14} color="#666" />
@@ -1195,7 +1302,7 @@ export const EventsContent = () => {
                             <TouchableOpacity
                                 key={index}
                                 style={styles.attachmentItem}
-                                onPress={() => Linking.openURL(attachment.url)}
+                                onPress={() => openUrlWithLanguageCheck(attachment.url, currentLanguage)}
                             >
                                 <Ionicons
                                     name={
@@ -1326,7 +1433,7 @@ export const EventsContent = () => {
                                     onPress={() => {
                                         setShowFullDescription(false);
                                         selectedEvent.formattedLocation?.mapUrl
-                                            ? Linking.openURL(selectedEvent.formattedLocation.mapUrl)
+                                            ? openUrlWithLanguageCheck(selectedEvent.formattedLocation.mapUrl, currentLanguage)
                                             : handleOpenMap(selectedEvent.location || '');
                                     }}
                                 >

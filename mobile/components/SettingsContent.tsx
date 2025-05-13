@@ -5,6 +5,8 @@ import { LanguageSelector } from './LanguageSelector';
 import { ThemeSelector } from './ThemeSelector';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocalizedContent } from '../hooks/useLocalizedContent';
+import { useLanguage } from '../contexts/LanguageContext';
+import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 
 // Enhanced interface for settings data
 interface SettingsContentData {
@@ -31,6 +33,7 @@ export const SettingsContent = () => {
     const { themeColors } = useTheme();
     const { content, isLoading, error, refresh } = useLocalizedContent<SettingsContentData>('settings');
     const [refreshing, setRefreshing] = useState(false);
+    const { currentLanguage } = useLanguage();
 
     // Pull to refresh functionality
     const onRefresh = async () => {
@@ -53,7 +56,7 @@ export const SettingsContent = () => {
                 },
                 {
                     text: 'Open',
-                    onPress: () => Linking.openURL(url)
+                    onPress: () => openUrlWithCorrectDomain(url, currentLanguage)
                 }
             ]
         );

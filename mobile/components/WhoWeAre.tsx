@@ -15,6 +15,8 @@ import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createWhoWeAreStyles } from '../styles/ThemedStyles';
+import { openUrlWithCorrectDomain, openGenericUrl } from '../utils/urlUtils';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -52,6 +54,7 @@ export const WhoWeAreContent = () => {
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createWhoWeAreStyles);
+    const { currentLanguage } = useLanguage();
 
     useEffect(() => {
         loadContent();
@@ -132,7 +135,7 @@ export const WhoWeAreContent = () => {
                                     return <React.Fragment key={i}>{part}(
                                         <Text
                                             style={{ color: themeColors.primary, textDecorationLine: 'underline' }}
-                                            onPress={() => Linking.openURL('https://ncmi.net/')}
+                                            onPress={() => openGenericUrl('https://ncmi.net/')}
                                         >
                                             NCMI
                                         </Text>
@@ -186,7 +189,7 @@ export const WhoWeAreContent = () => {
                         </Text>
                         <TouchableOpacity
                             style={styles.downloadButton}
-                            onPress={() => Linking.openURL(STATIC_URLS.statements)}
+                            onPress={() => openUrlWithCorrectDomain(STATIC_URLS.statements, currentLanguage)}
                         >
                             <Ionicons name={section.buttonIcon as any} size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
                             <Text style={styles.downloadButtonText}>

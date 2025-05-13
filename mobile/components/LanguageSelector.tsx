@@ -19,19 +19,27 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
 
     const handleLanguageSelect = async (languageCode: string) => {
         try {
+            console.log(`[LanguageSelector] Language selection requested: ${currentLanguage} -> ${languageCode}`);
+
             if (languageCode === currentLanguage) {
                 // If same language selected, just close modal
+                console.log(`[LanguageSelector] Same language selected, no change needed`);
                 setModalVisible(false);
                 return;
             }
 
+            console.log(`[LanguageSelector] Beginning language change process`);
             setModalVisible(false); // Close modal first for better UX
 
             // Change language via context
+            console.log(`[LanguageSelector] Calling setAppLanguage with: ${languageCode}`);
             await setAppLanguage(languageCode);
+            console.log(`[LanguageSelector] Language change successful: ${languageCode}`);
 
             // Show confirmation toast
             const langMetadata = getLanguageMetadata(languageCode);
+            console.log(`[LanguageSelector] Showing confirmation alert for ${langMetadata.nativeName}`);
+
             Alert.alert(
                 languageCode === 'en' ? 'Language Changed' : 'Langue Modifiée',
                 languageCode === 'en'
@@ -41,10 +49,13 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
 
             // Notify parent component if needed
             if (onLanguageChange) {
+                console.log(`[LanguageSelector] Notifying parent component of language change`);
                 onLanguageChange(languageCode);
             }
+
+            console.log(`[LanguageSelector] Language change process complete`);
         } catch (error) {
-            console.error('Error changing language:', error);
+            console.error(`[LanguageSelector] Error changing language to ${languageCode}:`, error);
             Alert.alert(
                 'Error',
                 'Failed to change language. Please try again.'

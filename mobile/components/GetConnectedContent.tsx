@@ -16,6 +16,8 @@ import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createGetConnectedStyles } from '../styles/ThemedStyles';
+import { openUrlWithCorrectDomain, openGenericUrl } from '../utils/urlUtils';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -55,6 +57,7 @@ export const GetConnectedContent = () => {
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createGetConnectedStyles);
     const scrollViewRef = useRef<ScrollView>(null);
+    const { currentLanguage } = useLanguage();
 
     useEffect(() => {
         loadContent();
@@ -112,31 +115,31 @@ export const GetConnectedContent = () => {
     };
 
     const handleSubscribe = () => {
-        Linking.openURL(STATIC_URLS.subscribe);
+        openUrlWithCorrectDomain(STATIC_URLS.subscribe, currentLanguage);
     };
 
     const handleVolunteer = () => {
-        Linking.openURL(STATIC_URLS.volunteer);
+        openUrlWithCorrectDomain(STATIC_URLS.volunteer, currentLanguage);
     };
 
     const handlePrayerRequest = () => {
-        Linking.openURL(STATIC_URLS.prayerRequest);
+        openUrlWithCorrectDomain(STATIC_URLS.prayerRequest, currentLanguage);
     };
 
     const handleChezNous = () => {
-        Linking.openURL(STATIC_URLS.chezNous);
+        openUrlWithCorrectDomain(STATIC_URLS.chezNous, currentLanguage);
     };
 
     const handleChezNousDetails = () => {
-        Linking.openURL(STATIC_URLS.chezNousDetails);
+        openUrlWithCorrectDomain(STATIC_URLS.chezNousDetails, currentLanguage);
     };
 
     const handleSocialMedia = (url: string) => {
-        Linking.openURL(url);
+        openGenericUrl(url);
     };
 
     const handleEmail = () => {
-        Linking.openURL('mailto:salut@egliselacite.com');
+        openGenericUrl('mailto:salut@egliselacite.com');
     };
 
     if (loading) {
