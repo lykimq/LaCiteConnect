@@ -3,7 +3,7 @@
  * Handles fetching events from a personal Google Calendar using iCal
  */
 import { Linking, Platform } from 'react-native';
-import { extractDriveLinksFromHtml, convertHtmlToFormattedText, parseLocationString, extractAttachmentLinks } from '../utils/htmlUtils';
+import { extractDriveLinksFromHtml, convertHtmlToFormattedText, parseLocationString, extractAttachmentLinks, extractDetailsUrl } from '../utils/htmlUtils';
 import * as Notifications from 'expo-notifications';
 import * as Calendar from 'expo-calendar';
 
@@ -40,6 +40,7 @@ interface CalendarEvent {
     isHoliday?: boolean;
     attachments?: Array<{ title: string, url: string }>;  // Attachments in the description
     reminderSet?: boolean;  // Whether a reminder is set for this event
+    detailsUrl?: string;  // URL to event details
 }
 
 // Personal calendar ID
@@ -233,12 +234,19 @@ export const calendarService = {
         // Extract attachment links
         const attachments = extractAttachmentLinks(description);
 
+        // Extract details URL if present
+        const detailsUrl = extractDetailsUrl(description);
+
         // Process location
         const formattedLocation = parseLocationString(item.location || '');
 
         // Log extracted content
         if (attachments.length > 0) {
             console.log(`Extracted ${attachments.length} attachments from event: ${item.summary}`);
+        }
+
+        if (detailsUrl) {
+            console.log(`Found details URL for event ${item.summary}: ${detailsUrl}`);
         }
 
         // Create the event object with all processed data
@@ -258,7 +266,8 @@ export const calendarService = {
             location: item.location,
             formattedLocation: formattedLocation,
             attachments: attachments.length > 0 ? attachments : undefined,
-            recurrence: item.recurrence ? true : false
+            recurrence: item.recurrence ? true : false,
+            detailsUrl: detailsUrl || undefined
         };
 
         return event;
@@ -409,12 +418,19 @@ export const calendarService = {
                 const formattedDescription = description ? convertHtmlToFormattedText(description) : undefined;
                 const attachments = description ? extractAttachmentLinks(description) : [];
 
+                // Extract details URL if present
+                const detailsUrl = description ? extractDetailsUrl(description) : null;
+
                 // Process location
                 const formattedLocation = location ? parseLocationString(location) : undefined;
 
                 // Log extracted content for debugging
                 if (attachments.length > 0) {
                     console.log(`Extracted ${attachments.length} attachments from event: ${summary}`);
+                }
+
+                if (detailsUrl) {
+                    console.log(`Found details URL for event ${summary}: ${detailsUrl}`);
                 }
 
                 // Create basic event
@@ -428,7 +444,8 @@ export const calendarService = {
                     start: {},
                     end: {},
                     recurrence: !!rrule,
-                    attachments: attachments.length > 0 ? attachments : undefined
+                    attachments: attachments.length > 0 ? attachments : undefined,
+                    detailsUrl: detailsUrl || undefined
                 };
 
                 // Process date format

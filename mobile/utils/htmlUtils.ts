@@ -330,3 +330,21 @@ export const extractAttachmentLinks = (description: string): Array<{ title: stri
 
     return attachments;
 };
+
+/**
+ * Extract "Details:" URL from event description
+ * Specifically looks for URLs that appear after the word "Details:"
+ */
+export const extractDetailsUrl = (description: string): string | null => {
+    if (!description) return null;
+
+    // Look for "Details:" followed by a URL
+    const detailsRegex = /Details:?\s*(https?:\/\/[^\s\n]+)/i;
+    const match = description.match(detailsRegex);
+
+    if (match && match[1]) {
+        return match[1].trim();
+    }
+
+    return null;
+};
