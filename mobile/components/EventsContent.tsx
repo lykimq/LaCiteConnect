@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl, Modal, TextInput } from 'react-native';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl, Modal, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime, isPastEvent } from '../utils/dateUtils';
 import { calendarService } from '../services/calendarService';
@@ -10,7 +10,7 @@ import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createEventsStyles } from '../styles/ThemedStyles';
 
 // Get screen dimensions for WebView sizing
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 // View modes
 type ViewMode = 'calendar' | 'list' | 'timeline';
@@ -156,6 +156,8 @@ export const EventsContent = () => {
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
     const currentDate = new Date();
+    const buttonRef = useRef(null);
+    const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
     // Content state
     const [content, setContent] = useState<EventsContent | null>(null);
@@ -923,7 +925,8 @@ export const EventsContent = () => {
     };
 
     // Handle showing the full description in a modal
-    const handleViewFullDescription = (event: CalendarEvent) => {
+    const handleViewFullDescription = (event: CalendarEvent, buttonRef: any) => {
+        // Set the selected event and show the full description modal
         setSelectedEvent(event);
         setShowFullDescription(true);
     };
@@ -1133,16 +1136,14 @@ export const EventsContent = () => {
                 {/* Display formatted description with better styling */}
                 {event.formattedDescription && (
                     <View style={styles.descriptionContainer}>
-                        <Text style={styles.eventDescription}>
-                            {event.formattedDescription.length > 150
-                                ? `${event.formattedDescription.substring(0, 150)}...`
-                                : event.formattedDescription}
+                        <Text style={styles.eventDescription} numberOfLines={3} ellipsizeMode="tail">
+                            {event.formattedDescription}
                         </Text>
 
-                        {event.formattedDescription.length > 150 && (
+                        {event.formattedDescription.length > 80 && (
                             <TouchableOpacity
                                 style={styles.readMoreButton}
-                                onPress={() => handleViewFullDescription(event)}
+                                onPress={() => handleViewFullDescription(event, null)}
                             >
                                 <Text style={styles.readMoreText}>{content?.ui.readMoreText || 'Read More'}</Text>
                             </TouchableOpacity>
@@ -1244,90 +1245,114 @@ export const EventsContent = () => {
     const renderFullDescriptionModal = () => {
         if (!selectedEvent) return null;
 
+        // Process description to properly display all content
+        const formatDescription = (description?: string) => {
+            if (!description) return '';
+
+            // Replace multiple consecutive line breaks with two line breaks
+            return description.replace(/\n{3,}/g, '\n\n');
+        };
+
         return (
-            <View style={styles.descriptionModal}>
-                <View style={styles.descriptionModalContent}>
-                    <View style={styles.descriptionModalHeader}>
-                        <Text style={styles.descriptionModalTitle}>{selectedEvent.summary}</Text>
-                        <TouchableOpacity
-                            style={styles.modalCloseIconButton}
-                            onPress={() => setShowFullDescription(false)}
-                        >
-                            <Ionicons name="close" size={24} color="#666" />
-                        </TouchableOpacity>
-                    </View>
-
-                    <ScrollView style={styles.descriptionModalScrollView}>
-                        <Text style={styles.modalEventDate}>
-                            {formatEventDate(selectedEvent)}
-                        </Text>
-
-                        {selectedEvent.formattedLocation && (
+            <Modal
+                visible={showFullDescription}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowFullDescription(false)}
+            >
+                <View style={styles.descriptionModal}>
+                    <View style={styles.descriptionModalContent}>
+                        <View style={styles.descriptionModalHeader}>
+                            <Text style={styles.descriptionModalTitle} numberOfLines={2} ellipsizeMode="tail">
+                                {selectedEvent.summary}
+                            </Text >
                             <TouchableOpacity
-                                style={styles.eventLocation}
-                                onPress={() => {
-                                    setShowFullDescription(false);
-                                    selectedEvent.formattedLocation?.mapUrl
-                                        ? Linking.openURL(selectedEvent.formattedLocation.mapUrl)
-                                        : handleOpenMap(selectedEvent.location || '');
-                                }}
+                                style={styles.modalCloseIconButton}
+                                onPress={() => setShowFullDescription(false)}
+                                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
                             >
-                                <Ionicons name="location-outline" size={16} color="#666" />
-                                <Text style={styles.eventLocationText}>
-                                    {selectedEvent.formattedLocation.address}
-                                </Text>
+                                <Ionicons name="close" size={20} color={themeColors.text} />
                             </TouchableOpacity>
-                        )}
+                        </View >
 
-                        {selectedEvent.formattedDescription && (
-                            <Text style={styles.descriptionModalText}>
-                                {selectedEvent.formattedDescription}
+                        <ScrollView
+                            style={styles.descriptionModalScrollView}
+                            showsVerticalScrollIndicator={true}
+                            contentContainerStyle={{ paddingBottom: 20 }}
+                        >
+                            <Text style={styles.modalEventDate}>
+                                {formatEventDate(selectedEvent)}
                             </Text>
-                        )}
 
-                        {selectedEvent.attachments && selectedEvent.attachments.some(
-                            attachment => isDriveAttachment(attachment.url)
-                        ) && (
+                            {selectedEvent.formattedLocation && (
+                                <TouchableOpacity
+                                    style={styles.eventLocation}
+                                    onPress={() => {
+                                        setShowFullDescription(false);
+                                        selectedEvent.formattedLocation?.mapUrl
+                                            ? Linking.openURL(selectedEvent.formattedLocation.mapUrl)
+                                            : handleOpenMap(selectedEvent.location || '');
+                                    }}
+                                >
+                                    <Ionicons name="location-outline" size={14} color={themeColors.text} />
+                                    <Text style={[styles.eventLocationText, { color: themeColors.primary }]} numberOfLines={1}>
+                                        {selectedEvent.formattedLocation.address}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {selectedEvent.formattedDescription && (
+                                <Text style={styles.descriptionModalText}>
+                                    {formatDescription(selectedEvent.formattedDescription)}
+                                </Text>
+                            )}
+
+                            {selectedEvent.attachments && selectedEvent.attachments.length > 0 && (
                                 <View style={styles.modalPhotoAttachmentsContainer}>
-                                    <Text style={styles.modalAttachmentsTitle}>{content?.ui.viewAttachmentText || 'Files:'}:</Text>
-                                    {selectedEvent.attachments
-                                        .filter(attachment => isDriveAttachment(attachment.url))
-                                        .map((attachment, index) => (
-                                            <TouchableOpacity
-                                                key={index}
-                                                style={styles.modalPhotoItem}
-                                                onPress={() => Linking.openURL(attachment.url)}
-                                            >
-                                                <Ionicons name="document-outline" size={16} color={themeColors.primary} />
-                                                <Text style={[styles.modalAttachmentText, { color: themeColors.primary }]}>
-                                                    {attachment.title}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ))}
+                                    <Text style={styles.modalAttachmentsTitle}>
+                                        {selectedEvent.attachments.length > 1 ?
+                                            `${content?.ui.viewAttachmentText || 'Files'} (${selectedEvent.attachments.length})` :
+                                            content?.ui.viewAttachmentText || 'File'}
+                                    </Text>
+                                    {selectedEvent.attachments.map((attachment, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={styles.modalPhotoItem}
+                                            onPress={() => {
+                                                setShowFullDescription(false);
+                                                handleViewAttachment(attachment.url);
+                                            }}
+                                        >
+                                            <Ionicons
+                                                name={isDriveAttachment(attachment.url) ? "document-outline" : "link-outline"}
+                                                size={14}
+                                                color={themeColors.primary}
+                                                style={{ marginRight: 6 }}
+                                            />
+                                            <Text style={[styles.modalAttachmentText, { color: themeColors.primary }]} numberOfLines={1}>
+                                                {attachment.title}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
                                 </View>
                             )}
-                    </ScrollView>
+                        </ScrollView>
 
-                    <View style={styles.modalButtonsContainer}>
-                        <TouchableOpacity
-                            style={styles.modalCloseButton}
-                            onPress={() => setShowFullDescription(false)}
-                        >
-                            <Text style={styles.buttonText}>{content?.ui.closeText || 'Close'}</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.modalActionButton}
-                            onPress={() => {
-                                setShowFullDescription(false);
-                                handleAddToCalendar(selectedEvent);
-                            }}
-                        >
-                            <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
+                        <View style={styles.modalButtonsContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalActionButton, { backgroundColor: themeColors.primary }]}
+                                onPress={() => {
+                                    setShowFullDescription(false);
+                                    handleAddToCalendar(selectedEvent);
+                                }}
+                            >
+                                <Ionicons name="calendar-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                                <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View >
+                </View >
+            </Modal >
         );
     };
 
