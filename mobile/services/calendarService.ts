@@ -2,8 +2,8 @@
  * Calendar Service
  * Handles fetching events from a personal Google Calendar using iCal
  */
-import { Linking, Platform } from 'react-native';
-import { extractDriveLinksFromHtml, convertHtmlToFormattedText, parseLocationString, extractAttachmentLinks, extractDetailsUrl } from '../utils/htmlUtils';
+import { Platform } from 'react-native';
+import { convertHtmlToFormattedText, parseLocationString, extractAttachmentLinks, extractDetailsUrl } from '../utils/htmlUtils';
 import * as Notifications from 'expo-notifications';
 import * as Calendar from 'expo-calendar';
 import { getLanguage } from '../services/languageService';

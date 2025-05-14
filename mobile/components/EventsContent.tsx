@@ -180,12 +180,9 @@ export const EventsContent = () => {
 
     // Events state
     const [events, setEvents] = useState<CalendarEvent[]>([]);
-    const [holidays, setHolidays] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
-    const [holidaysLoading, setHolidaysLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [holidaysError, setHolidaysError] = useState<string | null>(null);
     const [calendarError, setCalendarError] = useState<string | null>(null);
 
     // Modal state
@@ -196,8 +193,6 @@ export const EventsContent = () => {
     const [currentYear, setCurrentYear] = useState(currentDate.getFullYear());
     const [currentMonth, setCurrentMonth] = useState(currentDate.getMonth());
     const [showMonthPicker, setShowMonthPicker] = useState(false);
-    const [holidayYear, setHolidayYear] = useState(currentDate.getFullYear());
-    const [holidayMonth, setHolidayMonth] = useState(currentDate.getMonth());
 
     // Filter options state
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -358,22 +353,12 @@ export const EventsContent = () => {
     // Initial data fetch
     useEffect(() => {
         fetchEvents(currentYear, currentMonth);
-        fetchHolidays(holidayYear, holidayMonth);
     }, []);
 
     // Fetch events when month/year changes
     useEffect(() => {
-        if (activeTab === 'upcoming') {
-            fetchEvents(currentYear, currentMonth);
-        }
-    }, [currentYear, currentMonth, activeTab]);
-
-    // Fetch holidays when month/year changes
-    useEffect(() => {
-        if (activeTab === 'holidays') {
-            fetchHolidays(holidayYear, holidayMonth);
-        }
-    }, [holidayYear, holidayMonth, activeTab]);
+        fetchEvents(currentYear, currentMonth);
+    }, [currentYear, currentMonth]);
 
     const loadContent = async () => {
         try {
@@ -414,28 +399,9 @@ export const EventsContent = () => {
         }
     };
 
-    const fetchHolidays = async (year?: number, month?: number) => {
-        try {
-            setHolidaysLoading(true);
-            setHolidaysError(null);
-            const data = await calendarService.getFrenchHolidays(year, month);
-            setHolidays(data);
-        } catch (err) {
-            console.error('Error fetching holidays:', err);
-            setHolidaysError('Failed to load holidays. Please try again later.');
-        } finally {
-            setHolidaysLoading(false);
-            setRefreshing(false);
-        }
-    };
-
     const onRefresh = () => {
         setRefreshing(true);
-        if (activeTab === 'upcoming') {
-            fetchEvents(currentYear, currentMonth);
-        } else {
-            fetchHolidays(holidayYear, holidayMonth);
-        }
+        fetchEvents(currentYear, currentMonth);
     };
 
     // Render view mode selector with improved labels
@@ -1051,11 +1017,6 @@ export const EventsContent = () => {
 
     const selectMonth = (month: number) => {
         setCurrentMonth(month);
-        setShowMonthPicker(false);
-    };
-
-    const selectHolidayMonth = (month: number) => {
-        setHolidayMonth(month);
         setShowMonthPicker(false);
     };
 
