@@ -63,17 +63,10 @@ export const calendarService = {
     // Cached events that need URL updating when language changes
     cachedEvents: [] as CalendarEvent[],
 
-    // Debug mode flag to enable verbose logging
-    DEBUG_MODE: false,
-
     // Initialize language
     async initialize() {
         try {
             this.currentLanguage = await getLanguage();
-            console.log('[CalendarService] Calendar service initialized with language:', this.currentLanguage);
-            if (this.DEBUG_MODE) {
-                console.log('[CalendarService] Debug mode is ENABLED');
-            }
         } catch (error) {
             console.error('[CalendarService] Error initializing calendar service language:', error);
         }
@@ -84,11 +77,8 @@ export const calendarService = {
      */
     async updateLanguage(language: string) {
         try {
-            console.log(`[CalendarService] Language change requested: ${this.currentLanguage} -> ${language}`);
-
             // Skip if language is the same
             if (this.currentLanguage === language) {
-                console.log(`[CalendarService] Language is already set to ${language}, no change needed`);
                 return;
             }
 
@@ -97,28 +87,18 @@ export const calendarService = {
 
             // Update the language
             this.currentLanguage = language;
-            console.log(`[CalendarService] Calendar service language updated to: ${language}`);
-
-            // Log the event cache status
-            console.log(`[CalendarService] Event cache size before updating: ${this.cachedEvents.length}`);
 
             // Update all cached events' URLs to match the new language
             if (this.cachedEvents.length > 0) {
-                console.log(`[CalendarService] Updating URLs for ${this.cachedEvents.length} cached events`);
-
                 // Process each event to update its URL
                 this.cachedEvents = this.cachedEvents.map(event => {
                     // Only process events with descriptions or existing URLs
                     if (event.description || event.detailsUrl) {
-                        console.log(`[CalendarService] Updating URL for event: ${event.summary}`);
-
                         try {
                             // Clear the existing detailsUrl
                             const existingUrl = event.detailsUrl;
 
                             if (existingUrl) {
-                                console.log(`[CalendarService] Existing URL: ${existingUrl}`);
-
                                 try {
                                     // Parse the URL
                                     const urlObj = new URL(existingUrl);
@@ -130,15 +110,12 @@ export const calendarService = {
 
                                     // Update the event's URL
                                     event.detailsUrl = newUrl;
-                                    console.log(`[CalendarService] Updated URL: ${newUrl}`);
                                 } catch (urlError) {
                                     console.error(`[CalendarService] Error updating URL domain:`, urlError);
                                 }
                             }
                             // If no URL exists but we have a description, extract a new one
                             else if (event.description) {
-                                console.log(`[CalendarService] No URL exists, extracting from description for ${event.summary}`);
-
                                 // Process the event again to extract a fresh URL
                                 const freshEvent = this.processEventData({
                                     id: event.id,
@@ -151,7 +128,6 @@ export const calendarService = {
 
                                 // Copy the new URL to the original event
                                 event.detailsUrl = freshEvent.detailsUrl;
-                                console.log(`[CalendarService] Extracted new URL: ${event.detailsUrl || 'none'}`);
                             }
                         } catch (error) {
                             console.error(`[CalendarService] Error updating URL for event ${event.summary}:`, error);
@@ -160,13 +136,7 @@ export const calendarService = {
 
                     return event;
                 });
-
-                console.log(`[CalendarService] Finished updating all cached event URLs`);
-            } else {
-                console.log(`[CalendarService] No cached events to update`);
             }
-
-            console.log(`[CalendarService] Language change complete: ${previousLanguage} -> ${language}`);
         } catch (error) {
             console.error(`[CalendarService] Error updating language to ${language}:`, error);
         }
@@ -276,13 +246,26 @@ export const calendarService = {
                 }
             }
 
+            // Check for known invalid URL patterns that cause 404 errors
+            // Example: https://www.egliselacite.com/kwAKJW1JYirM3u7y5
+            const invalidUrlPattern = /https:\/\/(?:www\.|fr\.)?egliselacite\.com\/[a-zA-Z0-9]{10,20}\b/;
+            if (invalidUrlPattern.test(url)) {
+                // Redirect to default events2 page based on language
+                return this.currentLanguage === 'fr'
+                    ? 'https://fr.egliselacite.com/events2'
+                    : 'https://www.egliselacite.com/events2';
+            }
+
             // Generic domain replacement
             return this.currentLanguage === 'fr'
                 ? url.replace(/(?:www\.)?egliselacite\.com/, 'fr.egliselacite.com')
                 : url.replace(/fr\.egliselacite\.com/, 'www.egliselacite.com');
         } catch (error) {
             console.error('[CalendarService] Error processing URL:', error);
-            return url;
+            // Fall back to default events2 page in case of error
+            return this.currentLanguage === 'fr'
+                ? 'https://fr.egliselacite.com/events2'
+                : 'https://www.egliselacite.com/events2';
         }
     },
 
@@ -355,7 +338,6 @@ export const calendarService = {
 
         // Always process with the current language
         const events = data.items.map((item: any) => this.processEventData(item, true));
-        console.log(`Processed ${events.length} events with current language: ${this.currentLanguage}`);
         return events;
     },
 
@@ -815,10 +797,6 @@ export const calendarService = {
             // Get the embed URL for the calendar
             const embedUrl = this.getCalendarEmbedUrl();
 
-            if (this.DEBUG_MODE) {
-                console.log(`[CalendarService] Opening calendar in browser: ${embedUrl}`);
-            }
-
             // Use our centralized URL opening utility
             openUrlWithCorrectDomain(embedUrl, this.currentLanguage).catch(err => {
                 console.error('[CalendarService] Error opening calendar in browser:', err);
@@ -834,12 +812,9 @@ export const calendarService = {
      */
     async addEventReminder(event: CalendarEvent, minutesBefore: number = 30): Promise<boolean> {
         try {
-            console.log(`Setting reminder for ${event.summary} ${minutesBefore} minutes before`);
-
             // Request permissions first
             const { status } = await Notifications.requestPermissionsAsync();
             if (status !== 'granted') {
-                console.log('Notification permission not granted');
                 return false;
             }
 
@@ -859,7 +834,6 @@ export const calendarService = {
 
             // Don't schedule if the reminder time is in the past
             if (reminderTime <= new Date()) {
-                console.log('Reminder time is in the past, not scheduling');
                 return false;
             }
 
@@ -880,7 +854,6 @@ export const calendarService = {
                 },
             });
 
-            console.log(`Reminder set for: ${eventDate.toLocaleString()}, notification ID: ${notificationId}`);
             return true;
         } catch (error) {
             console.error('Error setting reminder:', error);
@@ -894,12 +867,9 @@ export const calendarService = {
      */
     async addToDeviceCalendar(event: CalendarEvent): Promise<boolean> {
         try {
-            console.log(`Adding ${event.summary} to device calendar`);
-
             // Request calendar permissions
             const { status } = await Calendar.requestCalendarPermissionsAsync();
             if (status !== 'granted') {
-                console.log('Calendar permission not granted');
                 return false;
             }
 
@@ -926,7 +896,7 @@ export const calendarService = {
             }
 
             // Create the event in the device calendar
-            const eventId = await Calendar.createEventAsync(defaultCalendarId, {
+            await Calendar.createEventAsync(defaultCalendarId, {
                 title: event.summary,
                 startDate: event.start.dateTime ? new Date(event.start.dateTime) : new Date(event.start.date || ''),
                 endDate: event.end.dateTime ? new Date(event.end.dateTime) : new Date(event.end.date || ''),
@@ -935,7 +905,6 @@ export const calendarService = {
                 alarms: [{ relativeOffset: -30 }] // Default 30-minute reminder
             });
 
-            console.log(`Event added to device calendar with ID: ${eventId}`);
             return true;
         } catch (error) {
             console.error('Error adding to device calendar:', error);
@@ -1003,21 +972,11 @@ export const calendarService = {
         // Process the description to extract images and format text
         const description = item.description || '';
 
-        // Log the raw description for debugging
-        if (description.includes('drive.google.com')) {
-            console.log('Event with Google Drive link found:', item.summary);
-            console.log('Description excerpt:', description.substring(0, Math.min(300, description.length)));
-        }
-
         // Process formatted description for display
         const formattedDescription = convertHtmlToFormattedText(description);
 
         // Extract attachment links
         const attachments = extractAttachmentLinks(description);
-
-        // IMPORTANT - LANGUAGE CONTROL
-        // Force language-specific URL extraction
-        console.log(`[CalendarService] Processing event "${item.summary}" with language ${this.currentLanguage}`);
 
         // Extract details URL if present, using current language preference
         let detailsUrl = null;
@@ -1029,8 +988,6 @@ export const calendarService = {
                 detailsUrl = extractDetailsUrl(description, this.currentLanguage);
 
                 if (detailsUrl) {
-                    console.log(`[CalendarService] Extracted raw URL for "${item.summary}": ${detailsUrl}`);
-
                     // Force the URL to match the current language
                     try {
                         // Get domain and path separately
@@ -1042,8 +999,6 @@ export const calendarService = {
 
                         // Create a new URL with the correct domain
                         detailsUrl = `https://${domain}${path}`;
-
-                        console.log(`[CalendarService] FORCED language-specific URL for "${item.summary}": ${detailsUrl}`);
                     } catch (urlError) {
                         console.error(`[CalendarService] Error processing URL domain for ${item.summary}:`, urlError);
                     }
@@ -1053,28 +1008,8 @@ export const calendarService = {
             }
         }
 
-        if (detailsUrl) {
-            console.log(`[CalendarService] Final details URL for event ${item.summary}: ${detailsUrl}`);
-
-            // Verify the URL has the correct domain
-            const hasFrenchDomain = detailsUrl.includes('fr.egliselacite.com');
-            const shouldHaveFrenchDomain = this.currentLanguage === 'fr';
-
-            if (hasFrenchDomain !== shouldHaveFrenchDomain) {
-                console.error(`[CalendarService] URL domain mismatch for ${item.summary}`);
-                console.error(`[CalendarService] URL: ${detailsUrl}, language: ${this.currentLanguage}`);
-            }
-        } else {
-            console.log(`[CalendarService] No URL found for event "${item.summary}"`);
-        }
-
         // Process location
         const formattedLocation = parseLocationString(item.location || '');
-
-        // Log extracted content
-        if (attachments.length > 0) {
-            console.log(`Extracted ${attachments.length} attachments from event: ${item.summary}`);
-        }
 
         // Create the event object with all processed data
         const event: CalendarEvent = {
@@ -1098,5 +1033,5 @@ export const calendarService = {
         };
 
         return event;
-    }
+    },
 };

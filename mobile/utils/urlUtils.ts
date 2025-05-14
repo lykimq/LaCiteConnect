@@ -68,6 +68,27 @@ export const processUrlForLanguage = (url: string, language: string): string => 
             }
         }
 
+        // Handle /calendar URLs - redirect to /events2
+        if (url.includes('/calendar')) {
+            const fallbackUrl = language === 'fr'
+                ? 'https://fr.egliselacite.com/events2'
+                : 'https://www.egliselacite.com/events2';
+            console.log(`[urlUtils] Calendar URL detected, redirecting to: ${fallbackUrl}`);
+            return fallbackUrl;
+        }
+
+        // Check for known invalid URL patterns that cause 404 errors
+        // Example: https://www.egliselacite.com/kwAKJW1JYirM3u7y5
+        const invalidUrlPattern = /https:\/\/(?:www\.|fr\.)?egliselacite\.com\/[a-zA-Z0-9]{10,20}\b/;
+        if (invalidUrlPattern.test(url)) {
+            // Redirect to default events2 page based on language
+            const fallbackUrl = language === 'fr'
+                ? 'https://fr.egliselacite.com/events2'
+                : 'https://www.egliselacite.com/events2';
+            console.log(`[urlUtils] Invalid URL detected, redirecting to: ${fallbackUrl}`);
+            return fallbackUrl;
+        }
+
         // For other URLs, just swap the domain
         if (language === 'fr') {
             // For French, ensure fr.egliselacite.com
@@ -83,12 +104,12 @@ export const processUrlForLanguage = (url: string, language: string): string => 
     } catch (error) {
         console.error(`[urlUtils] Error processing URL:`, error);
 
-        // Fallback simple string replacement
-        if (language === 'fr') {
-            return url.replace(/(?:www\.)?egliselacite\.com/, 'fr.egliselacite.com');
-        } else {
-            return url.replace(/fr\.egliselacite\.com/, 'www.egliselacite.com');
-        }
+        // Fallback to events2 page for errors
+        const fallbackUrl = language === 'fr'
+            ? 'https://fr.egliselacite.com/events2'
+            : 'https://www.egliselacite.com/events2';
+        console.log(`[urlUtils] Error processing URL, using fallback: ${fallbackUrl}`);
+        return fallbackUrl;
     }
 };
 
