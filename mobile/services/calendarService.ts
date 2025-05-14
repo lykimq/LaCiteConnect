@@ -195,7 +195,9 @@ export const calendarService = {
 
                     // Fallback to simple domain replacement
                     const correctDomainUrl = this.currentLanguage === 'fr'
-                        ? url.replace(/(?:www\.)?egliselacite\.com/, 'fr.egliselacite.com')
+                        ? url.includes('fr.egliselacite.com')
+                            ? url // Already has French domain
+                            : url.replace(/(?:www\.)?egliselacite\.com/, 'fr.egliselacite.com')
                         : url.replace(/fr\.egliselacite\.com/, 'www.egliselacite.com');
 
                     return correctDomainUrl;
@@ -256,10 +258,18 @@ export const calendarService = {
                     : 'https://www.egliselacite.com/events2';
             }
 
-            // Generic domain replacement
-            return this.currentLanguage === 'fr'
-                ? url.replace(/(?:www\.)?egliselacite\.com/, 'fr.egliselacite.com')
-                : url.replace(/fr\.egliselacite\.com/, 'www.egliselacite.com');
+            // Generic domain replacement with duplicate prevention
+            if (this.currentLanguage === 'fr') {
+                // For French, ensure fr.egliselacite.com but prevent fr.fr. duplication
+                // First check if it already has the correct domain
+                if (url.includes('fr.egliselacite.com')) {
+                    return url; // URL already has correct domain
+                }
+                return url.replace(/(?:www\.)?egliselacite\.com/, 'fr.egliselacite.com');
+            } else {
+                // For English, ensure www.egliselacite.com
+                return url.replace(/fr\.egliselacite\.com/, 'www.egliselacite.com');
+            }
         } catch (error) {
             console.error('[CalendarService] Error processing URL:', error);
             // Fall back to default events2 page in case of error
@@ -542,90 +552,196 @@ export const calendarService = {
                 // Add the event
                 events.push(event);
 
-                // Handle recurring events - add next 10 occurrences for repeating events
+                // Handle recurring events - add occurrences for repeating events
                 if (rrule && startDate) {
                     const now = new Date();
                     now.setHours(0, 0, 0, 0);
 
-                    // Naive implementation of simple recurring events
-                    // For weekly events
-                    if (rrule.includes('FREQ=WEEKLY')) {
-                        for (let j = 1; j <= 10; j++) {
-                            const futureDate = new Date(startDate);
-                            futureDate.setDate(futureDate.getDate() + (j * 7));
+                    try {
+                        // Parse the RRULE string (e.g. "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE,FR")
+                        const ruleParams = new Map();
+                        const ruleParts = rrule.split(';');
 
-                            // Only add future occurrences
-                            if (futureDate >= now) {
-                                const recurringEvent: CalendarEvent = {
-                                    ...event,
-                                    id: `${event.id}_recur_${j}`,
-                                    summary: `${event.summary}${event.recurrence ? ' (Recurring)' : ''}`,
-                                    start: {},
-                                    end: {}
-                                };
-
-                                if (event.start.dateTime) {
-                                    recurringEvent.start.dateTime = futureDate.toISOString();
-                                } else if (event.start.date) {
-                                    const futureDateStr = futureDate.toISOString().split('T')[0];
-                                    recurringEvent.start.date = futureDateStr;
-                                }
-
-                                // Calculate end date/time based on duration of original event
-                                if (event.end.dateTime && event.start.dateTime) {
-                                    const originalStart = new Date(event.start.dateTime);
-                                    const originalEnd = new Date(event.end.dateTime);
-                                    const duration = originalEnd.getTime() - originalStart.getTime();
-
-                                    const futureEndDate = new Date(futureDate.getTime() + duration);
-                                    recurringEvent.end.dateTime = futureEndDate.toISOString();
-                                } else if (event.end.date && event.start.date) {
-                                    const futureDateStr = futureDate.toISOString().split('T')[0];
-                                    recurringEvent.end.date = futureDateStr;
-                                }
-
-                                events.push(recurringEvent);
+                        for (const part of ruleParts) {
+                            const [key, value] = part.split('=');
+                            if (key && value) {
+                                ruleParams.set(key, value);
                             }
                         }
-                    }
 
-                    // For monthly events
-                    if (rrule.includes('FREQ=MONTHLY')) {
-                        for (let j = 1; j <= 10; j++) {
-                            const futureDate = new Date(startDate);
-                            futureDate.setMonth(futureDate.getMonth() + j);
+                        // Get frequency (required parameter)
+                        const freq = ruleParams.get('FREQ');
+                        if (!freq) {
+                            console.error('Invalid RRULE: missing FREQ', rrule);
+                            continue;
+                        }
 
-                            // Only add future occurrences
-                            if (futureDate >= now) {
-                                const recurringEvent: CalendarEvent = {
-                                    ...event,
-                                    id: `${event.id}_recur_${j}`,
-                                    summary: `${event.summary}${event.recurrence ? ' (Recurring)' : ''}`,
-                                    start: {},
-                                    end: {}
-                                };
+                        // Get interval (defaults to 1 if not specified)
+                        const interval = parseInt(ruleParams.get('INTERVAL') || '1', 10);
 
-                                if (event.start.dateTime) {
-                                    recurringEvent.start.dateTime = futureDate.toISOString();
-                                } else if (event.start.date) {
-                                    const futureDateStr = futureDate.toISOString().split('T')[0];
-                                    recurringEvent.start.date = futureDateStr;
+                        // Get count (number of occurrences) or UNTIL (end date)
+                        const count = ruleParams.get('COUNT') ? parseInt(ruleParams.get('COUNT') || '0', 10) : 10;
+                        const until = ruleParams.get('UNTIL') ? this.parseICalDate(ruleParams.get('UNTIL') || '') : null;
+
+                        // Get days of week for weekly recurrence
+                        const byDay = ruleParams.get('BYDAY') ? ruleParams.get('BYDAY')?.split(',') : null;
+
+                        // Get day of month for monthly recurrence (e.g. "15" means 15th of each month)
+                        const byMonthDay = ruleParams.get('BYMONTHDAY') ? parseInt(ruleParams.get('BYMONTHDAY') || '0', 10) : null;
+
+                        // Limit to a reasonable number of occurrences (10 unless specified in COUNT)
+                        const maxOccurrences = Math.min(count, 25);
+
+                        // Helper function to get day of week index (0 = Sunday, 6 = Saturday)
+                        const getDayIndex = (day: string) => {
+                            const days = {
+                                'SU': 0, 'MO': 1, 'TU': 2, 'WE': 3, 'TH': 4, 'FR': 5, 'SA': 6
+                            };
+                            return days[day as keyof typeof days] || -1;
+                        };
+
+                        // Calculate occurrences based on frequency
+                        const occurrences = [];
+                        let currentDate = new Date(startDate);
+                        let occurrenceCount = 0;
+
+                        // Loop until we hit maxOccurrences or until date
+                        while (occurrenceCount < maxOccurrences) {
+                            // Skip the first occurrence as it's already in the events array
+                            if (occurrenceCount > 0) {
+                                // Only add if it's in the future
+                                if (currentDate >= now) {
+                                    // Handle different frequencies
+                                    const recurringEvent: CalendarEvent = {
+                                        ...event,
+                                        id: `${event.id}_recur_${occurrenceCount}`,
+                                        summary: `${event.summary}${event.recurrence ? ' (Recurring)' : ''}`,
+                                        start: {},
+                                        end: {}
+                                    };
+
+                                    // Set start date/time
+                                    if (event.start.dateTime) {
+                                        recurringEvent.start.dateTime = currentDate.toISOString();
+                                    } else if (event.start.date) {
+                                        const dateStr = currentDate.toISOString().split('T')[0];
+                                        recurringEvent.start.date = dateStr;
+                                    }
+
+                                    // Calculate end date/time based on duration of original event
+                                    if (event.end.dateTime && event.start.dateTime) {
+                                        const originalStart = new Date(event.start.dateTime);
+                                        const originalEnd = new Date(event.end.dateTime);
+                                        const duration = originalEnd.getTime() - originalStart.getTime();
+
+                                        const endDate = new Date(currentDate.getTime() + duration);
+                                        recurringEvent.end.dateTime = endDate.toISOString();
+                                    } else if (event.end.date && event.start.date) {
+                                        const dateStr = currentDate.toISOString().split('T')[0];
+                                        recurringEvent.end.date = dateStr;
+                                    }
+
+                                    occurrences.push(recurringEvent);
                                 }
+                            }
 
-                                // Calculate end date/time based on duration of original event
-                                if (event.end.dateTime && event.start.dateTime) {
-                                    const originalStart = new Date(event.start.dateTime);
-                                    const originalEnd = new Date(event.end.dateTime);
-                                    const duration = originalEnd.getTime() - originalStart.getTime();
+                            // Move to next occurrence based on frequency
+                            switch (freq) {
+                                case 'DAILY':
+                                    currentDate = new Date(currentDate);
+                                    currentDate.setDate(currentDate.getDate() + interval);
+                                    break;
 
-                                    const futureEndDate = new Date(futureDate.getTime() + duration);
-                                    recurringEvent.end.dateTime = futureEndDate.toISOString();
-                                } else if (event.end.date && event.start.date) {
-                                    const futureDateStr = futureDate.toISOString().split('T')[0];
-                                    recurringEvent.end.date = futureDateStr;
+                                case 'WEEKLY':
+                                    if (byDay && byDay.length > 0) {
+                                        // Handle multiple weekdays (e.g. MO,WE,FR)
+                                        let foundNextDay = false;
+                                        const currentDayIndex = currentDate.getDay();
+
+                                        // First, try to find the next day within this week
+                                        for (const day of byDay) {
+                                            const dayIndex = getDayIndex(day);
+                                            if (dayIndex > currentDayIndex) {
+                                                // This day is later in the week
+                                                const daysToAdd = dayIndex - currentDayIndex;
+                                                currentDate = new Date(currentDate);
+                                                currentDate.setDate(currentDate.getDate() + daysToAdd);
+                                                foundNextDay = true;
+                                                break;
+                                            }
+                                        }
+
+                                        // If no later day in this week, move to first specified day of next week
+                                        if (!foundNextDay) {
+                                            const firstDayIndex = getDayIndex(byDay[0]);
+                                            const daysToAdd = 7 - currentDayIndex + firstDayIndex;
+                                            currentDate = new Date(currentDate);
+                                            currentDate.setDate(currentDate.getDate() + daysToAdd);
+                                        }
+                                    } else {
+                                        // Simple weekly recurrence (same day each week)
+                                        currentDate = new Date(currentDate);
+                                        currentDate.setDate(currentDate.getDate() + (7 * interval));
+                                    }
+                                    break;
+
+                                case 'MONTHLY':
+                                    if (byMonthDay) {
+                                        // Specific day of month (e.g. 15th of each month)
+                                        currentDate = new Date(currentDate);
+                                        currentDate.setMonth(currentDate.getMonth() + interval);
+                                        currentDate.setDate(byMonthDay);
+                                    } else {
+                                        // Same date each month
+                                        currentDate = new Date(currentDate);
+                                        currentDate.setMonth(currentDate.getMonth() + interval);
+                                    }
+                                    break;
+
+                                case 'YEARLY':
+                                    currentDate = new Date(currentDate);
+                                    currentDate.setFullYear(currentDate.getFullYear() + interval);
+                                    break;
+
+                                default:
+                                    // Unsupported recurrence type, use simple +1 month as fallback
+                                    currentDate = new Date(currentDate);
+                                    currentDate.setMonth(currentDate.getMonth() + 1);
+                            }
+
+                            // Check if we've passed the UNTIL date (if specified)
+                            if (until && currentDate > until) {
+                                break;
+                            }
+
+                            occurrenceCount++;
+                        }
+
+                        // Add the occurrences to the events array
+                        events.push(...occurrences);
+                    } catch (error) {
+                        console.error(`Error processing recurrence rule "${rrule}":`, error);
+
+                        // Fallback to very basic recurrence - next 3 occurrences
+                        if (rrule.includes('FREQ=WEEKLY')) {
+                            for (let j = 1; j <= 3; j++) {
+                                const futureDate = new Date(startDate);
+                                futureDate.setDate(futureDate.getDate() + (j * 7));
+
+                                if (futureDate >= now) {
+                                    const recurringEvent = this.createRecurringEvent(event, futureDate, j);
+                                    events.push(recurringEvent);
                                 }
+                            }
+                        } else if (rrule.includes('FREQ=MONTHLY')) {
+                            for (let j = 1; j <= 3; j++) {
+                                const futureDate = new Date(startDate);
+                                futureDate.setMonth(futureDate.getMonth() + j);
 
-                                events.push(recurringEvent);
+                                if (futureDate >= now) {
+                                    const recurringEvent = this.createRecurringEvent(event, futureDate, j);
+                                    events.push(recurringEvent);
+                                }
                             }
                         }
                     }
@@ -949,10 +1065,18 @@ export const calendarService = {
 
                         // Create a new URL with the correct domain
                         const domain = this.currentLanguage === 'fr' ? 'fr.egliselacite.com' : 'www.egliselacite.com';
-                        const newUrl = `https://${domain}${path}`;
 
-                        // Update the event's URL
-                        event.detailsUrl = newUrl;
+                        // Check if URL already has the correct domain
+                        if ((this.currentLanguage === 'fr' && event.detailsUrl.includes('fr.egliselacite.com')) ||
+                            (this.currentLanguage !== 'fr' && event.detailsUrl.includes('www.egliselacite.com'))) {
+                            // URL already has correct domain, skip updating
+                        } else {
+                            // Create a new URL with the correct domain
+                            const newUrl = `https://${domain}${path}`;
+
+                            // Update the event's URL
+                            event.detailsUrl = newUrl;
+                        }
                     } catch (urlError) {
                         console.error(`[CalendarService] Error fixing URL domain:`, urlError);
                     }
@@ -1033,5 +1157,41 @@ export const calendarService = {
         };
 
         return event;
+    },
+
+    /**
+     * Helper method to create recurring event instances
+     */
+    createRecurringEvent(baseEvent: CalendarEvent, futureDate: Date, index: number): CalendarEvent {
+        const recurringEvent: CalendarEvent = {
+            ...baseEvent,
+            id: `${baseEvent.id}_recur_${index}`,
+            summary: `${baseEvent.summary}${baseEvent.recurrence ? ' (Recurring)' : ''}`,
+            start: {},
+            end: {}
+        };
+
+        // Set start date/time
+        if (baseEvent.start.dateTime) {
+            recurringEvent.start.dateTime = futureDate.toISOString();
+        } else if (baseEvent.start.date) {
+            const dateStr = futureDate.toISOString().split('T')[0];
+            recurringEvent.start.date = dateStr;
+        }
+
+        // Calculate end date/time based on duration of original event
+        if (baseEvent.end.dateTime && baseEvent.start.dateTime) {
+            const originalStart = new Date(baseEvent.start.dateTime);
+            const originalEnd = new Date(baseEvent.end.dateTime);
+            const duration = originalEnd.getTime() - originalStart.getTime();
+
+            const endDate = new Date(futureDate.getTime() + duration);
+            recurringEvent.end.dateTime = endDate.toISOString();
+        } else if (baseEvent.end.date && baseEvent.start.date) {
+            const dateStr = futureDate.toISOString().split('T')[0];
+            recurringEvent.end.date = dateStr;
+        }
+
+        return recurringEvent;
     },
 };

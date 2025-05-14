@@ -89,9 +89,13 @@ export const processUrlForLanguage = (url: string, language: string): string => 
             return fallbackUrl;
         }
 
-        // For other URLs, just swap the domain
+        // For other URLs, just swap the domain, careful not to duplicate the prefix
         if (language === 'fr') {
-            // For French, ensure fr.egliselacite.com
+            // For French, ensure fr.egliselacite.com but prevent fr.fr. duplication
+            // First check if it already has the correct domain
+            if (url.includes('fr.egliselacite.com')) {
+                return url; // URL already has correct domain
+            }
             const processedUrl = url.replace(/(?:www\.)?egliselacite\.com/, 'fr.egliselacite.com');
             console.log(`[urlUtils] Processed to French URL: ${processedUrl}`);
             return processedUrl;

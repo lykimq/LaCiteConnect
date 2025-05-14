@@ -465,6 +465,14 @@ export const extractDetailsUrl = (description: string, currentLanguage: string =
 
                 // Create a new URL with the correct domain based on language
                 const domain = currentLanguage === 'fr' ? 'fr.egliselacite.com' : 'www.egliselacite.com';
+
+                // Check if URL already has the correct domain to prevent duplication
+                if ((currentLanguage === 'fr' && bestUrl.includes('fr.egliselacite.com')) ||
+                    (currentLanguage !== 'fr' && bestUrl.includes('www.egliselacite.com'))) {
+                    console.log(`[htmlUtils] URL already has correct domain: ${bestUrl}`);
+                    return bestUrl;
+                }
+
                 const finalUrl = `https://${domain}${path}`;
 
                 console.log(`[htmlUtils] FORCING language-appropriate domain:`);
