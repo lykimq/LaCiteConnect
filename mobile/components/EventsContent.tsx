@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Dimensions, RefreshControl, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, RefreshControl, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatDate, formatTime, isPastEvent } from '../utils/dateUtils';
+import { formatDate, formatTime } from '../utils/dateUtils';
 import { calendarService } from '../services/calendarService';
 import { contentService } from '../services/contentService';
 import WebView from 'react-native-webview';
@@ -10,15 +10,11 @@ import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createEventsStyles } from '../styles/ThemedStyles';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
-import * as WebBrowser from 'expo-web-browser';
 
 // Helper function that uses our centralized URL handling utility
 const openUrlWithLanguageCheck = (url: string, language: string) => {
     return openUrlWithCorrectDomain(url, language);
 };
-
-// Get screen dimensions for WebView sizing
-const { width, height } = Dimensions.get('window');
 
 // View modes
 type ViewMode = 'calendar' | 'list' | 'timeline';
@@ -166,8 +162,6 @@ export const EventsContent = () => {
     const styles = useThemedStyles(createEventsStyles);
     const { currentLanguage } = useLanguage();
     const currentDate = new Date();
-    const buttonRef = useRef(null);
-    const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
     // Track previous language to detect changes
     const prevLanguageRef = useRef(currentLanguage);
@@ -181,7 +175,6 @@ export const EventsContent = () => {
     const [activeTab, setActiveTab] = useState('upcoming');
     const [viewMode, setViewMode] = useState<ViewMode>('calendar');
     const [showFilterModal, setShowFilterModal] = useState(false);
-    const [timeFilter, setTimeFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
     const [selectedListPeriod, setSelectedListPeriod] = useState<'quick' | 'month'>('quick');
     const [selectedQuickPeriod, setSelectedQuickPeriod] = useState<'all' | 'today' | 'tomorrow' | 'week' | 'month'>('all');
 
@@ -205,7 +198,6 @@ export const EventsContent = () => {
     const [showMonthPicker, setShowMonthPicker] = useState(false);
     const [holidayYear, setHolidayYear] = useState(currentDate.getFullYear());
     const [holidayMonth, setHolidayMonth] = useState(currentDate.getMonth());
-    const [showHolidayMonthPicker, setShowHolidayMonthPicker] = useState(false);
 
     // Filter options state
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -331,36 +323,15 @@ export const EventsContent = () => {
     useEffect(() => {
         // Check if language has changed
         if (prevLanguageRef.current !== currentLanguage) {
-            console.log(`[EventsContent] Language changed from ${prevLanguageRef.current} to ${currentLanguage}, updating URLs`);
-
-            // Force log the current state to help diagnose issues
-            console.log(`[EventsContent] Current events count: ${events.length}`);
-            console.log(`[EventsContent] Has cached events in calendar service: ${calendarService.cachedEvents.length > 0}`);
-
             // Set loading state to true while processing language change
             setLoading(true);
 
             // Update calendar service language
             calendarService.updateLanguage(currentLanguage)
                 .then(() => {
-                    console.log(`[EventsContent] Calendar service language updated successfully`);
-
                     // Force fetch events to guarantee we get updated URLs
                     fetchEvents(currentYear, currentMonth)
                         .then(() => {
-                            console.log('[EventsContent] Events reloaded with updated language URLs');
-
-                            // Verify URLs match current language after reload
-                            const randomEvent = events.length > 0 ? events[0] : null;
-                            if (randomEvent && randomEvent.detailsUrl) {
-                                const matchesLanguage = currentLanguage === 'fr' ?
-                                    randomEvent.detailsUrl.includes('fr.egliselacite.com') :
-                                    !randomEvent.detailsUrl.includes('fr.egliselacite.com');
-
-                                console.log(`[EventsContent] Sample event URL after reload: ${randomEvent.detailsUrl}`);
-                                console.log(`[EventsContent] URL matches current language (${currentLanguage})? ${matchesLanguage}`);
-                            }
-
                             // Set loading to false when done
                             setLoading(false);
                         })
@@ -427,7 +398,6 @@ export const EventsContent = () => {
             setLoading(true);
             setError(null);
             const data = await calendarService.getEvents(year, month);
-            console.log(`Fetched ${data.length} events from calendar service`);
 
             const eventsWithUniqueIds = data.map((event, index) => ({
                 ...event,
@@ -449,7 +419,6 @@ export const EventsContent = () => {
             setHolidaysLoading(true);
             setHolidaysError(null);
             const data = await calendarService.getFrenchHolidays(year, month);
-            console.log(`Fetched ${data.length} French holidays`);
             setHolidays(data);
         } catch (err) {
             console.error('Error fetching holidays:', err);
@@ -657,7 +626,6 @@ export const EventsContent = () => {
     const renderCalendarView = () => {
         // Get the calendar URL and ensure it matches current language
         const calendarUrl = calendarService.getCalendarEmbedUrl();
-        console.log(`[renderCalendarView] Using calendar embed URL: ${calendarUrl}`);
 
         return (
             <View style={styles.calendarContainer}>
@@ -1005,60 +973,39 @@ export const EventsContent = () => {
         openUrlWithLanguageCheck(url, currentLanguage);
     };
 
-    const handleOpenCalendar = () => {
-        // Pass to our language-aware URL opener
-        const embedUrl = calendarService.getCalendarEmbedUrl();
-        openUrlWithLanguageCheck(embedUrl, currentLanguage);
-    };
-
     // Update handleViewDetailUrl to use our simplified approach
     const handleViewDetailUrl = (event: CalendarEvent) => {
         try {
-            console.log(`------- VIEW DETAILS DEBUGGING -------`);
-            console.log(`1. View Details clicked for event "${event.summary}" with language ${currentLanguage}`);
-
             // Get the event detail URL from the calendar service
             // This will already handle finding the correct language URL
             const detailUrl = calendarService.getEventDetailsUrl(event);
-            console.log(`2. Got URL from calendarService: ${detailUrl || 'none'}`);
 
             if (detailUrl) {
-                console.log(`3. Opening URL: ${detailUrl}`);
-
                 // Use our URL opener which will ensure correct domain
                 openUrlWithCorrectDomain(detailUrl, currentLanguage)
-                    .then(() => {
-                        console.log(`4. Successfully opened URL`);
-                    })
                     .catch(err => {
-                        console.error(`4. Error opening URL:`, err);
+                        console.error(`Error opening URL:`, err);
                         showFallbackUrl();
                     });
             } else {
-                console.error('2. No URL could be generated for event');
+                console.error('No URL could be generated for event');
                 showFallbackUrl();
             }
-            console.log(`------- END VIEW DETAILS DEBUGGING -------`);
 
             function showFallbackUrl() {
-                console.log(`5. Using fallback URL`);
-
                 // Simple fallback to events page in correct language
                 const fallbackUrl = currentLanguage === 'fr'
                     ? 'https://fr.egliselacite.com/events'
                     : 'https://www.egliselacite.com/events';
 
-                console.log(`6. Opening fallback URL: ${fallbackUrl}`);
-
                 openUrlWithCorrectDomain(fallbackUrl, currentLanguage)
                     .catch(fallbackErr => {
-                        console.error('7. Error opening fallback URL:', fallbackErr);
+                        console.error('Error opening fallback URL:', fallbackErr);
                         showErrorAlert();
                     });
             }
 
             function showErrorAlert() {
-                console.log('8. All URL opening attempts failed, showing error alert');
                 alert(content?.ui.viewDetailsText ? `${content.ui.viewDetailsText} - Error` : 'Could not open the event details. Please try again later.');
             }
         } catch (error) {
@@ -1068,7 +1015,7 @@ export const EventsContent = () => {
     };
 
     // Handle showing the full description in a modal
-    const handleViewFullDescription = (event: CalendarEvent, buttonRef: any) => {
+    const handleViewFullDescription = (event: CalendarEvent) => {
         // Set the selected event and show the full description modal
         setSelectedEvent(event);
         setShowFullDescription(true);
@@ -1094,40 +1041,12 @@ export const EventsContent = () => {
         }
     };
 
-    // Navigate to next month for holidays
-    const nextHolidayMonth = () => {
-        if (holidayMonth === 11) {
-            setHolidayMonth(0);
-            setHolidayYear(holidayYear + 1);
-        } else {
-            setHolidayMonth(holidayMonth + 1);
-        }
-    };
-
-    // Navigate to previous month for holidays
-    const prevHolidayMonth = () => {
-        if (holidayMonth === 0) {
-            setHolidayMonth(11);
-            setHolidayYear(holidayYear - 1);
-        } else {
-            setHolidayMonth(holidayMonth - 1);
-        }
-    };
-
     const getCurrentMonthYearString = () => {
         const monthNames = content?.months || [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
         return `${monthNames[currentMonth]} ${currentYear}`;
-    };
-
-    const getHolidayMonthYearString = () => {
-        const monthNames = content?.months || [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        return `${monthNames[holidayMonth]} ${holidayYear}`;
     };
 
     const selectMonth = (month: number) => {
@@ -1137,7 +1056,7 @@ export const EventsContent = () => {
 
     const selectHolidayMonth = (month: number) => {
         setHolidayMonth(month);
-        setShowHolidayMonthPicker(false);
+        setShowMonthPicker(false);
     };
 
     const handleViewAttachment = (attachmentUrl: string) => {
@@ -1191,36 +1110,6 @@ export const EventsContent = () => {
                     </View>
                 </View>
             </Modal>
-        );
-    };
-
-    // Render month picker for holidays
-    const renderHolidayMonthPicker = () => {
-        const months = content?.months?.map(month => month.substring(0, 3)) || [
-            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-        ];
-
-        return (
-            <View style={styles.monthPicker}>
-                {months.map((month, index) => (
-                    <TouchableOpacity
-                        key={`holiday-month-${index}`}
-                        style={[
-                            styles.monthPickerItem,
-                            holidayMonth === index && styles.monthPickerItemActive
-                        ]}
-                        onPress={() => selectHolidayMonth(index)}
-                    >
-                        <Text style={[
-                            styles.monthPickerText,
-                            holidayMonth === index && styles.monthPickerTextActive
-                        ]}>
-                            {month}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
         );
     };
 
@@ -1286,7 +1175,7 @@ export const EventsContent = () => {
                         {event.formattedDescription.length > 80 && (
                             <TouchableOpacity
                                 style={styles.readMoreButton}
-                                onPress={() => handleViewFullDescription(event, null)}
+                                onPress={() => handleViewFullDescription(event)}
                             >
                                 <Text style={styles.readMoreText}>{content?.ui.readMoreText || 'Read More'}</Text>
                             </TouchableOpacity>
