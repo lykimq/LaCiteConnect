@@ -4,11 +4,8 @@ import {
     Text,
     ScrollView,
     TouchableOpacity,
-    Linking,
     ActivityIndicator,
-    Animated,
     Dimensions,
-    Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS } from '../config/staticData';
@@ -18,8 +15,6 @@ import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createGetConnectedStyles } from '../styles/ThemedStyles';
 import { openUrlWithCorrectDomain, openGenericUrl } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
-
-const { width } = Dimensions.get('window');
 
 // Define the get connected content interface
 interface GetConnectedContent {

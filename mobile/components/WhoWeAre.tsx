@@ -5,8 +5,6 @@ import {
     Image,
     ScrollView,
     TouchableOpacity,
-    Linking,
-    Dimensions,
     ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,8 +15,6 @@ import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createWhoWeAreStyles } from '../styles/ThemedStyles';
 import { openUrlWithCorrectDomain, openGenericUrl } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
-
-const { width } = Dimensions.get('window');
 
 // Define the who we are content interface
 interface WhoWeAreContent {

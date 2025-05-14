@@ -39,7 +39,6 @@ interface CalendarEvent {
         mapUrl?: string;
     };
     recurrence?: boolean;
-    isHoliday?: boolean;
     attachments?: Array<{ title: string, url: string }>;  // Attachments in the description
     reminderSet?: boolean;  // Whether a reminder is set for this event
     detailsUrl?: string;  // URL to event details
@@ -57,12 +56,6 @@ const EMBED_URL = 'https://calendar.google.com/calendar/embed?src=lykimq%40gmail
 // Alternative public calendar REST API URL
 const API_URL = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs&timeMin=${new Date().toISOString()}&maxResults=100&singleEvents=true&orderBy=startTime`;
 
-// French holidays calendar ID
-const FRENCH_HOLIDAYS_CALENDAR_ID = 'en.french#holiday@group.v.calendar.google.com';
-
-// French holidays API URL - Use the public calendar endpoint
-const FRENCH_HOLIDAYS_API_URL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(FRENCH_HOLIDAYS_CALENDAR_ID)}/events?key=AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs&maxResults=100&singleEvents=true&orderBy=startTime`;
-
 export const calendarService = {
     // Track current language
     currentLanguage: 'en',
@@ -71,7 +64,7 @@ export const calendarService = {
     cachedEvents: [] as CalendarEvent[],
 
     // Debug mode flag to enable verbose logging
-    DEBUG_MODE: true,
+    DEBUG_MODE: false,
 
     // Initialize language
     async initialize() {
@@ -195,11 +188,6 @@ export const calendarService = {
      * @returns URL that matches the current language preference
      */
     getEventDetailsUrl(event: CalendarEvent): string | null {
-        if (this.DEBUG_MODE) {
-            console.log(`[CalendarService] getEventDetailsUrl called for event "${event.summary}"`);
-            console.log(`[CalendarService] Current language: ${this.currentLanguage}`);
-        }
-
         try {
             // Try to find a direct URL in the description first
             if (event.description) {
@@ -212,8 +200,6 @@ export const calendarService = {
                 const matches = event.description.match(urlRegex);
 
                 if (matches && matches.length > 0) {
-                    // Use the first URL that matches the current language
-                    console.log(`[CalendarService] Found direct ${this.currentLanguage} URL in description: ${matches[0]}`);
                     return matches[0];
                 }
 
@@ -231,9 +217,7 @@ export const calendarService = {
                         const parts = url.split('/event-details/');
                         if (parts.length > 1) {
                             const slug = parts[1].split('?')[0]; // Get slug without query params
-                            const finalUrl = `https://${domainToUse}/event-details/${slug}`;
-                            console.log(`[CalendarService] Converted generic URL to language-specific: ${finalUrl}`);
-                            return finalUrl;
+                            return `https://${domainToUse}/event-details/${slug}`;
                         }
                     } catch (e) {
                         console.error('[CalendarService] Error extracting slug from URL:', e);
@@ -244,7 +228,6 @@ export const calendarService = {
                         ? url.replace(/(?:www\.)?egliselacite\.com/, 'fr.egliselacite.com')
                         : url.replace(/fr\.egliselacite\.com/, 'www.egliselacite.com');
 
-                    console.log(`[CalendarService] Converted URL domain: ${correctDomainUrl}`);
                     return correctDomainUrl;
                 }
             }
@@ -253,27 +236,22 @@ export const calendarService = {
             if (event.detailsUrl) {
                 // Convert existing URL to correct language domain
                 const correctDomainUrl = this.processUrlForLanguage(event.detailsUrl);
-                console.log(`[CalendarService] Using existing URL with corrected domain: ${correctDomainUrl}`);
                 return correctDomainUrl;
             }
 
-            // No URL found, use a fallback to events listing page
+            // No URL found, use a fallback to events2 listing page (updated from events to events2)
             const fallbackUrl = this.currentLanguage === 'fr'
-                ? 'https://fr.egliselacite.com/events'
-                : 'https://www.egliselacite.com/events';
+                ? 'https://fr.egliselacite.com/events2'
+                : 'https://www.egliselacite.com/events2';
 
-            console.log(`[CalendarService] No URL found, using fallback: ${fallbackUrl}`);
             return fallbackUrl;
         } catch (error) {
             console.error(`[CalendarService] Error in getEventDetailsUrl:`, error);
 
-            // Final fallback - just return a language-appropriate base URL
-            const fallbackUrl = this.currentLanguage === 'fr'
-                ? 'https://fr.egliselacite.com/events'
-                : 'https://www.egliselacite.com/events';
-
-            console.log(`[CalendarService] Using fallback URL: ${fallbackUrl}`);
-            return fallbackUrl;
+            // Final fallback - just return a language-appropriate base URL (updated from events to events2)
+            return this.currentLanguage === 'fr'
+                ? 'https://fr.egliselacite.com/events2'
+                : 'https://www.egliselacite.com/events2';
         }
     },
 
@@ -320,12 +298,9 @@ export const calendarService = {
             }
 
             // Try using Google Calendar API first
-            console.log('Attempting to fetch from Google Calendar API');
             try {
                 const apiEvents = await this.fetchFromGoogleApi(year, month);
                 if (apiEvents && apiEvents.length > 0) {
-                    console.log(`Successfully fetched ${apiEvents.length} events from API`);
-
                     // Validate and fix URLs before caching
                     const validatedEvents = this.validateEventUrls(apiEvents);
                     this.cachedEvents = validatedEvents; // Cache events for language updates
@@ -351,237 +326,6 @@ export const calendarService = {
 
     // Track initialization status
     isInitialized: false,
-
-    /**
-     * Get French public holidays
-     */
-    async getFrenchHolidays(year?: number, month?: number): Promise<CalendarEvent[]> {
-        try {
-            console.log('Fetching French public holidays');
-            const currentYear = year || new Date().getFullYear();
-            let nextYear = currentYear;
-
-            // If we're filtering by month, use exact month range
-            if (month !== undefined) {
-                // Build URL with year and month filter
-                const startDate = new Date(currentYear, month, 1);
-                const endDate = new Date(currentYear, month + 1, 0); // Last day of month
-
-                const timeMin = startDate.toISOString();
-                const timeMax = endDate.toISOString();
-
-                const url = `${FRENCH_HOLIDAYS_API_URL}&timeMin=${timeMin}&timeMax=${timeMax}`;
-
-                return await this.fetchHolidaysFromApi(url);
-            }
-
-            // Otherwise get full year(s)
-            nextYear = currentYear + 1;
-            const timeMin = `${currentYear}-01-01T00:00:00Z`;
-            const timeMax = `${nextYear}-12-31T23:59:59Z`;
-
-            const url = `${FRENCH_HOLIDAYS_API_URL}&timeMin=${timeMin}&timeMax=${timeMax}`;
-
-            return await this.fetchHolidaysFromApi(url);
-        } catch (error) {
-            console.error('Error fetching French holidays:', error);
-            // If API fails, use hardcoded list of major French holidays
-            return this.getHardcodedFrenchHolidays(year, month);
-        }
-    },
-
-    /**
-     * Helper method to fetch holidays from API with error handling
-     */
-    async fetchHolidaysFromApi(url: string): Promise<CalendarEvent[]> {
-        try {
-            const response = await fetch(url);
-
-            if (!response.ok) {
-                console.error(`French holidays API request failed with status ${response.status}`);
-                throw new Error(`French holidays API request failed with status ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.items || !Array.isArray(data.items)) {
-                throw new Error('Invalid French holidays API response format');
-            }
-
-            // Map and mark as holidays
-            return data.items.map((item: any) => ({
-                id: item.id,
-                summary: item.summary || 'Holiday',
-                description: item.description || 'French Public Holiday',
-                formattedDescription: 'French Public Holiday',
-                location: 'France',
-                formattedLocation: { address: 'France' },
-                start: {
-                    dateTime: item.start.dateTime,
-                    date: item.start.date
-                },
-                end: {
-                    dateTime: item.end.dateTime,
-                    date: item.end.date
-                },
-                isHoliday: true
-            }));
-        } catch (error) {
-            console.error('Failed to fetch holidays from API:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Get hardcoded French holidays as fallback
-     */
-    getHardcodedFrenchHolidays(year?: number, month?: number): CalendarEvent[] {
-        const currentYear = year || new Date().getFullYear();
-
-        // List of major French holidays
-        const holidays = [
-            { name: "Jour de l'An", month: 0, day: 1 },
-            { name: "Lundi de Pâques", month: 3, day: 10 },
-            { name: "Fête du Travail", month: 4, day: 1 },
-            { name: "Victoire 1945", month: 4, day: 8 },
-            { name: "Ascension", month: 4, day: 18 },
-            { name: "Lundi de Pentecôte", month: 4, day: 29 },
-            { name: "Fête Nationale", month: 6, day: 14 },
-            { name: "Assomption", month: 7, day: 15 },
-            { name: "Toussaint", month: 10, day: 1 },
-            { name: "Armistice 1918", month: 10, day: 11 },
-            { name: "Noël", month: 11, day: 25 }
-        ];
-
-        let filteredHolidays = holidays;
-
-        // Filter by month if provided
-        if (month !== undefined) {
-            filteredHolidays = holidays.filter(holiday => holiday.month === month);
-        }
-
-        return filteredHolidays.map((holiday, index) => {
-            const dateStr = `${currentYear}-${(holiday.month + 1).toString().padStart(2, '0')}-${holiday.day.toString().padStart(2, '0')}`;
-
-            return {
-                id: `holiday-${currentYear}-${index}`,
-                summary: holiday.name,
-                description: 'French Public Holiday',
-                location: 'France',
-                start: {
-                    date: dateStr
-                },
-                end: {
-                    date: dateStr
-                },
-                isHoliday: true
-            };
-        });
-    },
-
-    /**
-     * Process event data from API response
-     */
-    processEventData(item: any, forceRefreshUrl: boolean = false): CalendarEvent {
-        // Process the description to extract images and format text
-        const description = item.description || '';
-
-        // Log the raw description for debugging
-        if (description.includes('drive.google.com')) {
-            console.log('Event with Google Drive link found:', item.summary);
-            console.log('Description excerpt:', description.substring(0, Math.min(300, description.length)));
-        }
-
-        // Process formatted description for display
-        const formattedDescription = convertHtmlToFormattedText(description);
-
-        // Extract attachment links
-        const attachments = extractAttachmentLinks(description);
-
-        // IMPORTANT - LANGUAGE CONTROL
-        // Force language-specific URL extraction
-        console.log(`[CalendarService] Processing event "${item.summary}" with language ${this.currentLanguage}`);
-
-        // Extract details URL if present, using current language preference
-        let detailsUrl = null;
-
-        if (description) {
-            try {
-                // Extract all URLs from the description, preferring language-appropriate ones
-                const { extractDetailsUrl } = require('../utils/htmlUtils');
-                detailsUrl = extractDetailsUrl(description, this.currentLanguage);
-
-                if (detailsUrl) {
-                    console.log(`[CalendarService] Extracted raw URL for "${item.summary}": ${detailsUrl}`);
-
-                    // Force the URL to match the current language
-                    try {
-                        // Get domain and path separately
-                        const urlObj = new URL(detailsUrl);
-                        const path = urlObj.pathname + urlObj.search;
-
-                        // Set the domain based on language
-                        const domain = this.currentLanguage === 'fr' ? 'fr.egliselacite.com' : 'www.egliselacite.com';
-
-                        // Create a new URL with the correct domain
-                        detailsUrl = `https://${domain}${path}`;
-
-                        console.log(`[CalendarService] FORCED language-specific URL for "${item.summary}": ${detailsUrl}`);
-                    } catch (urlError) {
-                        console.error(`[CalendarService] Error processing URL domain for ${item.summary}:`, urlError);
-                    }
-                }
-            } catch (error) {
-                console.error(`[CalendarService] Error extracting URL for ${item.summary}:`, error);
-            }
-        }
-
-        if (detailsUrl) {
-            console.log(`[CalendarService] Final details URL for event ${item.summary}: ${detailsUrl}`);
-
-            // Verify the URL has the correct domain
-            const hasFrenchDomain = detailsUrl.includes('fr.egliselacite.com');
-            const shouldHaveFrenchDomain = this.currentLanguage === 'fr';
-
-            if (hasFrenchDomain !== shouldHaveFrenchDomain) {
-                console.error(`[CalendarService] URL domain mismatch for ${item.summary}`);
-                console.error(`[CalendarService] URL: ${detailsUrl}, language: ${this.currentLanguage}`);
-            }
-        } else {
-            console.log(`[CalendarService] No URL found for event "${item.summary}"`);
-        }
-
-        // Process location
-        const formattedLocation = parseLocationString(item.location || '');
-
-        // Log extracted content
-        if (attachments.length > 0) {
-            console.log(`Extracted ${attachments.length} attachments from event: ${item.summary}`);
-        }
-
-        // Create the event object with all processed data
-        const event: CalendarEvent = {
-            id: item.id || `event-${new Date().getTime()}-${Math.random().toString(36).substring(2, 9)}`,
-            summary: item.summary || 'No title',
-            description: description,
-            formattedDescription: formattedDescription || '',
-            start: {
-                dateTime: item.start?.dateTime,
-                date: item.start?.date
-            },
-            end: {
-                dateTime: item.end?.dateTime,
-                date: item.end?.date
-            },
-            location: item.location,
-            formattedLocation: formattedLocation,
-            attachments: attachments.length > 0 ? attachments : undefined,
-            recurrence: item.recurrence ? true : false,
-            detailsUrl: detailsUrl || undefined
-        };
-
-        return event;
-    },
 
     /**
      * Attempt to fetch events from Google Calendar API with optional filtering
@@ -620,8 +364,6 @@ export const calendarService = {
      */
     async fetchICalEvents(icalUrl: string, year?: number, month?: number): Promise<CalendarEvent[]> {
         try {
-            console.log(`Fetching iCal events from: ${icalUrl}`);
-
             // Add timeout and retry logic
             const fetchWithTimeout = async (url: string, timeoutMs = 10000, retries = 3): Promise<Response> => {
                 let lastError;
@@ -648,7 +390,6 @@ export const calendarService = {
 
                         return response;
                     } catch (error) {
-                        console.warn(`Attempt ${attempt + 1}/${retries} failed:`, error);
                         lastError = error;
 
                         // Wait a bit before retrying (exponential backoff)
@@ -666,20 +407,11 @@ export const calendarService = {
             const icalData = await response.text();
 
             if (!icalData || icalData.trim().length === 0) {
-                console.error('Received empty iCal data');
                 throw new Error('Calendar service returned empty data');
             }
 
-            console.log(`Successfully retrieved iCal data (${icalData.length} bytes)`);
-
             // Parse the iCal data manually
             let events = this.parseICalData(icalData);
-
-            if (events.length === 0) {
-                console.warn('No events found in iCal data');
-            } else {
-                console.log(`Successfully parsed ${events.length} events from iCal data`);
-            }
 
             // Filter by year and month if provided
             if (year !== undefined && month !== undefined) {
@@ -714,11 +446,9 @@ export const calendarService = {
     parseICalData(icalData: string): CalendarEvent[] {
         try {
             const events: CalendarEvent[] = [];
-            console.log('Parsing iCal data...');
 
             // Simple regex-based parsing for iCal format
             const eventBlocks = icalData.split('BEGIN:VEVENT');
-            console.log(`Found ${eventBlocks.length - 1} event blocks in iCal data`);
 
             // Skip the first entry as it's the header
             for (let i = 1; i < eventBlocks.length; i++) {
@@ -745,12 +475,6 @@ export const calendarService = {
                         .replace(/\\;/g, ';')
                         .replace(/\\\\/g, '\\')
                         .replace(/\\N/g, '\n');
-
-                    // Log if the description contains Google Drive links
-                    if (description.includes('drive.google.com')) {
-                        console.log(`Event ${i} (${summary}) has Google Drive link(s)`);
-                        console.log('Description excerpt:', description.substring(0, Math.min(300, description.length)));
-                    }
                 }
 
                 // Get start and end dates
@@ -767,18 +491,10 @@ export const calendarService = {
 
                 // Skip if we couldn't find a start date
                 if (!dtstart) {
-                    console.log(`Event ${i} (${summary}) skipped - no start date found`);
                     continue;
                 }
 
                 const startDate = this.parseICalDate(dtstart);
-
-                // Only log, but include all events regardless of date
-                if (startDate) {
-                    const month = startDate.getMonth() + 1; // 0-indexed to 1-indexed
-                    const year = startDate.getFullYear();
-                    console.log(`Event ${i}: ${summary} - Date: ${startDate.toISOString()} (Month: ${month}, Year: ${year})`);
-                }
 
                 // Process the description to extract format text
                 const formattedDescription = description ? convertHtmlToFormattedText(description) : undefined;
@@ -789,15 +505,6 @@ export const calendarService = {
 
                 // Process location
                 const formattedLocation = location ? parseLocationString(location) : undefined;
-
-                // Log extracted content for debugging
-                if (attachments.length > 0) {
-                    console.log(`Extracted ${attachments.length} attachments from event: ${summary}`);
-                }
-
-                if (detailsUrl) {
-                    console.log(`Found details URL for event ${summary}: ${detailsUrl}`);
-                }
 
                 // Create basic event
                 const event: CalendarEvent = {
@@ -950,25 +657,6 @@ export const calendarService = {
                 return dateA.getTime() - dateB.getTime();
             });
 
-            // Log months found
-            const months = new Set();
-            events.forEach(event => {
-                const eventDate = event.start.dateTime
-                    ? new Date(event.start.dateTime)
-                    : event.start.date
-                        ? new Date(event.start.date)
-                        : null;
-
-                if (eventDate) {
-                    const month = eventDate.getMonth() + 1; // 0-indexed to 1-indexed
-                    const year = eventDate.getFullYear();
-                    months.add(`${year}-${month}`);
-                }
-            });
-
-            console.log('Months found in events:', [...months].sort().join(', '));
-            console.log(`Parsed ${events.length} calendar events in total (including expanded recurring events)`);
-
             return events;
         } catch (error) {
             console.error('Error parsing iCal data:', error);
@@ -1082,20 +770,7 @@ export const calendarService = {
      * Get the calendar embed URL
      */
     getCalendarEmbedUrl(): string {
-        // Check if we need to apply language-specific modifications
-        if (this.DEBUG_MODE) {
-            console.log(`[CalendarService] Getting calendar embed URL with language: ${this.currentLanguage}`);
-        }
-
-        // For now, there's no language-specific calendar embed URL,
-        // but if needed, we could modify EMBED_URL based on language here
-        const embedUrl = EMBED_URL;
-
-        if (this.DEBUG_MODE) {
-            console.log(`[CalendarService] Calendar embed URL: ${embedUrl}`);
-        }
-
-        return embedUrl;
+        return EMBED_URL;
     },
 
     /**
@@ -1274,12 +949,8 @@ export const calendarService = {
      */
     getBaseUrl(): string {
         const baseUrl = this.currentLanguage === 'fr'
-            ? 'https://fr.egliselacite.com'
-            : 'https://www.egliselacite.com';
-
-        if (this.DEBUG_MODE) {
-            console.log(`[CalendarService] Getting base URL for language ${this.currentLanguage}: ${baseUrl}`);
-        }
+            ? 'https://fr.egliselacite.com/events2'
+            : 'https://www.egliselacite.com/events2';
 
         return baseUrl;
     },
@@ -1290,10 +961,6 @@ export const calendarService = {
      * @returns Events with validated URLs
      */
     validateEventUrls(events: CalendarEvent[]): CalendarEvent[] {
-        if (this.DEBUG_MODE) {
-            console.log(`[CalendarService] Validating URLs for ${events.length} events`);
-        }
-
         return events.map(event => {
             // Skip events without URLs
             if (!event.detailsUrl) {
@@ -1306,9 +973,6 @@ export const calendarService = {
                 const shouldHaveFrenchDomain = this.currentLanguage === 'fr';
 
                 if (hasFrenchDomain !== shouldHaveFrenchDomain) {
-                    console.log(`[CalendarService] URL domain mismatch for event ${event.summary}`);
-                    console.log(`[CalendarService] Current: ${event.detailsUrl}`);
-
                     try {
                         // Parse the URL
                         const urlObj = new URL(event.detailsUrl);
@@ -1320,7 +984,6 @@ export const calendarService = {
 
                         // Update the event's URL
                         event.detailsUrl = newUrl;
-                        console.log(`[CalendarService] Fixed URL: ${newUrl}`);
                     } catch (urlError) {
                         console.error(`[CalendarService] Error fixing URL domain:`, urlError);
                     }
@@ -1331,5 +994,109 @@ export const calendarService = {
 
             return event;
         });
+    },
+
+    /**
+     * Process event data from API response
+     */
+    processEventData(item: any, forceRefreshUrl: boolean = false): CalendarEvent {
+        // Process the description to extract images and format text
+        const description = item.description || '';
+
+        // Log the raw description for debugging
+        if (description.includes('drive.google.com')) {
+            console.log('Event with Google Drive link found:', item.summary);
+            console.log('Description excerpt:', description.substring(0, Math.min(300, description.length)));
+        }
+
+        // Process formatted description for display
+        const formattedDescription = convertHtmlToFormattedText(description);
+
+        // Extract attachment links
+        const attachments = extractAttachmentLinks(description);
+
+        // IMPORTANT - LANGUAGE CONTROL
+        // Force language-specific URL extraction
+        console.log(`[CalendarService] Processing event "${item.summary}" with language ${this.currentLanguage}`);
+
+        // Extract details URL if present, using current language preference
+        let detailsUrl = null;
+
+        if (description) {
+            try {
+                // Extract all URLs from the description, preferring language-appropriate ones
+                const { extractDetailsUrl } = require('../utils/htmlUtils');
+                detailsUrl = extractDetailsUrl(description, this.currentLanguage);
+
+                if (detailsUrl) {
+                    console.log(`[CalendarService] Extracted raw URL for "${item.summary}": ${detailsUrl}`);
+
+                    // Force the URL to match the current language
+                    try {
+                        // Get domain and path separately
+                        const urlObj = new URL(detailsUrl);
+                        const path = urlObj.pathname + urlObj.search;
+
+                        // Set the domain based on language
+                        const domain = this.currentLanguage === 'fr' ? 'fr.egliselacite.com' : 'www.egliselacite.com';
+
+                        // Create a new URL with the correct domain
+                        detailsUrl = `https://${domain}${path}`;
+
+                        console.log(`[CalendarService] FORCED language-specific URL for "${item.summary}": ${detailsUrl}`);
+                    } catch (urlError) {
+                        console.error(`[CalendarService] Error processing URL domain for ${item.summary}:`, urlError);
+                    }
+                }
+            } catch (error) {
+                console.error(`[CalendarService] Error extracting URL for ${item.summary}:`, error);
+            }
+        }
+
+        if (detailsUrl) {
+            console.log(`[CalendarService] Final details URL for event ${item.summary}: ${detailsUrl}`);
+
+            // Verify the URL has the correct domain
+            const hasFrenchDomain = detailsUrl.includes('fr.egliselacite.com');
+            const shouldHaveFrenchDomain = this.currentLanguage === 'fr';
+
+            if (hasFrenchDomain !== shouldHaveFrenchDomain) {
+                console.error(`[CalendarService] URL domain mismatch for ${item.summary}`);
+                console.error(`[CalendarService] URL: ${detailsUrl}, language: ${this.currentLanguage}`);
+            }
+        } else {
+            console.log(`[CalendarService] No URL found for event "${item.summary}"`);
+        }
+
+        // Process location
+        const formattedLocation = parseLocationString(item.location || '');
+
+        // Log extracted content
+        if (attachments.length > 0) {
+            console.log(`Extracted ${attachments.length} attachments from event: ${item.summary}`);
+        }
+
+        // Create the event object with all processed data
+        const event: CalendarEvent = {
+            id: item.id || `event-${new Date().getTime()}-${Math.random().toString(36).substring(2, 9)}`,
+            summary: item.summary || 'No title',
+            description: description,
+            formattedDescription: formattedDescription || '',
+            start: {
+                dateTime: item.start?.dateTime,
+                date: item.start?.date
+            },
+            end: {
+                dateTime: item.end?.dateTime,
+                date: item.end?.date
+            },
+            location: item.location,
+            formattedLocation: formattedLocation,
+            attachments: attachments.length > 0 ? attachments : undefined,
+            recurrence: item.recurrence ? true : false,
+            detailsUrl: detailsUrl || undefined
+        };
+
+        return event;
     }
 };

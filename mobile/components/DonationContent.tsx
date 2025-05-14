@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, Clipboard, ActivityIndicator, Image, ToastAndroid, Platform, Alert, ImageBackground, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Clipboard, ActivityIndicator, ToastAndroid, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS, BANK_DETAILS } from '../config/staticData';
 import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createDonationStyles } from '../styles/ThemedStyles';
-import { LinearGradient } from 'expo-linear-gradient';
 
 // Define the donation content interface
 interface DonationContent {

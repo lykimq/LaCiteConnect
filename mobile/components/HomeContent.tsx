@@ -7,11 +7,8 @@ import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createHomeStyles } from '../styles/ThemedStyles';
-import { Platform } from 'react-native';
-import { openUrlWithCorrectDomain, openGenericUrl } from '../utils/urlUtils';
+import { openGenericUrl, openUrlWithCorrectDomain } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
-
-const { width } = Dimensions.get('window');
 
 // Define the section interface
 interface Section {
@@ -128,11 +125,11 @@ export const HomeContent = () => {
     }, []);
 
     const handleFindUs = () => {
-        openGenericUrl(STATIC_URLS.location);
+        openUrlWithCorrectDomain(STATIC_URLS.location, currentLanguage);
     };
 
     const handleWatchOnline = () => {
-        openGenericUrl(STATIC_URLS.youtubeDirectLink);
+        openUrlWithCorrectDomain(STATIC_URLS.youtubeDirectLink, currentLanguage);
     };
 
     // Display skeleton loading UI
