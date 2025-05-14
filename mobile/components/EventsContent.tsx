@@ -51,7 +51,6 @@ interface CalendarEvent {
         mapUrl?: string;
     };
     recurrence?: boolean;
-    isHoliday?: boolean;
     attachments?: Array<{ title: string, url: string }>;
     reminderSet?: boolean;
     detailsUrl?: string;
@@ -70,10 +69,8 @@ interface EventsContent {
     ui: {
         loadingText: string;
         errorText: string;
-        holidaysErrorText: string;
         calendarErrorText: string;
         noEventsText: string;
-        noHolidaysText: string;
         addToCalendarText: string;
         viewOnMapText: string;
         setReminderText: string;
@@ -86,7 +83,6 @@ interface EventsContent {
         viewAllEventsText: string;
         locationText: string;
         directionsText: string;
-        publicHolidayText: string;
         readMoreText: string;
         viewLocationText: string;
         viewFilesText: string;
@@ -94,7 +90,6 @@ interface EventsContent {
         closeText: string;
         eventAddedText: string;
         refreshEventsText: string;
-        refreshHolidaysText: string;
         tryAgainText: string;
         openCalendarText: string;
         calendarViewText: string;
