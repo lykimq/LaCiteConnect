@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, Dimensions, ActivityIndicator, FlatList, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Dimensions, ActivityIndicator, FlatList, RefreshControl, Platform, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import WebView from 'react-native-webview';
 import { STATIC_URLS, CHURCH_INFO } from '../config/staticData';
@@ -10,14 +10,46 @@ import { createHomeStyles } from '../styles/ThemedStyles';
 import { openGenericUrl, openUrlWithCorrectDomain } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
 
+// Define the UI strings interface
+interface UIStrings {
+    quickActions: {
+        watchLive: string;
+        findUs: string;
+    };
+    liveStream: {
+        title: string;
+        watchNow: string;
+        status: string;
+        viewerCount: string;
+        serviceTitle: string;
+    };
+    upcomingEvents: {
+        title: string;
+        seeAll: string;
+    };
+    location: {
+        title: string;
+        getDirections: string;
+    };
+    loading: string;
+    error: string;
+    retry: string;
+}
+
 // Define the section interface
 interface Section {
     id: string;
     icon: string;
     title: string;
-    content: string;
+    content?: string;
     buttonText?: string;
     buttonIcon?: string;
+    times?: Array<{
+        name: string;
+        time: string;
+        note?: string;
+        icon: string;
+    }>;
     subsections?: Array<{
         title: string;
         text?: string;
@@ -33,54 +65,57 @@ interface HomeContent {
         title: string;
         subtitle: string;
     };
+    ui: UIStrings;
     sections: Section[];
 }
 
-// Skeleton loading component
-const HomeContentSkeleton = () => {
-    const { themeColors } = useTheme();
-    const styles = useThemedStyles(createHomeStyles);
+// Add a new section for service times
+const ServiceTimesSection = ({ styles, themeColors, content }: { styles: any; themeColors: any; content: any }) => {
+    const serviceTimesSection = content?.sections.find((section: any) => section.id === 'serviceTimes');
+    if (!serviceTimesSection) return null;
 
     return (
-        <View style={styles.container}>
-            <ScrollView
-                style={styles.scrollView}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollViewContent}
-            >
-                {/* Header skeleton */}
-                <View style={styles.heroSection}>
-                    <View style={[styles.skeletonBox, { width: '70%', height: 30, marginBottom: 8 }]} />
-                    <View style={[styles.skeletonBox, { width: '90%', height: 16, marginBottom: 24 }]} />
-                </View>
-
-                {/* Feature grid skeleton */}
-                <View style={styles.featureGridContainer}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <View style={[styles.featureCard, styles.skeletonContainer]}>
-                            <View style={[styles.featureIconContainer, styles.skeletonCircle]} />
-                            <View style={[styles.skeletonBox, { width: '60%', height: 14 }]} />
-                        </View>
-                        <View style={[styles.featureCard, styles.skeletonContainer]}>
-                            <View style={[styles.featureIconContainer, styles.skeletonCircle]} />
-                            <View style={[styles.skeletonBox, { width: '60%', height: 14 }]} />
-                        </View>
+        <View style={styles.sectionContainer}>
+            <View style={[styles.serviceTimesCard, { overflow: 'hidden' }]}>
+                {/* Header with gradient background */}
+                <View style={styles.serviceTimesHeader}>
+                    <View style={styles.serviceTimesHeaderContent}>
+                        <Ionicons name={serviceTimesSection.icon} size={24} color={themeColors.primary} />
+                        <Text style={styles.serviceTimesTitle}>{serviceTimesSection.title}</Text>
                     </View>
                 </View>
 
-                {/* Card skeletons */}
-                {[1, 2].map((item) => (
-                    <View key={`skeleton-${item}`} style={[styles.cardContainer, styles.skeletonContainer]}>
-                        <View style={{ flexDirection: 'row', marginBottom: 12 }}>
-                            <View style={[styles.skeletonCircle, { width: 24, height: 24, marginRight: 10 }]} />
-                            <View style={[styles.skeletonBox, { width: '60%', height: 22 }]} />
-                        </View>
-                        <View style={[styles.skeletonBox, { width: '100%', height: 16, marginBottom: 8 }]} />
-                        <View style={[styles.skeletonBox, { width: '90%', height: 16, marginBottom: 8 }]} />
-                        <View style={[styles.skeletonBox, { width: '80%', height: 16 }]} />
-                    </View>
-                ))}
-            </ScrollView>
+                {/* Service times list */}
+                <View style={styles.serviceTimesList}>
+                    {serviceTimesSection.times.map((service: any, index: number) => (
+                        <React.Fragment key={service.name}>
+                            <View style={styles.serviceTimeItem}>
+                                {/* Left side - Icon */}
+                                <View style={styles.serviceTimeIconContainer}>
+                                    <Ionicons name={service.icon} size={24} color={themeColors.primary} />
+                                </View>
+
+                                {/* Right side - Content */}
+                                <View style={styles.serviceTimeContent}>
+                                    <Text style={styles.serviceTimeName}>{service.name}</Text>
+                                    <View style={styles.serviceTimeRow}>
+                                        <Ionicons name="time-outline" size={16} color={themeColors.text} style={styles.timeIcon} />
+                                        <Text style={styles.serviceTimeDetails}>{service.time}</Text>
+                                    </View>
+                                    {service.note && (
+                                        <View style={styles.serviceNoteContainer}>
+                                            <Text style={styles.serviceTimeNote}>{service.note}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                            {index < serviceTimesSection.times.length - 1 && (
+                                <View style={styles.serviceTimeDivider} />
+                            )}
+                        </React.Fragment>
+                    ))}
+                </View>
+            </View>
         </View>
     );
 };
@@ -132,130 +167,146 @@ export const HomeContent = () => {
         openUrlWithCorrectDomain(STATIC_URLS.youtubeDirectLink, currentLanguage);
     };
 
-    // Display skeleton loading UI
+    const handleDonate = () => {
+        openUrlWithCorrectDomain(STATIC_URLS.donate.mission, currentLanguage);
+    };
+
+    // Add styles for service times
+    const additionalStyles = StyleSheet.create({
+        serviceTimesCard: {
+            backgroundColor: themeColors.card,
+            borderRadius: 20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+        },
+        serviceTimesHeader: {
+            backgroundColor: themeColors.primary + '10',
+            paddingVertical: 16,
+            paddingHorizontal: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: themeColors.border,
+        },
+        serviceTimesHeaderContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        serviceTimesTitle: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: themeColors.text,
+            marginLeft: 12,
+        },
+        serviceTimesList: {
+            padding: 16,
+        },
+        serviceTimeItem: {
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            paddingVertical: 12,
+        },
+        serviceTimeIconContainer: {
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: themeColors.primary + '15',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 16,
+        },
+        serviceTimeContent: {
+            flex: 1,
+            justifyContent: 'center',
+        },
+        serviceTimeName: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: themeColors.text,
+            marginBottom: 6,
+        },
+        serviceTimeRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 4,
+        },
+        timeIcon: {
+            marginRight: 6,
+        },
+        serviceTimeDetails: {
+            fontSize: 16,
+            color: themeColors.text,
+            opacity: 0.8,
+        },
+        serviceNoteContainer: {
+            backgroundColor: themeColors.primary + '10',
+            paddingVertical: 4,
+            paddingHorizontal: 8,
+            borderRadius: 12,
+            alignSelf: 'flex-start',
+            marginTop: 6,
+        },
+        serviceTimeNote: {
+            fontSize: 13,
+            color: themeColors.primary,
+            fontWeight: '500',
+        },
+        serviceTimeDivider: {
+            height: 1,
+            backgroundColor: themeColors.border,
+            opacity: 0.5,
+            marginHorizontal: 16,
+        },
+    });
+
+    // Combine styles
+    const combinedStyles = {
+        ...styles,
+        ...additionalStyles,
+    };
+
     if (loading && !refreshing) {
-        return <HomeContentSkeleton />;
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
+                {content?.ui?.loading && (
+                    <Text style={{ color: themeColors.text, marginTop: 10 }}>{content.ui.loading}</Text>
+                )}
+            </View>
+        );
     }
 
     if (error && !content) {
         return (
-            <View style={[styles.container, styles.loadingContainer]}>
-                <Ionicons
-                    name="alert-circle"
-                    size={48}
-                    color={themeColors.error || '#FF3B30'}
-                    style={{ marginBottom: 16 }}
-                />
-                <Text style={styles.errorText}>{error}</Text>
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Ionicons name="alert-circle" size={48} color={themeColors.error} style={{ marginBottom: 16 }} />
+                <Text style={{ color: themeColors.error, fontSize: 16, marginBottom: 20 }}>
+                    {content?.ui?.error || error}
+                </Text>
                 <TouchableOpacity
-                    style={styles.retryButton}
+                    style={{
+                        backgroundColor: themeColors.primary,
+                        padding: 12,
+                        borderRadius: 8,
+                    }}
                     onPress={loadContent}
-                    activeOpacity={0.7}
                 >
-                    <Text style={styles.retryButtonText}>Retry</Text>
+                    <Text style={{ color: '#FFFFFF', fontSize: 16 }}>
+                        {content?.ui?.retry || 'Retry'}
+                    </Text>
                 </TouchableOpacity>
             </View>
         );
     }
 
-    if (!content) {
-        return (
-            <View style={[styles.container, styles.loadingContainer]}>
-                <ActivityIndicator size="large" color={themeColors.primary} />
-            </View>
-        );
-    }
-
-    // Feature cards for grid layout
-    const renderFeatureCard = ({ item: section }: { item: Section }) => {
-        const { id, icon, title } = section;
-
-        // Select the right action based on section id
-        const handlePress = () => {
-            if (id === 'findUs') {
-                handleFindUs();
-            } else if (id === 'watchOnline') {
-                handleWatchOnline();
-            }
-        };
-
-        return (
-            <TouchableOpacity
-                style={styles.featureCard}
-                onPress={handlePress}
-                activeOpacity={0.7}
-            >
-                <View style={styles.featureIconContainer}>
-                    <Ionicons
-                        name={icon as any}
-                        size={28}
-                        color={themeColors.primary}
-                    />
-                </View>
-                <Text style={styles.featureTitle}>{title}</Text>
-            </TouchableOpacity>
-        );
-    };
-
-    // Filter sections to show in the feature grid
-    const featureSections = content.sections.filter(
-        section => section.id === 'findUs' || section.id === 'watchOnline'
-    );
-
-    // Get sections that should be displayed as full cards
-    const cardSections = content.sections.filter(
-        section => section.id !== 'findUs' && section.id !== 'watchOnline'
-    );
-
-    // Helper function to render address with clickable link
-    const renderAddressWithLink = (text: string) => {
-        if (text.includes('24 Rue Antoine-Julien Hénard')) {
-            const addressText = CHURCH_INFO.address;
-            const parts = text.split(addressText);
-
-            if (parts.length === 1) {
-                // Try with just the street name in case the full address isn't in the text
-                const streetPart = '24 Rue Antoine-Julien Hénard';
-                const streetParts = text.split(streetPart);
-
-                if (streetParts.length > 1) {
-                    return (
-                        <>
-                            {streetParts[0]}
-                            <Text
-                                style={[styles.infoText, { color: themeColors.primary, textDecorationLine: 'underline' }]}
-                                onPress={handleFindUs}
-                            >
-                                {addressText}
-                            </Text>
-                            {streetParts[1]}
-                        </>
-                    );
-                }
-            }
-
-            return (
-                <>
-                    {parts[0]}
-                    <Text
-                        style={[styles.infoText, { color: themeColors.primary, textDecorationLine: 'underline' }]}
-                        onPress={handleFindUs}
-                    >
-                        {addressText}
-                    </Text>
-                    {parts.length > 1 ? parts[1] : ''}
-                </>
-            );
-        }
-        return text;
-    };
-
     return (
-        <View style={styles.container}>
+        <View style={combinedStyles.container}>
             <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollViewContent}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
@@ -265,219 +316,126 @@ export const HomeContent = () => {
                     />
                 }
             >
-                <View style={styles.header}>
-                    <Ionicons name="home" size={60} color={themeColors.primary} />
-                    <View style={styles.headerDivider} />
-                    <Text style={styles.title}>
-                        {content.header.title}
-                    </Text>
-                    <Text style={styles.subtitle}>
-                        {content.header.subtitle}
-                    </Text>
+                {/* Hero Section */}
+                <View style={styles.heroSection}>
+                    <View style={styles.heroContent}>
+                        <Text style={styles.heroTitle}>{content?.header.title}</Text>
+                        <Text style={styles.heroSubtitle}>{content?.header.subtitle}</Text>
+                    </View>
                 </View>
 
-                {/* Feature Grid for Quick Access */}
-                <View style={styles.featureGridContainer}>
-                    <FlatList
-                        data={featureSections}
-                        renderItem={renderFeatureCard}
-                        keyExtractor={(item) => item.id}
-                        numColumns={2}
-                        columnWrapperStyle={styles.featureRow}
-                        scrollEnabled={false}
-                    />
+                {/* Quick Actions */}
+                <View style={styles.quickActionsContainer}>
+                    <View style={styles.quickActionsRow}>
+                        <TouchableOpacity style={styles.quickActionButton} onPress={handleWatchOnline}>
+                            <Ionicons
+                                name="videocam"
+                                size={24}
+                                color={themeColors.primary}
+                                style={styles.quickActionIcon}
+                            />
+                            <Text style={styles.quickActionText}>
+                                {content?.ui?.quickActions.watchLive}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.quickActionButton} onPress={handleFindUs}>
+                            <Ionicons
+                                name="location"
+                                size={24}
+                                color={themeColors.primary}
+                                style={styles.quickActionIcon}
+                            />
+                            <Text style={styles.quickActionText}>
+                                {content?.ui?.quickActions.findUs}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
-                {/* Main Content Cards */}
-                {cardSections.map((section) => {
-                    if (section.id === 'sundayService') {
-                        return (
-                            <View key={section.id} style={styles.streamCardContainer}>
-                                <View style={styles.sectionHeaderRow}>
-                                    <Ionicons
-                                        name={section.icon as any}
-                                        size={24}
-                                        color={themeColors.primary}
-                                        style={styles.sectionHeaderIcon}
-                                    />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
-                                <Text style={styles.infoText}>
-                                    {section.content}
+                {/* Service Times Section */}
+                <ServiceTimesSection styles={combinedStyles} themeColors={themeColors} content={content} />
+
+                {/* Live Stream Section */}
+                <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>{content?.ui?.liveStream.title}</Text>
+                        <TouchableOpacity style={styles.seeAllButton} onPress={handleWatchOnline}>
+                            <Text style={styles.seeAllText}>{content?.ui?.liveStream.watchNow}</Text>
+                            <Ionicons name="arrow-forward" size={16} color={themeColors.primary} />
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.liveStreamCard}>
+                        <WebView
+                            source={{ uri: STATIC_URLS.youtube }}
+                            style={styles.liveStreamThumbnail}
+                            allowsFullscreenVideo={true}
+                            javaScriptEnabled={true}
+                            domStorageEnabled={true}
+                        />
+                        <View style={styles.liveStreamInfo}>
+                            <Text style={styles.liveStreamTitle}>
+                                {content?.ui?.liveStream.serviceTitle}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Upcoming Events Section */}
+                <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>
+                            {content?.ui?.upcomingEvents.title}
+                        </Text>
+                        <TouchableOpacity style={styles.seeAllButton}>
+                            <Text style={styles.seeAllText}>
+                                {content?.ui?.upcomingEvents.seeAll}
+                            </Text>
+                            <Ionicons name="arrow-forward" size={16} color={themeColors.primary} />
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.upcomingEventsContainer}>
+                        {/* Example Event Cards */}
+                        <TouchableOpacity style={styles.eventCard}>
+                            <View style={styles.eventDate}>
+                                <Text style={styles.eventDay}>15</Text>
+                                <Text style={styles.eventMonth}>MAR</Text>
+                            </View>
+                            <View style={styles.eventInfo}>
+                                <Text style={styles.eventTitle}>
+                                    {content?.ui?.liveStream.serviceTitle}
                                 </Text>
-                                <TouchableOpacity
-                                    style={styles.videoContainer}
-                                    onPress={handleWatchOnline}
-                                    activeOpacity={0.9}
-                                >
-                                    <WebView
-                                        source={{ uri: STATIC_URLS.youtube }}
-                                        style={styles.videoWebView}
-                                        allowsFullscreenVideo={true}
-                                        javaScriptEnabled={true}
-                                        domStorageEnabled={true}
-                                    />
-                                </TouchableOpacity>
+                                <Text style={styles.eventTime}>10:30 AM</Text>
                             </View>
-                        );
-                    }
+                        </TouchableOpacity>
+                    </View>
+                </View>
 
-                    if (section.id === 'joinUs') {
-                        return (
-                            <View key={section.id} style={styles.cardContainer}>
-                                <View style={styles.sectionHeaderRow}>
-                                    <Ionicons
-                                        name={section.icon as any}
-                                        size={24}
-                                        color={themeColors.primary}
-                                        style={styles.sectionHeaderIcon}
-                                    />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
-                                <Text style={styles.infoText}>
-                                    {renderAddressWithLink(section.content)}
-                                </Text>
-
-                                <TouchableOpacity
-                                    style={styles.button}
-                                    onPress={handleFindUs}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Ionicons
-                                            name={(section.buttonIcon || 'map') as any}
-                                            size={20}
-                                            color="#FFFFFF"
-                                            style={{ marginRight: 8 }}
-                                        />
-                                        <Text style={styles.buttonText}>
-                                            {CHURCH_INFO.address}
-                                        </Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-                        );
-                    }
-
-                    if (section.id === 'joinOnline') {
-                        return (
-                            <View key={section.id} style={styles.cardContainer}>
-                                <View style={styles.sectionHeaderRow}>
-                                    <Ionicons
-                                        name={section.icon as any}
-                                        size={24}
-                                        color={themeColors.primary}
-                                        style={styles.sectionHeaderIcon}
-                                    />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
-                                <Text style={styles.infoText}>
-                                    {section.content}
-                                </Text>
-
-                                <TouchableOpacity
-                                    style={styles.button}
-                                    onPress={handleWatchOnline}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Ionicons
-                                            name={(section.buttonIcon || 'videocam') as any}
-                                            size={20}
-                                            color="#FFFFFF"
-                                            style={{ marginRight: 8 }}
-                                        />
-                                        <Text style={styles.buttonText}>
-                                            {section.buttonText || "Watch Live Stream"}
-                                        </Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-                        );
-                    }
-
-                    if (section.subsections) {
-                        return (
-                            <View key={section.id} style={styles.cardContainer}>
-                                <View style={styles.sectionHeaderRow}>
-                                    <Ionicons
-                                        name={section.icon as any}
-                                        size={24}
-                                        color={themeColors.primary}
-                                        style={styles.sectionHeaderIcon}
-                                    />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
-                                <View>
-                                    {section.subsections.map((subsection, subIndex) => (
-                                        <View key={`${section.id}-sub-${subIndex}`} style={styles.subsectionContainer}>
-                                            <Text style={styles.subsectionTitle}>
-                                                {subsection.title}
-                                            </Text>
-                                            {subsection.text && (
-                                                <Text style={styles.infoText}>
-                                                    {renderAddressWithLink(subsection.text)}
-                                                </Text>
-                                            )}
-                                            {subsection.items && subsection.items.map((item, itemIndex) => (
-                                                <View key={`item-${itemIndex}`} style={styles.itemRow}>
-                                                    <Ionicons
-                                                        name={(subsection.itemIcons?.[itemIndex] || subsection.itemIcon || 'checkmark-circle') as any}
-                                                        size={20}
-                                                        color={themeColors.primary}
-                                                        style={styles.itemIcon}
-                                                    />
-                                                    <Text style={[styles.infoText, { marginBottom: 0, flex: 1 }]}>
-                                                        {renderAddressWithLink(item)}
-                                                    </Text>
-                                                </View>
-                                            ))}
-                                        </View>
-                                    ))}
-                                </View>
-                            </View>
-                        );
-                    } else {
-                        // Render standard content card
-                        return (
-                            <View key={section.id} style={styles.cardContainer}>
-                                <View style={styles.sectionHeaderRow}>
-                                    <Ionicons
-                                        name={section.icon as any}
-                                        size={24}
-                                        color={themeColors.primary}
-                                        style={styles.sectionHeaderIcon}
-                                    />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
-                                <Text style={styles.infoText}>
-                                    {renderAddressWithLink(section.content)}
-                                </Text>
-
-                                {section.buttonText && (
-                                    <TouchableOpacity
-                                        style={styles.button}
-                                        onPress={section.id === 'findUs' ? handleFindUs : section.id === 'watchOnline' ? handleWatchOnline : undefined}
-                                        activeOpacity={0.7}
-                                    >
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                                            {section.buttonIcon && (
-                                                <Ionicons
-                                                    name={section.buttonIcon as any}
-                                                    size={20}
-                                                    color="#FFFFFF"
-                                                    style={{ marginRight: 8 }}
-                                                />
-                                            )}
-                                            <Text style={styles.buttonText}>{section.buttonText}</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        );
-                    }
-                })}
+                {/* Location Section */}
+                <View style={styles.sectionContainer}>
+                    <View style={styles.locationSection}>
+                        <View style={styles.locationHeader}>
+                            <Ionicons name="location" size={24} color={themeColors.primary} />
+                            <Text style={styles.locationTitle}>
+                                {content?.ui?.location.title}
+                            </Text>
+                        </View>
+                        <Text style={styles.locationAddress}>
+                            {CHURCH_INFO.address}
+                        </Text>
+                        <TouchableOpacity style={styles.mapButton} onPress={handleFindUs}>
+                            <Ionicons name="map" size={20} color="#FFFFFF" />
+                            <Text style={styles.mapButtonText}>
+                                {content?.ui?.location.getDirections}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </ScrollView>
+
+            {/* Floating Action Button for Donations */}
+            <TouchableOpacity style={styles.fab} onPress={handleDonate}>
+                <Ionicons name="heart" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
         </View>
     );
 };

@@ -3,7 +3,42 @@
     "title": "Our Sundays",
     "subtitle": "Join us for worship and fellowship"
   },
+  "ui": {
+    "quickActions": {
+      "watchLive": "Watch Live",
+      "findUs": "Find Us"
+    },
+    "liveStream": {
+      "title": "Live Stream",
+      "watchNow": "Watch Now",
+      "serviceTitle": "Sunday Service"
+    },
+    "upcomingEvents": {
+      "title": "Upcoming Events",
+      "seeAll": "See All"
+    },
+    "location": {
+      "title": "Visit Us",
+      "getDirections": "Get Directions"
+    },
+    "loading": "Loading...",
+    "error": "An error occurred while loading content",
+    "retry": "Retry"
+  },
   "sections": [
+    {
+      "id": "serviceTimes",
+      "icon": "time",
+      "title": "Service Times",
+      "times": [
+        {
+          "name": "Sunday Service",
+          "time": "10:30 AM - 12:00 PM",
+          "note": "Bilingual (English & French)",
+          "icon": "calendar"
+        }
+      ]
+    },
     {
       "id": "sundayService",
       "icon": "videocam",

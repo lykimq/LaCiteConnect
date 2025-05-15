@@ -3,18 +3,53 @@
     "title": "La Cité Église",
     "subtitle": "Bienvenue à notre communauté"
   },
+  "ui": {
+    "quickActions": {
+      "watchLive": "Regarder en Direct",
+      "findUs": "Nous Trouver"
+    },
+    "liveStream": {
+      "title": "Direct",
+      "watchNow": "Regarder Maintenant",
+      "serviceTitle": "Service du Dimanche"
+    },
+    "upcomingEvents": {
+      "title": "Événements à Venir",
+      "seeAll": "Voir Tout"
+    },
+    "location": {
+      "title": "Visitez-Nous",
+      "getDirections": "Obtenir l'Itinéraire"
+    },
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite lors du chargement du contenu",
+    "retry": "Réessayer"
+  },
   "sections": [
+    {
+      "id": "serviceTimes",
+      "icon": "time",
+      "title": "Horaires des Services",
+      "times": [
+        {
+          "name": "Service du Dimanche",
+          "time": "10h30 - 12h00",
+          "note": "Bilingue (Français & Anglais)",
+          "icon": "calendar"
+        }
+      ]
+    },
     {
       "id": "sundayService",
       "icon": "calendar",
       "title": "Service du Dimanche",
-      "content": "Nous nous réunissons tous les dimanches à 10h pour un moment de louange, de prière et d'enseignement. Venez vous joindre à nous!"
+      "content": "Nous nous réunissons tous les dimanches à 10h30 pour un moment de louange, de prière et d'enseignement. Venez vous joindre à nous!"
     },
     {
       "id": "joinUs",
       "icon": "navigate",
       "title": "Venez nous Rejoindre",
-      "content": "Notre église est située à Levallois-Perret. Nous serions ravis de vous accueillir parmi nous!",
+      "content": "Notre église est située à Paris. Nous serions ravis de vous accueillir parmi nous!",
       "buttonText": "Nous Trouver",
       "buttonIcon": "map"
     },
@@ -32,22 +67,18 @@
       "title": "Informations Pratiques",
       "subsections": [
         {
-          "title": "Nos Horaires",
+          "title": "Nos Services",
           "items": [
-            "Service principal: Dimanche 10h00 - 12h00",
-            "Prière: Mercredi 19h30 - 20h30",
-            "Groupe de jeunes: Vendredi 19h30 - 21h30"
+            "Nos services sont en français et en anglais",
+            "Nous nous réunissons en personne et en ligne",
+            "Tout le monde est invité et bienvenu!",
+            "Venez comme vous êtes!"
           ],
-          "itemIcon": "time"
+          "itemIcon": "checkmark-circle"
         },
         {
           "title": "Pour les Enfants",
-          "text": "Nous proposons un programme adapté aux enfants pendant le service du dimanche matin.",
-          "items": [
-            "École du dimanche: 3-12 ans",
-            "Garderie: 0-3 ans"
-          ],
-          "itemIcon": "happy"
+          "text": "Nous aimons les enfants! Nous avons une salle pour les parents avec bébés et un programme d'école du dimanche pour les enfants (ils sont également les bienvenus dans la salle principale avec leurs parents)."
         },
         {
           "title": "Déroulement du Service",
