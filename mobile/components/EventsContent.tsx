@@ -1016,8 +1016,8 @@ export const EventsContent = () => {
                             onPress={() => setViewMode('calendar')}
                         >
                             <Ionicons
-                                name="calendar-outline"
-                                size={28}
+                                name="calendar"
+                                size={24}
                                 color={themeColors.primary}
                                 style={styles.quickActionIcon}
                             />
@@ -1030,8 +1030,8 @@ export const EventsContent = () => {
                             onPress={() => setViewMode('list')}
                         >
                             <Ionicons
-                                name="list-outline"
-                                size={28}
+                                name="document-text"
+                                size={24}
                                 color={themeColors.primary}
                                 style={styles.quickActionIcon}
                             />
