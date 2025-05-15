@@ -4,11 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import WebView from 'react-native-webview';
 import { STATIC_URLS, CHURCH_INFO } from '../config/staticData';
 import { contentService } from '../services/contentService';
+import { calendarService } from '../services/calendarService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createHomeStyles } from '../styles/ThemedStyles';
 import { openGenericUrl, openUrlWithCorrectDomain } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
+import type { TabParamList } from '../navigation/AppNavigator';
+import { formatDate, formatTime } from '../utils/dateUtils';
 
 // Define the UI strings interface
 interface UIStrings {
@@ -26,6 +31,7 @@ interface UIStrings {
     upcomingEvents: {
         title: string;
         seeAll: string;
+        noEvents: string;
     };
     location: {
         title: string;
@@ -67,6 +73,22 @@ interface HomeContent {
     };
     ui: UIStrings;
     sections: Section[];
+}
+
+// Add CalendarEvent interface
+interface CalendarEvent {
+    id: string;
+    summary: string;
+    description?: string;
+    start: {
+        dateTime?: string;
+        date?: string;
+    };
+    end: {
+        dateTime?: string;
+        date?: string;
+    };
+    location?: string;
 }
 
 // Add a new section for service times
@@ -125,13 +147,41 @@ export const HomeContent = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [todayEvents, setTodayEvents] = useState<CalendarEvent[]>([]);
+    const [loadingEvents, setLoadingEvents] = useState<boolean>(true);
     const { themeColors, theme } = useTheme();
     const styles = useThemedStyles(createHomeStyles);
     const { currentLanguage } = useLanguage();
+    const navigation = useNavigation<NavigationProp<TabParamList>>();
 
     useEffect(() => {
         loadContent();
+        loadTodayEvents();
     }, []);
+
+    const loadTodayEvents = async () => {
+        try {
+            setLoadingEvents(true);
+            const events = await calendarService.getEvents();
+
+            // Filter for today's events
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const todaysEvents = events.filter(event => {
+                const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                return eventDate >= today && eventDate < tomorrow;
+            });
+
+            setTodayEvents(todaysEvents);
+        } catch (err) {
+            console.error('Error loading events:', err);
+        } finally {
+            setLoadingEvents(false);
+        }
+    };
 
     const loadContent = async () => {
         try {
@@ -169,6 +219,16 @@ export const HomeContent = () => {
 
     const handleDonate = () => {
         openUrlWithCorrectDomain(STATIC_URLS.donate.mission, currentLanguage);
+    };
+
+    const handleOpenLocation = (location: string) => {
+        const encodedLocation = encodeURIComponent(location);
+        const mapsUrl = Platform.select({
+            ios: `maps://maps.apple.com/?q=${encodedLocation}`,
+            android: `geo:0,0?q=${encodedLocation}`,
+            default: `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`
+        });
+        Linking.openURL(mapsUrl);
     };
 
     // Add styles for service times
@@ -268,6 +328,40 @@ export const HomeContent = () => {
         ...additionalStyles,
     };
 
+    const renderEventCard = (event: CalendarEvent) => {
+        const eventDate = new Date(event.start.dateTime || event.start.date || '');
+
+        return (
+            <View key={event.id} style={styles.eventCard}>
+                <View style={styles.eventDate}>
+                    <Text style={styles.eventDay}>{eventDate.getDate()}</Text>
+                    <Text style={styles.eventMonth}>
+                        {eventDate.toLocaleString('default', { month: 'short' }).toUpperCase()}
+                    </Text>
+                </View>
+                <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle} numberOfLines={2}>
+                        {event.summary}
+                    </Text>
+                    <Text style={styles.eventTime}>
+                        {event.start.dateTime ? formatTime(eventDate) : 'All Day'}
+                    </Text>
+                    {event.location && (
+                        <TouchableOpacity
+                            style={styles.eventLocation}
+                            onPress={() => handleOpenLocation(event.location || '')}
+                        >
+                            <Ionicons name="location-outline" size={14} color={themeColors.primary} />
+                            <Text style={[styles.eventLocationText, { color: themeColors.primary }]} numberOfLines={1}>
+                                {event.location}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+        );
+    };
+
     if (loading && !refreshing) {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -284,7 +378,7 @@ export const HomeContent = () => {
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                 <Ionicons name="alert-circle" size={48} color={themeColors.error} style={{ marginBottom: 16 }} />
                 <Text style={{ color: themeColors.error, fontSize: 16, marginBottom: 20 }}>
-                    {content?.ui?.error || error}
+                    {error}
                 </Text>
                 <TouchableOpacity
                     style={{
@@ -295,7 +389,7 @@ export const HomeContent = () => {
                     onPress={loadContent}
                 >
                     <Text style={{ color: '#FFFFFF', fontSize: 16 }}>
-                        {content?.ui?.retry || 'Retry'}
+                        Retry
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -319,8 +413,8 @@ export const HomeContent = () => {
                 {/* Hero Section */}
                 <View style={styles.heroSection}>
                     <View style={styles.heroContent}>
-                        <Text style={styles.heroTitle}>{content?.header.title}</Text>
-                        <Text style={styles.heroSubtitle}>{content?.header.subtitle}</Text>
+                        <Text style={styles.heroTitle}>{content?.header?.title || ''}</Text>
+                        <Text style={styles.heroSubtitle}>{content?.header?.subtitle || ''}</Text>
                     </View>
                 </View>
 
@@ -335,7 +429,7 @@ export const HomeContent = () => {
                                 style={styles.quickActionIcon}
                             />
                             <Text style={styles.quickActionText}>
-                                {content?.ui?.quickActions.watchLive}
+                                {content?.ui?.quickActions?.watchLive || 'Watch Live'}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.quickActionButton} onPress={handleFindUs}>
@@ -346,7 +440,7 @@ export const HomeContent = () => {
                                 style={styles.quickActionIcon}
                             />
                             <Text style={styles.quickActionText}>
-                                {content?.ui?.quickActions.findUs}
+                                {content?.ui?.quickActions?.findUs || 'Find Us'}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -358,9 +452,9 @@ export const HomeContent = () => {
                 {/* Live Stream Section */}
                 <View style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>{content?.ui?.liveStream.title}</Text>
+                        <Text style={styles.sectionTitle}>{content?.ui?.liveStream?.title || 'Live Stream'}</Text>
                         <TouchableOpacity style={styles.seeAllButton} onPress={handleWatchOnline}>
-                            <Text style={styles.seeAllText}>{content?.ui?.liveStream.watchNow}</Text>
+                            <Text style={styles.seeAllText}>{content?.ui?.liveStream?.watchNow || 'Watch Now'}</Text>
                             <Ionicons name="arrow-forward" size={16} color={themeColors.primary} />
                         </TouchableOpacity>
                     </View>
@@ -374,7 +468,7 @@ export const HomeContent = () => {
                         />
                         <View style={styles.liveStreamInfo}>
                             <Text style={styles.liveStreamTitle}>
-                                {content?.ui?.liveStream.serviceTitle}
+                                {content?.ui?.liveStream?.serviceTitle || 'Sunday Service'}
                             </Text>
                         </View>
                     </View>
@@ -384,29 +478,30 @@ export const HomeContent = () => {
                 <View style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>
-                            {content?.ui?.upcomingEvents.title}
+                            {content?.ui?.upcomingEvents?.title || 'Upcoming Events'}
                         </Text>
-                        <TouchableOpacity style={styles.seeAllButton}>
+                        <TouchableOpacity
+                            style={styles.seeAllButton}
+                            onPress={() => navigation.navigate('Events')}
+                        >
                             <Text style={styles.seeAllText}>
-                                {content?.ui?.upcomingEvents.seeAll}
+                                {content?.ui?.upcomingEvents?.seeAll || 'See All'}
                             </Text>
                             <Ionicons name="arrow-forward" size={16} color={themeColors.primary} />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.upcomingEventsContainer}>
-                        {/* Example Event Cards */}
-                        <TouchableOpacity style={styles.eventCard}>
-                            <View style={styles.eventDate}>
-                                <Text style={styles.eventDay}>15</Text>
-                                <Text style={styles.eventMonth}>MAR</Text>
-                            </View>
-                            <View style={styles.eventInfo}>
-                                <Text style={styles.eventTitle}>
-                                    {content?.ui?.liveStream.serviceTitle}
+                        {loadingEvents ? (
+                            <ActivityIndicator size="small" color={themeColors.primary} />
+                        ) : todayEvents.length > 0 ? (
+                            todayEvents.map(event => renderEventCard(event))
+                        ) : (
+                            <View style={styles.noEventsContainer}>
+                                <Text style={styles.noEventsText}>
+                                    {content?.ui?.upcomingEvents?.noEvents || 'No events scheduled for today'}
                                 </Text>
-                                <Text style={styles.eventTime}>10:30 AM</Text>
                             </View>
-                        </TouchableOpacity>
+                        )}
                     </View>
                 </View>
 
@@ -416,7 +511,7 @@ export const HomeContent = () => {
                         <View style={styles.locationHeader}>
                             <Ionicons name="location" size={24} color={themeColors.primary} />
                             <Text style={styles.locationTitle}>
-                                {content?.ui?.location.title}
+                                {content?.ui?.location?.title || 'Visit Us'}
                             </Text>
                         </View>
                         <Text style={styles.locationAddress}>
@@ -425,7 +520,7 @@ export const HomeContent = () => {
                         <TouchableOpacity style={styles.mapButton} onPress={handleFindUs}>
                             <Ionicons name="map" size={20} color="#FFFFFF" />
                             <Text style={styles.mapButtonText}>
-                                {content?.ui?.location.getDirections}
+                                {content?.ui?.location?.getDirections || 'Get Directions'}
                             </Text>
                         </TouchableOpacity>
                     </View>

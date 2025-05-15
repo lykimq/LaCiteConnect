@@ -268,6 +268,28 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
         shadowRadius: 4,
         elevation: 5,
     },
+    eventLocation: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    eventLocationText: {
+        fontSize: 12,
+        color: colors.text,
+        opacity: 0.7,
+        marginLeft: 4,
+    },
+    noEventsContainer: {
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    noEventsText: {
+        fontSize: 14,
+        color: colors.text,
+        opacity: 0.7,
+        textAlign: 'center',
+    },
 });
 
 /**
@@ -896,21 +918,6 @@ export const createEventsStyles = (colors: any) => StyleSheet.create({
         justifyContent: 'center',
         paddingVertical: 8,
         borderRadius: 6,
-    },
-    noEventsContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
-        backgroundColor: colors.card,
-        borderRadius: 8,
-        marginVertical: 10,
-    },
-    noEventsText: {
-        fontSize: 16,
-        color: colors.text,
-        opacity: 0.7,
-        textAlign: 'center',
-        marginVertical: 15,
     },
     errorText: {
         fontSize: 16,

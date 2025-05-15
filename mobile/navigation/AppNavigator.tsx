@@ -14,7 +14,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { LanguageAwareScreen } from '../components/LanguageAwareScreen';
 
 // Define the tab navigator param list
-type TabParamList = {
+export type TabParamList = {
     Home: undefined;
     WhoWeAre: undefined;
     GetConnected: undefined;
