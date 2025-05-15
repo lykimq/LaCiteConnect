@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Linking, Alert, RefreshControl } from 'react-native';
+import {
+    View,
+    Text,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    ActivityIndicator,
+    Platform,
+    Linking,
+    Alert,
+    RefreshControl,
+    Share,
+    Switch
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LanguageSelector } from './LanguageSelector';
 import { ThemeSelector } from './ThemeSelector';
@@ -7,6 +20,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useLocalizedContent } from '../hooks/useLocalizedContent';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
+import Constants from 'expo-constants';
 
 // Enhanced interface for settings data
 interface SettingsContentData {
@@ -30,10 +44,10 @@ interface SettingsContentData {
 }
 
 export const SettingsContent = () => {
-    const { themeColors } = useTheme();
+    const { themeColors, theme: currentTheme, changeTheme } = useTheme();
     const { content, isLoading, error, refresh } = useLocalizedContent<SettingsContentData>('settings');
     const [refreshing, setRefreshing] = useState(false);
-    const { currentLanguage } = useLanguage();
+    const { currentLanguage, setAppLanguage } = useLanguage();
 
     // Pull to refresh functionality
     const onRefresh = async () => {
@@ -60,6 +74,26 @@ export const SettingsContent = () => {
                 }
             ]
         );
+    };
+
+    // Handle share
+    const handleShare = async () => {
+        try {
+            const result = await Share.share({
+                message: currentLanguage === 'fr'
+                    ? 'Découvrez La Cité Connect, votre lien avec la communauté! Téléchargez l\'application:'
+                    : 'Discover La Cité Connect, your community link! Download the app:',
+                url: 'https://laciteconnect.org/app',
+                title: 'La Cité Connect'
+            });
+        } catch (error) {
+            Alert.alert('Error', 'Failed to share the app');
+        }
+    };
+
+    // Get the icon component for a given icon name
+    const getIconComponent = (iconName: string) => {
+        return <Ionicons name={iconName as keyof typeof Ionicons.glyphMap} size={24} color={themeColors.primary} />;
     };
 
     // Create dynamic styles based on theme
@@ -132,7 +166,16 @@ export const SettingsContent = () => {
             lineHeight: 20,
         },
         settingItem: {
-            marginVertical: 8,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: `${themeColors.border}80`,
+        },
+        settingLabel: {
+            fontSize: 16,
+            color: themeColors.text,
         },
         infoItem: {
             flexDirection: 'row',
@@ -190,6 +233,34 @@ export const SettingsContent = () => {
             marginTop: 20,
             marginBottom: 10,
         },
+        version: {
+            fontSize: 14,
+            color: themeColors.secondary || '#666',
+            textAlign: 'center',
+            marginTop: 8,
+        },
+        themeSwitch: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        activeTheme: {
+            color: themeColors.primary,
+            fontWeight: '700',
+        },
+        languageSwitch: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        languageLabel: {
+            fontSize: 14,
+            color: themeColors.secondary || '#666',
+            marginHorizontal: 4,
+            fontWeight: '600',
+        },
+        activeLanguage: {
+            color: themeColors.primary,
+            fontWeight: '700',
+        },
     });
 
     // Loading state UI
@@ -215,11 +286,6 @@ export const SettingsContent = () => {
         );
     }
 
-    // Get the icon component for a given icon name
-    const getIconComponent = (iconName: string) => {
-        return <Ionicons name={iconName as keyof typeof Ionicons.glyphMap} size={24} color={themeColors.primary} />;
-    };
-
     return (
         <View style={styles.container}>
             <ScrollView
@@ -240,122 +306,151 @@ export const SettingsContent = () => {
                     <Text style={styles.subtitle}>{content.header.subtitle}</Text>
                 </View>
 
-                {/* Language Settings */}
-                {content.sections.map((section, sectionIndex) => {
-                    if (section.id === 'language') {
-                        return (
-                            <View key={section.id} style={styles.section}>
-                                <View style={styles.sectionHeader}>
-                                    <View style={styles.sectionIcon}>
-                                        {getIconComponent(section.icon)}
-                                    </View>
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
-                                {section.description && (
-                                    <Text style={styles.description}>
-                                        {section.description}
-                                    </Text>
-                                )}
-                                <View style={styles.settingItem}>
-                                    <LanguageSelector />
-                                </View>
-                            </View>
-                        );
-                    }
+                {/* Preferences Section */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <View style={styles.sectionIcon}>
+                            <Ionicons name="settings-outline" size={24} color={themeColors.primary} />
+                        </View>
+                        <Text style={styles.sectionTitle}>
+                            {currentLanguage === 'fr' ? 'Préférences' : 'Preferences'}
+                        </Text>
+                    </View>
 
-                    if (section.id === 'theme') {
-                        return (
-                            <View key={section.id} style={styles.section}>
-                                <View style={styles.sectionHeader}>
-                                    <View style={styles.sectionIcon}>
-                                        {getIconComponent(section.icon)}
-                                    </View>
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
-                                {section.description && (
-                                    <Text style={styles.description}>
-                                        {section.description}
-                                    </Text>
-                                )}
-                                <View style={styles.settingItem}>
-                                    <ThemeSelector />
-                                </View>
-                            </View>
-                        );
-                    }
+                    <View style={styles.settingItem}>
+                        <Text style={styles.settingLabel}>
+                            {currentLanguage === 'fr' ? 'Mode Sombre' : 'Dark Mode'}
+                        </Text>
+                        <View style={styles.themeSwitch}>
+                            <Text style={[
+                                styles.languageLabel,
+                                currentTheme === 'dark' && styles.activeTheme
+                            ]}>Dark</Text>
+                            <Switch
+                                value={currentTheme === 'dark'}
+                                onValueChange={(value) => changeTheme(value ? 'dark' : 'light')}
+                                trackColor={{ false: '#767577', true: themeColors.primary }}
+                                thumbColor={Platform.OS === 'ios' ? '#FFFFFF' : undefined}
+                            />
+                            <Text style={[
+                                styles.languageLabel,
+                                currentTheme === 'light' && styles.activeTheme
+                            ]}>Light</Text>
+                        </View>
+                    </View>
 
-                    if (section.id === 'about' && section.items) {
-                        return (
-                            <View key={section.id} style={styles.section}>
-                                <View style={styles.sectionHeader}>
-                                    <View style={styles.sectionIcon}>
-                                        {getIconComponent(section.icon)}
-                                    </View>
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
-                                {section.items.map((item, index) => {
-                                    const isLast = index === section.items!.length - 1;
-                                    return (
-                                        <TouchableOpacity
-                                            key={item.id}
-                                            style={[styles.infoItem, isLast && styles.lastInfoItem]}
-                                            onPress={() => item.type === 'link' && handleLinkPress(item.url || '#', item.label)}
-                                            disabled={item.type !== 'link'}
-                                        >
-                                            <Text style={styles.infoLabel}>{item.label}</Text>
-                                            {item.type === 'text' && item.value ? (
-                                                <Text style={styles.infoValue}>{item.value}</Text>
-                                            ) : item.type === 'link' ? (
-                                                <Ionicons
-                                                    name="arrow-forward"
-                                                    size={18}
-                                                    color={themeColors.primary}
-                                                />
-                                            ) : (
-                                                <Ionicons
-                                                    name="chevron-forward"
-                                                    size={18}
-                                                    color={themeColors.text}
-                                                    style={{ opacity: 0.6 }}
-                                                />
-                                            )}
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </View>
-                        );
-                    }
+                    <View style={[styles.settingItem, { borderBottomWidth: 0 }]}>
+                        <Text style={styles.settingLabel}>
+                            {currentLanguage === 'fr' ? 'Langue' : 'Language'}
+                        </Text>
+                        <View style={styles.languageSwitch}>
+                            <Text style={[
+                                styles.languageLabel,
+                                currentLanguage === 'fr' && styles.activeLanguage
+                            ]}>FR</Text>
+                            <Switch
+                                value={currentLanguage === 'en'}
+                                onValueChange={(value) => setAppLanguage(value ? 'en' : 'fr')}
+                                trackColor={{ false: '#767577', true: themeColors.primary }}
+                                thumbColor={Platform.OS === 'ios' ? '#FFFFFF' : undefined}
+                            />
+                            <Text style={[
+                                styles.languageLabel,
+                                currentLanguage === 'en' && styles.activeLanguage
+                            ]}>EN</Text>
+                        </View>
+                    </View>
+                </View>
 
-                    return null;
-                })}
+                {/* Share Section */}
+                <View style={styles.section}>
+                    <TouchableOpacity onPress={handleShare} style={styles.infoItem}>
+                        <Text style={styles.infoLabel}>
+                            {currentLanguage === 'fr' ? 'Partager l\'Application' : 'Share App'}
+                        </Text>
+                        <Ionicons name="share-outline" size={24} color={themeColors.primary} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Legal Section */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <View style={styles.sectionIcon}>
+                            <Ionicons name="shield-outline" size={24} color={themeColors.primary} />
+                        </View>
+                        <Text style={styles.sectionTitle}>
+                            {currentLanguage === 'fr' ? 'Légal' : 'Legal'}
+                        </Text>
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.infoItem}
+                        onPress={() => handleLinkPress('https://laciteconnect.org/terms', 'Terms of Service')}
+                    >
+                        <Text style={styles.infoLabel}>
+                            {currentLanguage === 'fr' ? 'Conditions d\'Utilisation' : 'Terms of Service'}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={24} color={themeColors.text} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.infoItem, styles.lastInfoItem]}
+                        onPress={() => handleLinkPress('https://laciteconnect.org/privacy', 'Privacy Policy')}
+                    >
+                        <Text style={styles.infoLabel}>
+                            {currentLanguage === 'fr' ? 'Politique de Confidentialité' : 'Privacy Policy'}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={24} color={themeColors.text} />
+                    </TouchableOpacity>
+                </View>
 
                 {/* Support Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={styles.sectionIcon}>
-                            {getIconComponent('help-buoy')}
+                            <Ionicons name="help-buoy-outline" size={24} color={themeColors.primary} />
                         </View>
-                        <Text style={styles.sectionTitle}>Support</Text>
+                        <Text style={styles.sectionTitle}>
+                            {currentLanguage === 'fr' ? 'Support' : 'Support'}
+                        </Text>
                     </View>
 
-                    <TouchableOpacity style={styles.infoItem} onPress={() => handleLinkPress('mailto:support@laciteconnect.org', 'Contact Support')}>
-                        <Text style={styles.infoLabel}>Contact Support</Text>
-                        <Ionicons name="mail" size={18} color={themeColors.primary} />
+                    <TouchableOpacity
+                        style={styles.infoItem}
+                        onPress={() => handleLinkPress('mailto:support@laciteconnect.org', 'Contact Support')}
+                    >
+                        <Text style={styles.infoLabel}>
+                            {currentLanguage === 'fr' ? 'Contacter le Support' : 'Contact Support'}
+                        </Text>
+                        <Ionicons name="mail-outline" size={24} color={themeColors.primary} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.infoItem} onPress={() => handleLinkPress('https://laciteconnect.org/faq', 'FAQ')}>
-                        <Text style={styles.infoLabel}>Frequently Asked Questions</Text>
-                        <Ionicons name="help-circle" size={18} color={themeColors.primary} />
+                    <TouchableOpacity
+                        style={styles.infoItem}
+                        onPress={() => handleLinkPress('https://laciteconnect.org/faq', 'FAQ')}
+                    >
+                        <Text style={styles.infoLabel}>
+                            {currentLanguage === 'fr' ? 'FAQ' : 'FAQ'}
+                        </Text>
+                        <Ionicons name="help-circle-outline" size={24} color={themeColors.primary} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={[styles.infoItem, styles.lastInfoItem]} onPress={() => handleLinkPress('https://laciteconnect.org/feedback', 'Feedback')}>
-                        <Text style={styles.infoLabel}>Send Feedback</Text>
-                        <Ionicons name="chatbubble" size={18} color={themeColors.primary} />
+                    <TouchableOpacity
+                        style={[styles.infoItem, styles.lastInfoItem]}
+                        onPress={() => handleLinkPress('https://laciteconnect.org/feedback', 'Feedback')}
+                    >
+                        <Text style={styles.infoLabel}>
+                            {currentLanguage === 'fr' ? 'Envoyer un Retour' : 'Send Feedback'}
+                        </Text>
+                        <Ionicons name="chatbubble-outline" size={24} color={themeColors.primary} />
                     </TouchableOpacity>
                 </View>
 
                 <Text style={styles.footerText}>
                     La Cité Connect © {new Date().getFullYear()}
+                </Text>
+                <Text style={styles.version}>
+                    Version {Constants.expoConfig?.version || '1.0.0'}
                 </Text>
             </ScrollView>
         </View>
