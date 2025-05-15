@@ -477,66 +477,6 @@ export const EventsContent = () => {
             contentContainerStyle={styles.quickFiltersContent}
         >
             <TouchableOpacity
-                style={[
-                    styles.quickFilterChip,
-                    filterOptions.category === 'all' && styles.activeQuickFilterChip
-                ]}
-                onPress={() => setFilterOptions(prev => ({ ...prev, category: 'all' }))}
-            >
-                <Ionicons
-                    name="calendar"
-                    size={16}
-                    color={filterOptions.category === 'all' ? '#FFFFFF' : themeColors.primary}
-                />
-                <Text style={[
-                    styles.quickFilterText,
-                    filterOptions.category === 'all' && styles.activeQuickFilterText
-                ]}>
-                    {content?.ui.filterOptions.allEvents || 'All'}
-                </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={[
-                    styles.quickFilterChip,
-                    filterOptions.category === 'upcoming' && styles.activeQuickFilterChip
-                ]}
-                onPress={() => setFilterOptions(prev => ({ ...prev, category: 'upcoming' }))}
-            >
-                <Ionicons
-                    name="time-outline"
-                    size={16}
-                    color={filterOptions.category === 'upcoming' ? '#FFFFFF' : themeColors.primary}
-                />
-                <Text style={[
-                    styles.quickFilterText,
-                    filterOptions.category === 'upcoming' && styles.activeQuickFilterText
-                ]}>
-                    {content?.ui.filterOptions.upcoming || 'Upcoming'}
-                </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={[
-                    styles.quickFilterChip,
-                    filterOptions.category === 'thisWeek' && styles.activeQuickFilterChip
-                ]}
-                onPress={() => setFilterOptions(prev => ({ ...prev, category: 'thisWeek' }))}
-            >
-                <Ionicons
-                    name="calendar-outline"
-                    size={16}
-                    color={filterOptions.category === 'thisWeek' ? '#FFFFFF' : themeColors.primary}
-                />
-                <Text style={[
-                    styles.quickFilterText,
-                    filterOptions.category === 'thisWeek' && styles.activeQuickFilterText
-                ]}>
-                    {content?.ui.filterOptions.thisWeek || 'This Week'}
-                </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
                 style={styles.moreFiltersButton}
                 onPress={() => setShowFilterModal(true)}
             >
@@ -556,8 +496,16 @@ export const EventsContent = () => {
             animationType="slide"
             onRequestClose={() => setShowFilterModal(false)}
         >
-            <View style={styles.modalOverlay}>
-                <View style={styles.filterModalContent}>
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowFilterModal(false)}
+            >
+                <TouchableOpacity
+                    activeOpacity={1}
+                    style={styles.filterModalContent}
+                    onPress={(e) => e.stopPropagation()}
+                >
                     <View style={styles.filterModalHeader}>
                         <Text style={styles.filterModalTitle}>
                             {content?.ui.filterModalTitle || 'Filter Events'}
@@ -649,8 +597,8 @@ export const EventsContent = () => {
                             {content?.ui.applyFiltersText || 'Apply Filters'}
                         </Text>
                     </TouchableOpacity>
-                </View>
-            </View>
+                </TouchableOpacity>
+            </TouchableOpacity>
         </Modal>
     );
 
