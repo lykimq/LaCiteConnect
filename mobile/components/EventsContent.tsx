@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, RefreshControl, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime } from '../utils/dateUtils';
 import { calendarService } from '../services/calendarService';
@@ -11,7 +11,6 @@ import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createEventsStyles } from '../styles/ThemedStyles';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
-import { StatusBar } from 'expo-status-bar';
 
 // Helper function that uses our centralized URL handling utility
 const openUrlWithLanguageCheck = (url: string, language: string) => {
@@ -54,7 +53,6 @@ interface CalendarEvent {
     };
     recurrence?: boolean;
     attachments?: Array<{ title: string, url: string }>;
-    reminderSet?: boolean;
     detailsUrl?: string;
 }
 
@@ -75,8 +73,6 @@ interface EventsContent {
         noEventsText: string;
         addToCalendarText: string;
         viewOnMapText: string;
-        setReminderText: string;
-        reminderSetText: string;
         viewFullDescriptionText: string;
         viewAttachmentText: string;
         openInBrowserText: string;

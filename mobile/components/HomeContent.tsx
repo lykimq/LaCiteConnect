@@ -8,12 +8,12 @@ import { calendarService } from '../services/calendarService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createHomeStyles } from '../styles/ThemedStyles';
-import { openGenericUrl, openUrlWithCorrectDomain } from '../utils/urlUtils';
+import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { TabParamList } from '../navigation/AppNavigator';
-import { formatDate, formatTime } from '../utils/dateUtils';
+import { formatTime } from '../utils/dateUtils';
 
 // Define the UI strings interface
 interface UIStrings {
@@ -25,7 +25,6 @@ interface UIStrings {
         title: string;
         watchNow: string;
         status: string;
-        viewerCount: string;
         serviceTitle: string;
     };
     upcomingEvents: {

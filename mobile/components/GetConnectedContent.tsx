@@ -295,13 +295,12 @@ export const GetConnectedContent = () => {
                             onPress={handleSubscribe}
                             activeOpacity={0.8}
                         >
-                            <View style={styles.quickActionIconContainer}>
-                                <Ionicons
-                                    name="mail"
-                                    size={24}
-                                    color={themeColors.primary}
-                                />
-                            </View>
+                            <Ionicons
+                                name="mail"
+                                size={24}
+                                color={themeColors.primary}
+                                style={styles.quickActionIconContainer}
+                            />
                             <Text style={styles.quickActionText}>
                                 {content.ui.quickActions.subscribe || 'Subscribe'}
                             </Text>
@@ -311,13 +310,12 @@ export const GetConnectedContent = () => {
                             onPress={handleVolunteer}
                             activeOpacity={0.8}
                         >
-                            <View style={styles.quickActionIconContainer}>
-                                <Ionicons
-                                    name="people"
-                                    size={24}
-                                    color={themeColors.primary}
-                                />
-                            </View>
+                            <Ionicons
+                                name="people"
+                                size={24}
+                                color={themeColors.primary}
+                                style={styles.quickActionIconContainer}
+                            />
                             <Text style={styles.quickActionText}>
                                 {content.ui.quickActions.volunteer || 'Volunteer'}
                             </Text>
