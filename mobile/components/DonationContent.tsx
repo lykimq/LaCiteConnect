@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking, Clipboard, ActivityIndicator, ToastAndroid, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { STATIC_URLS, BANK_DETAILS } from '../config/staticData';
+import { STATIC_URLS } from '../config/staticData';
 import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -86,32 +86,9 @@ export const DonationContent = () => {
         Linking.openURL(url);
     };
 
-    if (loading) {
-        return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={themeColors.primary} />
-            </View>
-        );
-    }
-
-    if (error || !content) {
-        return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 16, color: '#FF3B30' }}>{error || 'Content not available'}</Text>
-                <TouchableOpacity
-                    style={{
-                        marginTop: 20,
-                        padding: 10,
-                        backgroundColor: themeColors.primary,
-                        borderRadius: 8
-                    }}
-                    onPress={loadContent}
-                >
-                    <Text style={{ color: '#FFFFFF' }}>Retry</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
+    const handleDonate = () => {
+        handleOpenLink(STATIC_URLS.donate.mission);
+    };
 
     // Helper function to get the appropriate URL for donation buttons
     const getDonationUrl = (buttonIndex: number) => {
@@ -119,20 +96,6 @@ export const DonationContent = () => {
             return STATIC_URLS.donate.mission;
         } else {
             return STATIC_URLS.donate.building;
-        }
-    };
-
-    // Helper function to get bank details based on section ID
-    const getBankDetails = (sectionId: string) => {
-        switch (sectionId) {
-            case 'missionFund':
-                return BANK_DETAILS.missionFund;
-            case 'buildingFund':
-                return BANK_DETAILS.buildingFund;
-            case 'lesMainsTendues':
-                return BANK_DETAILS.lesMainsTendues;
-            default:
-                return null;
         }
     };
 
@@ -150,146 +113,174 @@ export const DonationContent = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
+            </View>
+        );
+    }
+
+    if (error || !content) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Ionicons name="alert-circle" size={48} color={themeColors.error} style={{ marginBottom: 16 }} />
+                <Text style={{ color: themeColors.error, fontSize: 16, marginBottom: 20 }}>
+                    {error || 'Content not available'}
+                </Text>
+                <TouchableOpacity
+                    style={{
+                        backgroundColor: themeColors.primary,
+                        padding: 12,
+                        borderRadius: 8,
+                    }}
+                    onPress={loadContent}
+                >
+                    <Text style={{ color: '#FFFFFF', fontSize: 16 }}>
+                        Retry
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.header}>
-                    <Ionicons name="heart-circle" size={60} color={themeColors.primary} />
-                    <View style={styles.headerDivider} />
-                    <Text style={styles.title}>
-                        {content.header.title}
-                    </Text>
-                    <Text style={styles.subtitle}>
-                        {content.header.subtitle}
-                    </Text>
+                {/* Hero Section */}
+                <View style={styles.heroSection}>
+                    <View style={styles.heroContent}>
+                        <Text style={styles.heroTitle}>{content.header.title}</Text>
+                        <Text style={styles.heroSubtitle}>{content.header.subtitle}</Text>
+                    </View>
                 </View>
 
-                {content.sections.map((section, index) => {
-                    if (section.id === 'quickDonation') {
-                        return (
-                            <View key={section.id} style={styles.cardContainer}>
-                                <Text style={styles.sectionTitle}>{section.title}</Text>
-                                <View style={styles.donationButtonsContainer}>
-                                    {section.buttons?.map((button, buttonIndex) => (
-                                        <TouchableOpacity
-                                            key={`button-${buttonIndex}`}
-                                            style={styles.donationButton}
-                                            onPress={() => handleOpenLink(getDonationUrl(buttonIndex))}
-                                            activeOpacity={0.7}
-                                        >
-                                            <Ionicons name={button.icon as any} size={28} color="#FFFFFF" style={styles.buttonIcon} />
-                                            <Text style={styles.buttonText}>{button.text}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            </View>
-                        );
-                    } else if (section.content) {
-                        return (
-                            <View key={section.id} style={styles.cardContainer}>
-                                <Text style={styles.sectionTitle}>{section.title}</Text>
-                                <Text style={styles.paragraph}>
-                                    {section.content}
-                                </Text>
-                            </View>
-                        );
-                    } else if (section.details && section.labels) {
-                        // Ensure section.details is defined before accessing its properties
-                        const accountName = section.details?.accountName || '';
-                        const iban = section.details?.iban || '';
-                        const bic = section.details?.bic || '';
-                        const icon = getFundIcon(section.id);
+                {/* Quick Actions */}
+                {content.sections.find(section => section.id === 'quickDonation')?.buttons && (
+                    <View style={styles.quickActionsContainer}>
+                        <View style={styles.quickActionsRow}>
+                            {content.sections
+                                .find(section => section.id === 'quickDonation')
+                                ?.buttons?.map((button, buttonIndex) => (
+                                    <TouchableOpacity
+                                        key={`button-${buttonIndex}`}
+                                        style={styles.quickActionButton}
+                                        onPress={() => handleOpenLink(getDonationUrl(buttonIndex))}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons
+                                            name={button.icon as any}
+                                            size={28}
+                                            color={themeColors.primary}
+                                            style={styles.quickActionIcon}
+                                        />
+                                        <Text style={styles.quickActionText}>{button.text}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                        </View>
+                    </View>
+                )}
 
-                        return (
-                            <View key={section.id} style={styles.cardContainer}>
-                                <View style={styles.cardHeader}>
-                                    <Ionicons name={icon as any} size={24} color={themeColors.primary} style={styles.cardHeaderIcon} />
-                                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                                </View>
+                {/* Thank You Section */}
+                {content.sections.find(section => section.id === 'thankYou') && (
+                    <View style={styles.cardContainer}>
+                        <View style={styles.cardHeader}>
+                            <Ionicons name="heart-circle" size={24} color={themeColors.primary} style={styles.cardHeaderIcon} />
+                            <Text style={styles.sectionTitle}>
+                                {content.sections.find(section => section.id === 'thankYou')?.title}
+                            </Text>
+                        </View>
+                        <Text style={styles.paragraph}>
+                            {content.sections.find(section => section.id === 'thankYou')?.content}
+                        </Text>
+                    </View>
+                )}
 
-                                <Text style={styles.paragraph}>
-                                    {section.description}
-                                </Text>
+                {/* Bank Details Sections */}
+                {content.sections
+                    .filter(section => section.id !== 'quickDonation' && section.id !== 'thankYou')
+                    .map((section, index) => {
+                        if (section.details && section.labels) {
+                            // Ensure section.details is defined before accessing its properties
+                            const accountName = section.details?.accountName || '';
+                            const iban = section.details?.iban || '';
+                            const bic = section.details?.bic || '';
+                            const icon = getFundIcon(section.id);
 
-                                <View style={styles.bankDetailsContainer}>
-                                    <View style={styles.bankDetailRow}>
-                                        <Text style={styles.bankDetailLabel}>{section.labels.accountName}</Text>
-                                        <TouchableOpacity
-                                            style={styles.bankDetailValueContainer}
-                                            onPress={() => handleCopyToClipboard(accountName, 'Account name')}
-                                            activeOpacity={0.6}
-                                        >
-                                            <Text style={styles.bankDetailValue}>{accountName}</Text>
-                                            <Ionicons
-                                                name={copiedText === accountName ? "checkmark" : "copy-outline"}
-                                                size={20}
-                                                color={copiedText === accountName ? "#4CAF50" : themeColors.primary}
-                                            />
-                                        </TouchableOpacity>
+                            return (
+                                <View key={section.id} style={styles.cardContainer}>
+                                    <View style={styles.cardHeader}>
+                                        <Ionicons name={icon as any} size={24} color={themeColors.primary} style={styles.cardHeaderIcon} />
+                                        <Text style={styles.sectionTitle}>{section.title}</Text>
                                     </View>
 
-                                    <View style={styles.bankDetailRow}>
-                                        <Text style={styles.bankDetailLabel}>{section.labels.iban}</Text>
-                                        <TouchableOpacity
-                                            style={styles.bankDetailValueContainer}
-                                            onPress={() => handleCopyToClipboard(iban, 'IBAN')}
-                                            activeOpacity={0.6}
-                                        >
-                                            <Text style={styles.bankDetailValue}>{iban}</Text>
-                                            <Ionicons
-                                                name={copiedText === iban ? "checkmark" : "copy-outline"}
-                                                size={20}
-                                                color={copiedText === iban ? "#4CAF50" : themeColors.primary}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
-
-                                    <View style={[styles.bankDetailRow, { marginBottom: 0, paddingBottom: 0, borderBottomWidth: 0 }]}>
-                                        <Text style={styles.bankDetailLabel}>{section.labels.bic}</Text>
-                                        <TouchableOpacity
-                                            style={styles.bankDetailValueContainer}
-                                            onPress={() => handleCopyToClipboard(bic, 'BIC/SWIFT')}
-                                            activeOpacity={0.6}
-                                        >
-                                            <Text style={styles.bankDetailValue}>{bic}</Text>
-                                            <Ionicons
-                                                name={copiedText === bic ? "checkmark" : "copy-outline"}
-                                                size={20}
-                                                color={copiedText === bic ? "#4CAF50" : themeColors.primary}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            </View>
-                        );
-                    } else {
-                        return (
-                            <View key={section.id} style={styles.cardContainer}>
-                                <Text style={styles.sectionTitle}>{section.title}</Text>
-                                {section.description && (
                                     <Text style={styles.paragraph}>
                                         {section.description}
                                     </Text>
-                                )}
-                            </View>
-                        );
-                    }
-                })}
 
-                <View style={styles.donateNowContainer}>
-                    <TouchableOpacity
-                        style={styles.donateNowButton}
-                        onPress={() => handleOpenLink(STATIC_URLS.donate.mission)}
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="heart" size={24} color="#FFFFFF" style={{ marginRight: 10 }} />
-                        <Text style={styles.donateNowButtonText}>Donate Now</Text>
-                    </TouchableOpacity>
-                </View>
+                                    <View style={styles.bankDetailsContainer}>
+                                        <View style={styles.bankDetailRow}>
+                                            <Text style={styles.bankDetailLabel}>{section.labels.accountName}</Text>
+                                            <TouchableOpacity
+                                                style={styles.bankDetailValueContainer}
+                                                onPress={() => handleCopyToClipboard(accountName, 'Account name')}
+                                                activeOpacity={0.6}
+                                            >
+                                                <Text style={styles.bankDetailValue}>{accountName}</Text>
+                                                <Ionicons
+                                                    name={copiedText === accountName ? "checkmark" : "copy-outline"}
+                                                    size={20}
+                                                    color={copiedText === accountName ? "#4CAF50" : themeColors.primary}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <View style={styles.bankDetailRow}>
+                                            <Text style={styles.bankDetailLabel}>{section.labels.iban}</Text>
+                                            <TouchableOpacity
+                                                style={styles.bankDetailValueContainer}
+                                                onPress={() => handleCopyToClipboard(iban, 'IBAN')}
+                                                activeOpacity={0.6}
+                                            >
+                                                <Text style={styles.bankDetailValue}>{iban}</Text>
+                                                <Ionicons
+                                                    name={copiedText === iban ? "checkmark" : "copy-outline"}
+                                                    size={20}
+                                                    color={copiedText === iban ? "#4CAF50" : themeColors.primary}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <View style={[styles.bankDetailRow, { marginBottom: 0, paddingBottom: 0, borderBottomWidth: 0 }]}>
+                                            <Text style={styles.bankDetailLabel}>{section.labels.bic}</Text>
+                                            <TouchableOpacity
+                                                style={styles.bankDetailValueContainer}
+                                                onPress={() => handleCopyToClipboard(bic, 'BIC/SWIFT')}
+                                                activeOpacity={0.6}
+                                            >
+                                                <Text style={styles.bankDetailValue}>{bic}</Text>
+                                                <Ionicons
+                                                    name={copiedText === bic ? "checkmark" : "copy-outline"}
+                                                    size={20}
+                                                    color={copiedText === bic ? "#4CAF50" : themeColors.primary}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                </View>
+                            );
+                        }
+                        return null;
+                    })}
             </ScrollView>
+
+            {/* Floating Action Button for Donations */}
+            <TouchableOpacity style={styles.fab} onPress={handleDonate}>
+                <Ionicons name="heart" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
         </View>
     );
 };
