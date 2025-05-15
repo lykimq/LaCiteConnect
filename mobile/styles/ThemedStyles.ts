@@ -894,143 +894,97 @@ export const createEventsStyles = (colors: any) => StyleSheet.create({
     },
     filterModalContent: {
         backgroundColor: colors.background,
-        borderRadius: 12,
+        borderRadius: 20,
+        width: '90%',
+        maxHeight: '80%',
         padding: 20,
-        width: '80%',
-        maxWidth: 400,
     },
     filterModalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 20,
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
     },
     filterModalTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         color: colors.text,
     },
-    filterOptions: {
-        gap: 12,
-    },
-    filterOption: {
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        backgroundColor: colors.card,
-    },
-    activeFilterOption: {
-        backgroundColor: colors.primary,
-    },
-    filterOptionText: {
-        fontSize: 16,
-        color: colors.text,
-    },
-    activeFilterOptionText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-    },
-    timelineContainer: {
-        padding: 16,
-    },
-    timelineGroup: {
-        marginBottom: 24,
-    },
-    timelineDate: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.text,
-        marginBottom: 12,
-        paddingHorizontal: 16,
-    },
-    listContainer: {
-        padding: 16,
-    },
-    button: {
-        backgroundColor: colors.primary,
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    buttonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
+    closeButton: {
+        padding: 4,
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.card,
-        borderRadius: 8,
+        borderRadius: 12,
         paddingHorizontal: 12,
-        marginBottom: 16,
+        paddingVertical: 8,
+        marginBottom: 20,
         borderWidth: 1,
         borderColor: colors.border,
-    },
-    searchIcon: {
-        marginRight: 8,
     },
     searchInput: {
         flex: 1,
-        height: 40,
-        color: colors.text,
+        marginLeft: 8,
         fontSize: 16,
-    },
-    filterSectionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
         color: colors.text,
-        marginBottom: 12,
-        marginTop: 16,
+        padding: 0,
     },
-    sortOptions: {
-        marginTop: 8,
-    },
-    sortRow: {
+    filterOptionsGrid: {
         flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
+        flexWrap: 'wrap',
+        gap: 12,
+        marginBottom: 24,
     },
-    sortLabel: {
-        fontSize: 14,
-        color: colors.text,
-        marginRight: 12,
-        width: 70,
-    },
-    sortButtons: {
-        flexDirection: 'row',
+    filterOptionCard: {
         flex: 1,
-        gap: 8,
-    },
-    sortButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 6,
+        minWidth: '45%',
         backgroundColor: colors.card,
+        borderRadius: 12,
+        padding: 16,
+        alignItems: 'center',
         borderWidth: 1,
         borderColor: colors.border,
     },
-    activeSortButton: {
+    activeFilterOptionCard: {
         backgroundColor: colors.primary,
         borderColor: colors.primary,
     },
-    sortButtonText: {
+    filterOptionCardText: {
         fontSize: 14,
         color: colors.text,
+        marginTop: 8,
+        textAlign: 'center',
     },
-    activeSortButtonText: {
+    activeFilterOptionCardText: {
         color: '#FFFFFF',
-        fontWeight: '600',
+    },
+    sortOptionsContainer: {
+        marginBottom: 24,
+    },
+    sortButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.card,
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    sortButtonText: {
+        fontSize: 16,
+        color: colors.text,
+        marginLeft: 12,
     },
     applyButton: {
         backgroundColor: colors.primary,
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 8,
+        borderRadius: 12,
+        padding: 16,
         alignItems: 'center',
-        marginTop: 24,
     },
     applyButtonText: {
         color: '#FFFFFF',
@@ -1253,9 +1207,6 @@ export const createEventsStyles = (colors: any) => StyleSheet.create({
         fontWeight: 'bold',
         color: colors.text,
     },
-    closeButton: {
-        padding: 8,
-    },
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -1312,6 +1263,53 @@ export const createEventsStyles = (colors: any) => StyleSheet.create({
         color: colors.primary,
         fontSize: 12,
         marginLeft: 6,
+    },
+    quickFiltersContainer: {
+        marginBottom: 16,
+        paddingHorizontal: 20,
+    },
+    quickFiltersContent: {
+        paddingVertical: 8,
+    },
+    quickFilterChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.card,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        marginRight: 8,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    activeQuickFilterChip: {
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
+    },
+    quickFilterText: {
+        fontSize: 14,
+        color: colors.primary,
+        marginLeft: 6,
+        fontWeight: '500',
+    },
+    activeQuickFilterText: {
+        color: '#FFFFFF',
+    },
+    moreFiltersButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.background,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    moreFiltersText: {
+        fontSize: 14,
+        color: colors.primary,
+        marginLeft: 6,
+        fontWeight: '500',
     },
 });
 

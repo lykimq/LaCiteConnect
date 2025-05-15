@@ -468,18 +468,87 @@ export const EventsContent = () => {
         </View>
     );
 
-    // Render filter button
-    const renderFilterButton = () => (
-        <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => setShowFilterModal(true)}
+    // Add this new component for quick filters
+    const renderQuickFilters = () => (
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.quickFiltersContainer}
+            contentContainerStyle={styles.quickFiltersContent}
         >
-            <Ionicons name="filter-outline" size={20} color={themeColors.text} />
-            <Text style={styles.filterButtonText}>{content?.ui.filterText || 'Filter'}</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+                style={[
+                    styles.quickFilterChip,
+                    filterOptions.category === 'all' && styles.activeQuickFilterChip
+                ]}
+                onPress={() => setFilterOptions(prev => ({ ...prev, category: 'all' }))}
+            >
+                <Ionicons
+                    name="calendar"
+                    size={16}
+                    color={filterOptions.category === 'all' ? '#FFFFFF' : themeColors.primary}
+                />
+                <Text style={[
+                    styles.quickFilterText,
+                    filterOptions.category === 'all' && styles.activeQuickFilterText
+                ]}>
+                    {content?.ui.filterOptions.allEvents || 'All'}
+                </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={[
+                    styles.quickFilterChip,
+                    filterOptions.category === 'upcoming' && styles.activeQuickFilterChip
+                ]}
+                onPress={() => setFilterOptions(prev => ({ ...prev, category: 'upcoming' }))}
+            >
+                <Ionicons
+                    name="time-outline"
+                    size={16}
+                    color={filterOptions.category === 'upcoming' ? '#FFFFFF' : themeColors.primary}
+                />
+                <Text style={[
+                    styles.quickFilterText,
+                    filterOptions.category === 'upcoming' && styles.activeQuickFilterText
+                ]}>
+                    {content?.ui.filterOptions.upcoming || 'Upcoming'}
+                </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={[
+                    styles.quickFilterChip,
+                    filterOptions.category === 'thisWeek' && styles.activeQuickFilterChip
+                ]}
+                onPress={() => setFilterOptions(prev => ({ ...prev, category: 'thisWeek' }))}
+            >
+                <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color={filterOptions.category === 'thisWeek' ? '#FFFFFF' : themeColors.primary}
+                />
+                <Text style={[
+                    styles.quickFilterText,
+                    filterOptions.category === 'thisWeek' && styles.activeQuickFilterText
+                ]}>
+                    {content?.ui.filterOptions.thisWeek || 'This Week'}
+                </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={styles.moreFiltersButton}
+                onPress={() => setShowFilterModal(true)}
+            >
+                <Ionicons name="options-outline" size={16} color={themeColors.primary} />
+                <Text style={styles.moreFiltersText}>
+                    {content?.ui.filterText || 'More'}
+                </Text>
+            </TouchableOpacity>
+        </ScrollView>
     );
 
-    // Render enhanced filter modal
+    // Update the filter modal to be simpler
     const renderFilterModal = () => (
         <Modal
             visible={showFilterModal}
@@ -490,12 +559,20 @@ export const EventsContent = () => {
             <View style={styles.modalOverlay}>
                 <View style={styles.filterModalContent}>
                     <View style={styles.filterModalHeader}>
-                        <Text style={styles.filterModalTitle}>{content?.ui.filterModalTitle || 'Filter & Sort Events'}</Text>
+                        <Text style={styles.filterModalTitle}>
+                            {content?.ui.filterModalTitle || 'Filter Events'}
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowFilterModal(false)}
+                        >
+                            <Ionicons name="close" size={24} color={themeColors.text} />
+                        </TouchableOpacity>
                     </View>
 
-                    {/* Search Input */}
+                    {/* Search Bar */}
                     <View style={styles.searchContainer}>
-                        <Ionicons name="search" size={20} color={themeColors.text} style={styles.searchIcon} />
+                        <Ionicons name="search" size={20} color={themeColors.text} />
                         <TextInput
                             style={styles.searchInput}
                             placeholder={content?.ui.searchPlaceholder || 'Search events...'}
@@ -505,27 +582,34 @@ export const EventsContent = () => {
                         />
                     </View>
 
-                    {/* Category Filter */}
-                    <Text style={styles.filterSectionTitle}>{content?.ui.filterSectionTitle || 'Show Events'}</Text>
-                    <View style={styles.filterOptions}>
+                    {/* Time Period Selection */}
+                    <Text style={styles.filterSectionTitle}>
+                        {content?.ui.filterSectionTitle || 'Time Period'}
+                    </Text>
+                    <View style={styles.filterOptionsGrid}>
                         {[
-                            { value: 'all', label: content?.ui.filterOptions.allEvents || 'All Events' },
-                            { value: 'upcoming', label: content?.ui.filterOptions.upcoming || 'Upcoming' },
-                            { value: 'thisWeek', label: content?.ui.filterOptions.thisWeek || 'This Week' },
-                            { value: 'thisMonth', label: content?.ui.filterOptions.thisMonth || 'This Month' },
-                            { value: 'past', label: content?.ui.filterOptions.pastEvents || 'Past Events' }
+                            { value: 'all', icon: 'calendar', label: content?.ui.filterOptions.allEvents || 'All Events' },
+                            { value: 'upcoming', icon: 'time', label: content?.ui.filterOptions.upcoming || 'Upcoming' },
+                            { value: 'thisWeek', icon: 'calendar-outline', label: content?.ui.filterOptions.thisWeek || 'This Week' },
+                            { value: 'thisMonth', icon: 'calendar-number', label: content?.ui.filterOptions.thisMonth || 'This Month' },
+                            { value: 'past', icon: 'hourglass', label: content?.ui.filterOptions.pastEvents || 'Past Events' }
                         ].map(option => (
                             <TouchableOpacity
                                 key={option.value}
                                 style={[
-                                    styles.filterOption,
-                                    filterOptions.category === option.value && styles.activeFilterOption
+                                    styles.filterOptionCard,
+                                    filterOptions.category === option.value && styles.activeFilterOptionCard
                                 ]}
                                 onPress={() => setFilterOptions(prev => ({ ...prev, category: option.value as EventCategory }))}
                             >
+                                <Ionicons
+                                    name={option.icon as any}
+                                    size={24}
+                                    color={filterOptions.category === option.value ? '#FFFFFF' : themeColors.primary}
+                                />
                                 <Text style={[
-                                    styles.filterOptionText,
-                                    filterOptions.category === option.value && styles.activeFilterOptionText
+                                    styles.filterOptionCardText,
+                                    filterOptions.category === option.value && styles.activeFilterOptionCardText
                                 ]}>
                                     {option.label}
                                 </Text>
@@ -534,65 +618,26 @@ export const EventsContent = () => {
                     </View>
 
                     {/* Sort Options */}
-                    <Text style={styles.filterSectionTitle}>{content?.ui.sortSectionTitle || 'Sort By'}</Text>
-                    <View style={styles.sortOptions}>
-                        <View style={styles.sortRow}>
-                            <Text style={styles.sortLabel}>{content?.ui.sortByLabel || 'Sort by:'}</Text>
-                            <View style={styles.sortButtons}>
-                                {[
-                                    { value: 'date', label: content?.ui.sortOptions.date || 'Date' },
-                                    { value: 'title', label: content?.ui.sortOptions.title || 'Title' },
-                                    { value: 'location', label: content?.ui.sortOptions.location || 'Location' }
-                                ].map(option => (
-                                    <TouchableOpacity
-                                        key={option.value}
-                                        style={[
-                                            styles.sortButton,
-                                            filterOptions.sortBy === option.value && styles.activeSortButton
-                                        ]}
-                                        onPress={() => setFilterOptions(prev => ({ ...prev, sortBy: option.value as SortBy }))}
-                                    >
-                                        <Text style={[
-                                            styles.sortButtonText,
-                                            filterOptions.sortBy === option.value && styles.activeSortButtonText
-                                        ]}>
-                                            {option.label}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        </View>
-                        <View style={styles.sortRow}>
-                            <Text style={styles.sortLabel}>{content?.ui.sortOrderLabel || 'Order:'}</Text>
-                            <View style={styles.sortButtons}>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.sortButton,
-                                        filterOptions.sortOrder === 'asc' && styles.activeSortButton
-                                    ]}
-                                    onPress={() => setFilterOptions(prev => ({ ...prev, sortOrder: 'asc' }))}
-                                >
-                                    <Ionicons
-                                        name="arrow-up"
-                                        size={16}
-                                        color={filterOptions.sortOrder === 'asc' ? '#FFFFFF' : themeColors.text}
-                                    />
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.sortButton,
-                                        filterOptions.sortOrder === 'desc' && styles.activeSortButton
-                                    ]}
-                                    onPress={() => setFilterOptions(prev => ({ ...prev, sortOrder: 'desc' }))}
-                                >
-                                    <Ionicons
-                                        name="arrow-down"
-                                        size={16}
-                                        color={filterOptions.sortOrder === 'desc' ? '#FFFFFF' : themeColors.text}
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                    <Text style={styles.filterSectionTitle}>
+                        {content?.ui.sortSectionTitle || 'Sort By'}
+                    </Text>
+                    <View style={styles.sortOptionsContainer}>
+                        <TouchableOpacity
+                            style={styles.sortButton}
+                            onPress={() => setFilterOptions(prev => ({
+                                ...prev,
+                                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
+                            }))}
+                        >
+                            <Ionicons
+                                name={filterOptions.sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
+                                size={20}
+                                color={themeColors.primary}
+                            />
+                            <Text style={styles.sortButtonText}>
+                                {filterOptions.sortOrder === 'asc' ? 'Oldest First' : 'Newest First'}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Apply Button */}
@@ -600,7 +645,9 @@ export const EventsContent = () => {
                         style={styles.applyButton}
                         onPress={() => setShowFilterModal(false)}
                     >
-                        <Text style={styles.applyButtonText}>{content?.ui.applyFiltersText || 'Apply Filters'}</Text>
+                        <Text style={styles.applyButtonText}>
+                            {content?.ui.applyFiltersText || 'Apply Filters'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -1255,27 +1302,19 @@ export const EventsContent = () => {
                     </View>
                 </View>
 
-                {/* View Mode Content */}
-                <View style={styles.viewContent}>
-                    {/* Filter Bar */}
-                    <View style={styles.filterBar}>
-                        <TouchableOpacity
-                            style={styles.filterButton}
-                            onPress={() => setShowFilterModal(true)}
-                        >
-                            <Ionicons name="filter" size={20} color={themeColors.primary} />
-                            <Text style={styles.filterButtonText}>
-                                {content?.ui?.filterText || 'Filter'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                {/* Quick Filters */}
+                {renderQuickFilters()}
 
+                {/* View Content */}
+                <View style={styles.viewContent}>
                     {renderView()}
                 </View>
             </ScrollView>
 
-            {/* Modals */}
+            {/* Filter Modal */}
             {renderFilterModal()}
+
+            {/* Full Description Modal */}
             {renderFullDescriptionModal()}
         </View>
     );
