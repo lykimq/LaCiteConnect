@@ -1318,6 +1318,23 @@ export const createEventsStyles = (colors: any) => StyleSheet.create({
         marginBottom: 12,
         marginTop: 8,
     },
+    listContainer: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    button: {
+        backgroundColor: colors.primary,
+        borderRadius: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
 });
 
 /**
