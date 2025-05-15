@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime } from '../utils/dateUtils';
 import { calendarService } from '../services/calendarService';
 import { contentService } from '../services/contentService';
+import { convertHtmlToFormattedText, extractAttachmentLinks, parseLocationString } from '../utils/htmlUtils';
 import WebView from 'react-native-webview';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
@@ -153,6 +154,16 @@ const isDriveAttachment = (url: string): boolean => {
     return url.includes('drive.google.com');
 };
 
+// Add helper function for getting day name
+const getDayName = (date: Date): string => {
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+};
+
+// Add helper function for getting month name
+const getMonthName = (date: Date): string => {
+    return date.toLocaleDateString('en-US', { month: 'short' });
+};
+
 export const EventsContent = () => {
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
@@ -184,11 +195,6 @@ export const EventsContent = () => {
     // Modal state
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [showFullDescription, setShowFullDescription] = useState(false);
-
-    // Month pagination state
-    const [currentYear, setCurrentYear] = useState(currentDate.getFullYear());
-    const [currentMonth, setCurrentMonth] = useState(currentDate.getMonth());
-    const [showMonthPicker, setShowMonthPicker] = useState(false);
 
     // Filter options state
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -276,109 +282,112 @@ export const EventsContent = () => {
         const nextMonth = new Date(today);
         nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-        if (selectedListPeriod === 'quick') {
-            switch (selectedQuickPeriod) {
-                case 'today':
-                    return filteredAndSortedEvents.filter(event => {
-                        const eventDate = new Date(event.start.dateTime || event.start.date || '');
-                        return eventDate.toDateString() === today.toDateString();
-                    });
-                case 'tomorrow':
-                    return filteredAndSortedEvents.filter(event => {
-                        const eventDate = new Date(event.start.dateTime || event.start.date || '');
-                        return eventDate.toDateString() === tomorrow.toDateString();
-                    });
-                case 'week':
-                    return filteredAndSortedEvents.filter(event => {
-                        const eventDate = new Date(event.start.dateTime || event.start.date || '');
-                        return eventDate > today && eventDate <= nextWeek;
-                    });
-                case 'month':
-                    return filteredAndSortedEvents.filter(event => {
-                        const eventDate = new Date(event.start.dateTime || event.start.date || '');
-                        return eventDate > today && eventDate <= nextMonth;
-                    });
-                default:
-                    return filteredAndSortedEvents;
-            }
-        } else {
-            // Month view
-            return filteredAndSortedEvents.filter(event => {
-                const eventDate = new Date(event.start.dateTime || event.start.date || '');
-                return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
-            });
+        switch (selectedQuickPeriod) {
+            case 'today':
+                return filteredAndSortedEvents.filter(event => {
+                    const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                    return eventDate.toDateString() === today.toDateString();
+                });
+            case 'tomorrow':
+                return filteredAndSortedEvents.filter(event => {
+                    const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                    return eventDate.toDateString() === tomorrow.toDateString();
+                });
+            case 'week':
+                return filteredAndSortedEvents.filter(event => {
+                    const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                    return eventDate > today && eventDate <= nextWeek;
+                });
+            case 'month':
+                return filteredAndSortedEvents.filter(event => {
+                    const eventDate = new Date(event.start.dateTime || event.start.date || '');
+                    return eventDate > today && eventDate <= nextMonth;
+                });
+            default:
+                return filteredAndSortedEvents;
         }
-    }, [filteredAndSortedEvents, selectedListPeriod, selectedQuickPeriod, currentMonth, currentYear]);
+    }, [filteredAndSortedEvents, selectedQuickPeriod]);
 
     // Effect to handle language changes
     useEffect(() => {
         // Check if language has changed
         if (prevLanguageRef.current !== currentLanguage) {
-            // Set loading state to true while processing language change
+            // Update the reference immediately to prevent multiple triggers
+            prevLanguageRef.current = currentLanguage;
+
+            // Set loading states
+            setContentLoading(true);
             setLoading(true);
 
-            // Update calendar service language
-            calendarService.updateLanguage(currentLanguage)
-                .then(() => {
-                    // Force fetch events to guarantee we get updated URLs
-                    fetchEvents(currentYear, currentMonth)
-                        .then(() => {
-                            // Set loading to false when done
-                            setLoading(false);
-                        })
-                        .catch(error => {
-                            console.error('[EventsContent] Error reloading events after language change:', error);
-                            setLoading(false);
-                        });
-                })
+            // First load content, then events
+            loadContent()
+                .then(() => calendarService.updateLanguage(currentLanguage))
+                .then(() => fetchEvents())
                 .catch(error => {
-                    console.error('[EventsContent] Error updating calendar service language:', error);
+                    console.error('[EventsContent] Error during language change sequence:', error);
+                    setError('Failed to update content after language change');
+                })
+                .finally(() => {
+                    setContentLoading(false);
                     setLoading(false);
                 });
-
-            // Update the reference
-            prevLanguageRef.current = currentLanguage;
         }
-    }, [currentLanguage, currentYear, currentMonth]);
+    }, [currentLanguage]);
 
-    // Load content from JSON
+    // Load initial data
     useEffect(() => {
-        loadContent();
-    }, [currentLanguage]); // Also reload content when language changes
+        // Set initial loading states
+        setContentLoading(true);
+        setLoading(true);
 
-    // Initial data fetch
-    useEffect(() => {
-        fetchEvents(currentYear, currentMonth);
-    }, []);
-
-    // Fetch events when month/year changes
-    useEffect(() => {
-        fetchEvents(currentYear, currentMonth);
-    }, [currentYear, currentMonth]);
+        // Load content first, then events
+        loadContent()
+            .then(() => fetchEvents())
+            .catch(error => {
+                console.error('[EventsContent] Error during initial load:', error);
+                setError('Failed to load initial content');
+            })
+            .finally(() => {
+                setContentLoading(false);
+                setLoading(false);
+            });
+    }, []); // Empty dependency array for initial load only
 
     const loadContent = async () => {
         try {
-            setContentLoading(true);
+            console.log('[EventsContent] Loading content...');
             const response = await contentService.getContent<EventsContent>('events');
 
             if (response.success && response.data) {
                 setContent(response.data);
+                setContentError(null); // Clear any previous errors
+                console.log('[EventsContent] Content loaded successfully');
+                return true;
             } else {
-                setContentError(response.error || 'Failed to load content');
+                const error = response.error || 'Failed to load content';
+                console.error('[EventsContent] Content load error:', error);
+                setContentError(error);
+                return Promise.reject(error);
             }
         } catch (err) {
-            console.error('Error loading events content:', err);
-            setContentError('An error occurred while loading content');
-        } finally {
-            setContentLoading(false);
+            console.error('[EventsContent] Error loading content:', err);
+            const error = 'An error occurred while loading content';
+            setContentError(error);
+            return Promise.reject(error);
         }
     };
 
-    const fetchEvents = async (year?: number, month?: number) => {
+    const fetchEvents = async () => {
         try {
-            setLoading(true);
-            setError(null);
-            const data = await calendarService.getEvents(year, month);
+            console.log('[EventsContent] Fetching events...');
+            setError(null); // Clear any previous errors
+
+            const data = await calendarService.getEvents();
+            console.log('[EventsContent] Received events:', data?.length || 0);
+
+            if (!data || !Array.isArray(data)) {
+                throw new Error('Invalid events data received');
+            }
 
             const eventsWithUniqueIds = data.map((event, index) => ({
                 ...event,
@@ -386,8 +395,9 @@ export const EventsContent = () => {
             }));
 
             setEvents(eventsWithUniqueIds);
+            console.log('[EventsContent] Events set successfully');
         } catch (err) {
-            console.error('Error fetching events:', err);
+            console.error('[EventsContent] Error fetching events:', err);
             setError('Failed to load events. Please try again later.');
         } finally {
             setLoading(false);
@@ -395,9 +405,22 @@ export const EventsContent = () => {
         }
     };
 
+    // Add debug logging for state changes
+    useEffect(() => {
+        console.log('[EventsContent] Content loading:', contentLoading);
+        console.log('[EventsContent] Events loading:', loading);
+        console.log('[EventsContent] Events count:', events.length);
+        console.log('[EventsContent] Content error:', contentError);
+        console.log('[EventsContent] Events error:', error);
+    }, [contentLoading, loading, events.length, contentError, error]);
+
     const onRefresh = () => {
         setRefreshing(true);
-        fetchEvents(currentYear, currentMonth);
+        fetchEvents();
+    };
+
+    const handleViewAttachment = (attachmentUrl: string) => {
+        openUrlWithLanguageCheck(attachmentUrl, currentLanguage);
     };
 
     // Render view mode selector with improved labels
@@ -630,101 +653,45 @@ export const EventsContent = () => {
     // Render list view with enhanced organization
     const renderListView = () => (
         <View style={styles.listContainer}>
-            {/* Period Selector */}
-            <View style={styles.periodSelectorContainer}>
-                <View style={styles.periodTypeSelector}>
+            {/* Quick Period Selector */}
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.quickPeriodSelector}
+            >
+                {[
+                    { value: 'all', label: content?.ui.quickPeriodOptions.allEvents || 'All Events' },
+                    { value: 'today', label: content?.ui.quickPeriodOptions.today || 'Today' },
+                    { value: 'tomorrow', label: content?.ui.quickPeriodOptions.tomorrow || 'Tomorrow' },
+                    { value: 'week', label: content?.ui.quickPeriodOptions.nextSevenDays || 'Next 7 Days' },
+                    { value: 'month', label: content?.ui.quickPeriodOptions.nextThirtyDays || 'Next 30 Days' }
+                ].map(period => (
                     <TouchableOpacity
+                        key={period.value}
                         style={[
-                            styles.periodTypeButton,
-                            selectedListPeriod === 'quick' && styles.activePeriodTypeButton
+                            styles.quickPeriodButton,
+                            selectedQuickPeriod === period.value && styles.activeQuickPeriodButton
                         ]}
-                        onPress={() => setSelectedListPeriod('quick')}
+                        onPress={() => setSelectedQuickPeriod(period.value as any)}
                     >
                         <Text style={[
-                            styles.periodTypeText,
-                            selectedListPeriod === 'quick' && styles.activePeriodTypeText
-                        ]}>{content?.ui.quickViewText || 'Quick View'}</Text>
+                            styles.quickPeriodText,
+                            selectedQuickPeriod === period.value && styles.activeQuickPeriodText
+                        ]}>{period.label}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[
-                            styles.periodTypeButton,
-                            selectedListPeriod === 'month' && styles.activePeriodTypeButton
-                        ]}
-                        onPress={() => setSelectedListPeriod('month')}
-                    >
-                        <Text style={[
-                            styles.periodTypeText,
-                            selectedListPeriod === 'month' && styles.activePeriodTypeText
-                        ]}>{content?.ui.monthViewText || 'Month View'}</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {selectedListPeriod === 'quick' ? (
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.quickPeriodSelector}
-                    >
-                        {[
-                            { value: 'all', label: content?.ui.quickPeriodOptions.allEvents || 'All Events' },
-                            { value: 'today', label: content?.ui.quickPeriodOptions.today || 'Today' },
-                            { value: 'tomorrow', label: content?.ui.quickPeriodOptions.tomorrow || 'Tomorrow' },
-                            { value: 'week', label: content?.ui.quickPeriodOptions.nextSevenDays || 'Next 7 Days' },
-                            { value: 'month', label: content?.ui.quickPeriodOptions.nextThirtyDays || 'Next 30 Days' }
-                        ].map(period => (
-                            <TouchableOpacity
-                                key={period.value}
-                                style={[
-                                    styles.quickPeriodButton,
-                                    selectedQuickPeriod === period.value && styles.activeQuickPeriodButton
-                                ]}
-                                onPress={() => setSelectedQuickPeriod(period.value as any)}
-                            >
-                                <Text style={[
-                                    styles.quickPeriodText,
-                                    selectedQuickPeriod === period.value && styles.activeQuickPeriodText
-                                ]}>{period.label}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                ) : (
-                    <View style={styles.monthSelector}>
-                        <TouchableOpacity
-                            style={styles.monthNavigationButton}
-                            onPress={prevMonth}
-                        >
-                            <Ionicons name="chevron-back" size={24} color={themeColors.text} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.currentMonthButton}
-                            onPress={() => setShowMonthPicker(true)}
-                        >
-                            <Text style={styles.currentMonthText}>
-                                {getCurrentMonthYearString()}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.monthNavigationButton}
-                            onPress={nextMonth}
-                        >
-                            <Ionicons name="chevron-forward" size={24} color={themeColors.text} />
-                        </TouchableOpacity>
-                    </View>
-                )}
-            </View>
+                ))}
+            </ScrollView>
 
             {/* Events List */}
-            {listViewFilteredEvents.map(event => renderEventCard(event))}
-            {listViewFilteredEvents.length === 0 && (
+            {listViewFilteredEvents.length > 0 ? (
+                listViewFilteredEvents.map(event => renderEventCard(event))
+            ) : (
                 <View style={styles.noEventsContainer}>
                     <Text style={styles.noEventsText}>
                         {content?.ui.noEventsText || 'No events found'}
                     </Text>
                 </View>
             )}
-
-            {/* Month Picker Modal */}
-            {showMonthPicker && renderMonthPicker()}
         </View>
     );
 
@@ -1002,168 +969,74 @@ export const EventsContent = () => {
         setShowFullDescription(true);
     };
 
-    // Navigate to next month for events
-    const nextMonth = () => {
-        if (currentMonth === 11) {
-            setCurrentMonth(0);
-            setCurrentYear(currentYear + 1);
-        } else {
-            setCurrentMonth(currentMonth + 1);
-        }
-    };
-
-    // Navigate to previous month for events
-    const prevMonth = () => {
-        if (currentMonth === 0) {
-            setCurrentMonth(11);
-            setCurrentYear(currentYear - 1);
-        } else {
-            setCurrentMonth(currentMonth - 1);
-        }
-    };
-
-    const getCurrentMonthYearString = () => {
-        const monthNames = content?.months || [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        return `${monthNames[currentMonth]} ${currentYear}`;
-    };
-
-    const selectMonth = (month: number) => {
-        setCurrentMonth(month);
-        setShowMonthPicker(false);
-    };
-
-    const handleViewAttachment = (attachmentUrl: string) => {
-        openUrlWithLanguageCheck(attachmentUrl, currentLanguage);
-    };
-
-    // Render month picker for events
-    const renderMonthPicker = () => {
-        const months = content?.months?.map(month => month.substring(0, 3)) || [
-            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-        ];
-
-        return (
-            <Modal
-                visible={showMonthPicker}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowMonthPicker(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.monthPickerModal}>
-                        <View style={styles.monthPickerHeader}>
-                            <Text style={styles.monthPickerTitle}>{content?.ui.monthViewText || 'Select Month'}</Text>
-                            <TouchableOpacity
-                                style={styles.closeButton}
-                                onPress={() => setShowMonthPicker(false)}
-                            >
-                                <Ionicons name="close" size={24} color={themeColors.text} />
-                            </TouchableOpacity>
-                        </View>
-                        <View style={styles.monthPicker}>
-                            {months.map((month, index) => (
-                                <TouchableOpacity
-                                    key={`month-${index}`}
-                                    style={[
-                                        styles.monthPickerItem,
-                                        currentMonth === index && styles.monthPickerItemActive
-                                    ]}
-                                    onPress={() => selectMonth(index)}
-                                >
-                                    <Text style={[
-                                        styles.monthPickerText,
-                                        currentMonth === index && styles.monthPickerTextActive
-                                    ]}>
-                                        {month}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-        );
-    };
-
-    // Render event card
+    // Update renderEventCard with improved layout
     const renderEventCard = (event: CalendarEvent) => {
         const eventDate = new Date(event.start.dateTime || event.start.date || '');
-        const isToday = eventDate.toDateString() === new Date().toDateString();
+
+        // Format the description using HTML utils
+        const formattedDescription = event.description ? convertHtmlToFormattedText(event.description) : '';
+        const locationDetails = event.location ? parseLocationString(event.location) : null;
 
         return (
             <View key={event.id} style={styles.eventCard}>
-                <View style={styles.eventHeader}>
-                    <Text style={styles.eventTitle}>
-                        {event.summary}
-                        {event.recurrence && (
-                            <Text style={{ color: themeColors.primary, fontSize: 12, marginLeft: 6 }}>
-                                {' '}(Recurring)
-                            </Text>
-                        )}
-                    </Text>
-                </View>
+                <View style={styles.eventContent}>
+                    {/* Simplified Date Icon */}
+                    <View style={styles.dateIconContainer}>
+                        <Text style={styles.dayNumber}>{eventDate.getDate()}</Text>
+                        <Text style={styles.monthName}>{getMonthName(eventDate)}</Text>
+                    </View>
 
-                <Text style={styles.eventDate}>
-                    {formatEventDate(event)}
-                </Text>
-
-                {event.location && (
-                    <View style={styles.eventLocation}>
-                        <Ionicons name="location-outline" size={18} color={themeColors.primary} />
-                        <Text style={styles.locationText} numberOfLines={2}>
-                            {event.location}
+                    <View style={styles.eventHeader}>
+                        <Text style={styles.eventTitle} numberOfLines={2}>
+                            {event.summary}
                         </Text>
                     </View>
-                )}
 
-                {event.description && (
-                    <Text
-                        style={[styles.eventDate, { marginTop: -4 }]}
-                        numberOfLines={3}
-                        onPress={() => handleViewFullDescription(event)}
-                    >
-                        {event.description}
-                    </Text>
-                )}
+                    {locationDetails && (
+                        <View style={styles.eventLocation}>
+                            <Ionicons name="location-outline" size={18} color={themeColors.primary} />
+                            <Text style={styles.locationText} numberOfLines={1}>
+                                {locationDetails.address}
+                            </Text>
+                        </View>
+                    )}
 
-                <View style={styles.eventActions}>
-                    <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={() => handleAddToCalendar(event)}
-                    >
-                        <Ionicons name="calendar-outline" size={16} color={themeColors.primary} />
-                        <Text style={styles.actionButtonText}>
-                            {content?.ui.addToCalendarText || 'Add to Calendar'}
+                    {formattedDescription && (
+                        <Text
+                            style={styles.eventDescription}
+                            numberOfLines={2}
+                            onPress={() => handleViewFullDescription(event)}
+                        >
+                            {formattedDescription}
                         </Text>
-                    </TouchableOpacity>
-
-                    {event.location && (
-                        <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={() => handleOpenMap(event.location || '')}
-                        >
-                            <Ionicons name="map-outline" size={16} color={themeColors.primary} />
-                            <Text style={styles.actionButtonText}>
-                                {content?.ui.viewLocationText || 'View Location'}
-                            </Text>
-                        </TouchableOpacity>
                     )}
 
-                    {event.detailsUrl && (
+                    <View style={styles.eventActions}>
                         <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={() => handleViewDetailUrl(event)}
+                            style={[styles.actionButton, styles.secondaryActionButton]}
+                            onPress={() => handleAddToCalendar(event)}
                         >
-                            <Ionicons name="open-outline" size={16} color={themeColors.primary} />
-                            <Text style={styles.actionButtonText}>
-                                {content?.ui.viewDetailsText || 'View Details'}
-                            </Text>
+                            <Ionicons name="calendar-outline" size={16} color={themeColors.primary} />
                         </TouchableOpacity>
-                    )}
+
+                        {event.detailsUrl && (
+                            <TouchableOpacity
+                                style={[styles.actionButton, styles.secondaryActionButton]}
+                                onPress={() => handleViewDetailUrl(event)}
+                            >
+                                <Ionicons name="open-outline" size={16} color={themeColors.primary} />
+                            </TouchableOpacity>
+                        )}
+
+                        {locationDetails && (
+                            <TouchableOpacity
+                                style={[styles.actionButton, styles.secondaryActionButton]}
+                                onPress={() => handleOpenMap(event.location || '')}
+                            >
+                                <Ionicons name="map-outline" size={16} color={themeColors.primary} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
             </View>
         );
@@ -1172,6 +1045,13 @@ export const EventsContent = () => {
     // Render full description modal
     const renderFullDescriptionModal = () => {
         if (!selectedEvent) return null;
+
+        const formattedDescription = selectedEvent.description ?
+            convertHtmlToFormattedText(selectedEvent.description) : '';
+        const attachments = selectedEvent.description ?
+            extractAttachmentLinks(selectedEvent.description) : [];
+        const locationDetails = selectedEvent.location ?
+            parseLocationString(selectedEvent.location) : null;
 
         return (
             <Modal
@@ -1199,25 +1079,25 @@ export const EventsContent = () => {
                         </Text>
 
                         <ScrollView style={styles.descriptionModalScrollView}>
-                            {selectedEvent.description && (
+                            {formattedDescription && (
                                 <Text style={styles.descriptionModalText}>
-                                    {selectedEvent.description}
+                                    {formattedDescription}
                                 </Text>
                             )}
 
-                            {selectedEvent.attachments && selectedEvent.attachments.length > 0 && (
+                            {attachments.length > 0 && (
                                 <View style={styles.modalPhotoAttachmentsContainer}>
                                     <Text style={styles.modalAttachmentsTitle}>
                                         {content?.ui.viewFilesText || 'Attachments'}
                                     </Text>
-                                    {selectedEvent.attachments.map((attachment, index) => (
+                                    {attachments.map((attachment, index) => (
                                         <TouchableOpacity
                                             key={index}
                                             style={styles.modalPhotoItem}
                                             onPress={() => handleViewAttachment(attachment.url)}
                                         >
                                             <Ionicons
-                                                name={isDriveAttachment(attachment.url) ? 'document-outline' : 'image-outline'}
+                                                name={isDriveAttachment(attachment.url) ? 'document-outline' : 'link-outline'}
                                                 size={16}
                                                 color={themeColors.text}
                                             />
@@ -1243,7 +1123,7 @@ export const EventsContent = () => {
                                     </Text>
                                 </TouchableOpacity>
 
-                                {selectedEvent.location && (
+                                {locationDetails && (
                                     <TouchableOpacity
                                         style={[styles.modalActionButton, { flex: 1, backgroundColor: themeColors.primary + '15' }]}
                                         onPress={() => handleOpenMap(selectedEvent.location || '')}
@@ -1302,7 +1182,7 @@ export const EventsContent = () => {
                         if (contentError) {
                             loadContent();
                         } else {
-                            fetchEvents(currentYear, currentMonth);
+                            fetchEvents();
                         }
                     }}
                 >
@@ -1377,25 +1257,6 @@ export const EventsContent = () => {
 
                 {/* View Mode Content */}
                 <View style={styles.viewContent}>
-                    {/* Month Navigation (for Calendar and List views) */}
-                    {viewMode !== 'timeline' && (
-                        <View style={styles.monthNavigation}>
-                            <TouchableOpacity onPress={prevMonth}>
-                                <Ionicons name="chevron-back" size={24} color={themeColors.primary} />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.monthYearButton}
-                                onPress={() => setShowMonthPicker(true)}
-                            >
-                                <Text style={styles.monthYearText}>{getCurrentMonthYearString()}</Text>
-                                <Ionicons name="calendar" size={20} color={themeColors.primary} />
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={nextMonth}>
-                                <Ionicons name="chevron-forward" size={24} color={themeColors.primary} />
-                            </TouchableOpacity>
-                        </View>
-                    )}
-
                     {/* Filter Bar */}
                     <View style={styles.filterBar}>
                         <TouchableOpacity
@@ -1407,38 +1268,6 @@ export const EventsContent = () => {
                                 {content?.ui?.filterText || 'Filter'}
                             </Text>
                         </TouchableOpacity>
-                        {viewMode === 'list' && (
-                            <View style={styles.viewToggle}>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.toggleButton,
-                                        selectedListPeriod === 'quick' && styles.activeToggleButton
-                                    ]}
-                                    onPress={() => setSelectedListPeriod('quick')}
-                                >
-                                    <Text style={[
-                                        styles.toggleButtonText,
-                                        selectedListPeriod === 'quick' && styles.activeToggleButtonText
-                                    ]}>
-                                        {content?.ui?.quickViewText || 'Quick View'}
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.toggleButton,
-                                        selectedListPeriod === 'month' && styles.activeToggleButton
-                                    ]}
-                                    onPress={() => setSelectedListPeriod('month')}
-                                >
-                                    <Text style={[
-                                        styles.toggleButtonText,
-                                        selectedListPeriod === 'month' && styles.activeToggleButtonText
-                                    ]}>
-                                        {content?.ui?.monthViewText || 'Month View'}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
                     </View>
 
                     {renderView()}
@@ -1447,7 +1276,6 @@ export const EventsContent = () => {
 
             {/* Modals */}
             {renderFilterModal()}
-            {renderMonthPicker()}
             {renderFullDescriptionModal()}
         </View>
     );
