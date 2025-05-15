@@ -15,18 +15,24 @@ import {
     defaultTheme,
     defaultColorTheme,
     defaultCategory,
-    initializeTheme
+    initializeTheme,
+    ThemeData
 } from '../services/themeService';
+
+// Define custom theme colors type combining the base theme colors with additional primary/secondary
+type CustomThemeColors = {
+    [K in keyof typeof themes[ThemeType]['colors']]: string
+} & {
+    primary: string;
+    secondary: string;
+};
 
 // Define the theme context type
 interface ThemeContextType {
     theme: ThemeType;
     colorTheme: ColorThemeType;
     category: ThemeCategoryType;
-    themeColors: typeof themes.light.colors & {
-        primary: string;
-        secondary: string;
-    };
+    themeColors: CustomThemeColors;
     changeTheme: (newTheme: ThemeType) => Promise<void>;
     changeColorTheme: (newColorTheme: ColorThemeType) => Promise<void>;
     changeCategory: (newCategory: ThemeCategoryType) => Promise<void>;
@@ -39,8 +45,9 @@ const ThemeContext = createContext<ThemeContextType>({
     category: defaultCategory,
     themeColors: {
         ...themes.light.colors,
-        ...themeColors.default
-    },
+        primary: categorizedThemes.default.default.primary,
+        secondary: categorizedThemes.default.default.secondary,
+    } as CustomThemeColors,
     changeTheme: async () => { },
     changeColorTheme: async () => { },
     changeCategory: async () => { },
@@ -50,6 +57,23 @@ const ThemeContext = createContext<ThemeContextType>({
 interface ThemeProviderProps {
     children: ReactNode;
 }
+
+// Function to safely access theme data
+const getThemeData = (category: ThemeCategoryType, colorTheme: ColorThemeType): ThemeData => {
+    // Check if the category exists
+    if (!(category in categorizedThemes)) {
+        return categorizedThemes.default.default;
+    }
+
+    // Check if the theme exists in the category
+    const categoryThemes = categorizedThemes[category];
+    if (colorTheme in categoryThemes) {
+        return categoryThemes[colorTheme as keyof typeof categoryThemes];
+    }
+
+    // Default fallback
+    return categorizedThemes.default.default;
+};
 
 // Theme provider component
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
@@ -111,10 +135,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     };
 
     // Get current theme colors merged with color theme
-    const currentThemeColors = {
+    const currentThemeData = getThemeData(categoryType, colorThemeType);
+
+    const currentThemeColors: CustomThemeColors = {
         ...themes[themeType].colors,
-        primary: categorizedThemes[categoryType][colorThemeType]?.primary || themeColors[defaultColorTheme].primary,
-        secondary: categorizedThemes[categoryType][colorThemeType]?.secondary || themeColors[defaultColorTheme].secondary,
+        primary: currentThemeData.primary,
+        secondary: currentThemeData.secondary,
     };
 
     // The context value

@@ -30,6 +30,23 @@ interface SettingsContent {
     };
 }
 
+// Helper function to safely get theme data
+const getThemeData = (category: ThemeCategoryType, colorTheme: ColorThemeType): ThemeData | undefined => {
+    // Check if the category exists
+    if (!(category in categorizedThemes)) {
+        return categorizedThemes.default.default;
+    }
+
+    // Check if the theme exists in the category
+    const categoryThemes = categorizedThemes[category];
+    if (colorTheme in categoryThemes) {
+        return categoryThemes[colorTheme as keyof typeof categoryThemes];
+    }
+
+    // Default fallback
+    return categorizedThemes.default.default;
+};
+
 export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false }) => {
     const { theme: currentTheme, colorTheme, category: currentCategory, changeTheme, changeColorTheme, changeCategory, themeColors } = useTheme();
     const [modalVisible, setModalVisible] = useState(false);
@@ -49,8 +66,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
 
     // Get current theme data
     const currentThemeData = useMemo(() => {
-        const themeData = categorizedThemes[currentCategory][colorTheme];
-        return themeData || categorizedThemes.default.default;
+        return getThemeData(currentCategory, colorTheme) || categorizedThemes.default.default;
     }, [currentCategory, colorTheme]);
 
     const handleThemeSelect = useCallback(async (themeId: ColorThemeType, category: ThemeCategoryType) => {
@@ -60,7 +76,8 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
             await changeColorTheme(themeId);
             setModalVisible(false);
 
-            const themeName = categorizedThemes[category][themeId]?.name || themeId;
+            const themeData = getThemeData(category, themeId);
+            const themeName = themeData?.name || themeId;
             const categoryName = content?.sections?.preferences?.theme?.categories?.[category] || category;
 
             // Announce theme change to screen readers
