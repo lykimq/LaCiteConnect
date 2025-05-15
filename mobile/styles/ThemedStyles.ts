@@ -1311,6 +1311,13 @@ export const createEventsStyles = (colors: any) => StyleSheet.create({
         marginLeft: 6,
         fontWeight: '500',
     },
+    filterSectionTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: colors.text,
+        marginBottom: 12,
+        marginTop: 8,
+    },
 });
 
 /**
