@@ -298,7 +298,6 @@ export const createHomeStyles = (colors: any) => StyleSheet.create({
 export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
         backgroundColor: colors.background,
     },
     scrollView: {
@@ -307,47 +306,40 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
     scrollViewContent: {
         paddingBottom: 30,
     },
-    header: {
-        marginBottom: 24,
-        marginTop: 30,
-        alignItems: 'center',
-        paddingVertical: 20,
-        paddingHorizontal: 16,
-        backgroundColor: colors.card,
-        borderRadius: 12,
+    heroSection: {
+        height: 200,
+        backgroundColor: colors.primary,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        padding: 20,
+        justifyContent: 'flex-end',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-        borderColor: colors.border,
-        borderWidth: 1,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
     },
-    headerDivider: {
-        height: 1,
-        width: '40%',
-        backgroundColor: colors.border,
-        marginVertical: 10,
-        opacity: 0.7,
+    heroContent: {
+        marginBottom: 20,
     },
-    title: {
-        fontSize: 28,
+    heroTitle: {
+        fontSize: 32,
         fontWeight: 'bold',
-        color: colors.text,
-        marginVertical: 10,
-        textAlign: 'center',
+        color: '#FFFFFF',
+        marginBottom: 8,
     },
-    subtitle: {
-        fontSize: 18,
-        color: colors.text,
-        opacity: 0.7,
-        marginBottom: 10,
-        textAlign: 'center',
+    heroSubtitle: {
+        fontSize: 16,
+        color: '#FFFFFF',
+        opacity: 0.9,
     },
-    sectionContainer: {
+    sectionsContainer: {
+        padding: 20,
+    },
+    sectionCard: {
         backgroundColor: colors.card,
-        borderRadius: 12,
-        marginBottom: 16,
+        borderRadius: 20,
+        marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -360,12 +352,10 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         padding: 16,
-    },
-    sectionHeaderContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        backgroundColor: colors.primary + '10',
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
     },
     sectionIconContainer: {
         width: 40,
@@ -380,6 +370,10 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: colors.text,
+        flex: 1,
+    },
+    sectionContent: {
+        padding: 16,
     },
     paragraph: {
         fontSize: 16,
@@ -387,26 +381,32 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
         opacity: 0.8,
         lineHeight: 24,
         marginBottom: 15,
-        paddingHorizontal: 16,
-        paddingBottom: 16,
+    },
+    link: {
+        color: colors.primary,
+        textDecorationLine: 'underline',
     },
     valueItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: 12,
-        paddingHorizontal: 16,
+    },
+    valueIcon: {
+        marginRight: 12,
     },
     valueText: {
         fontSize: 16,
         color: colors.text,
-        fontWeight: '500',
+        flex: 1,
     },
     teamGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-around',
-        padding: 10,
+        justifyContent: 'space-between',
+        padding: 16,
     },
     teamMemberCard: {
-        width: (width - 80) / 2,
+        width: (Dimensions.get('window').width - 80) / 2,
         backgroundColor: colors.background,
         borderRadius: 12,
         padding: 12,
@@ -448,8 +448,6 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 20,
         borderRadius: 25,
-        marginTop: 15,
-        marginBottom: 10,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -464,7 +462,19 @@ export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 15,
         fontWeight: '600',
-        textAlign: 'center',
+    },
+    retryButton: {
+        marginTop: 20,
+        padding: 12,
+        backgroundColor: colors.primary,
+        borderRadius: 8,
+        minWidth: 100,
+        alignItems: 'center',
+    },
+    retryButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
 
