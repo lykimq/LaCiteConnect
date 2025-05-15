@@ -73,6 +73,7 @@ interface HomeContent {
     };
     ui: UIStrings;
     sections: Section[];
+    months?: string[];
 }
 
 // Add CalendarEvent interface
@@ -149,6 +150,7 @@ export const HomeContent = () => {
     const [error, setError] = useState<string | null>(null);
     const [todayEvents, setTodayEvents] = useState<CalendarEvent[]>([]);
     const [loadingEvents, setLoadingEvents] = useState<boolean>(true);
+    const [eventsContent, setEventsContent] = useState<{ months: string[] } | null>(null);
     const { themeColors, theme } = useTheme();
     const styles = useThemedStyles(createHomeStyles);
     const { currentLanguage } = useLanguage();
@@ -157,6 +159,7 @@ export const HomeContent = () => {
     useEffect(() => {
         loadContent();
         loadTodayEvents();
+        loadEventsContent();
     }, []);
 
     // Add language change effect
@@ -165,6 +168,17 @@ export const HomeContent = () => {
             .then(() => loadTodayEvents())
             .catch(err => console.error('Error updating calendar language:', err));
     }, [currentLanguage]);
+
+    const loadEventsContent = async () => {
+        try {
+            const response = await contentService.getContent<{ months: string[] }>('events');
+            if (response.success && response.data) {
+                setEventsContent(response.data);
+            }
+        } catch (err) {
+            console.error('Error loading events content:', err);
+        }
+    };
 
     const loadTodayEvents = async () => {
         try {
@@ -337,13 +351,14 @@ export const HomeContent = () => {
 
     const renderEventCard = (event: CalendarEvent) => {
         const eventDate = new Date(event.start.dateTime || event.start.date || '');
+        const monthIndex = eventDate.getMonth();
 
         return (
             <View key={event.id} style={styles.eventCard}>
                 <View style={styles.eventDate}>
                     <Text style={styles.eventDay}>{eventDate.getDate()}</Text>
                     <Text style={styles.eventMonth}>
-                        {eventDate.toLocaleString('default', { month: 'short' }).toUpperCase()}
+                        {(eventsContent?.months?.[monthIndex] || eventDate.toLocaleString('default', { month: 'short' })).toUpperCase()}
                     </Text>
                 </View>
                 <View style={styles.eventInfo}>
