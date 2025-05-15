@@ -10,14 +10,37 @@
                 "title": "Thème",
                 "darkMode": "Mode Sombre",
                 "themeColor": "Couleurs du Thème",
+                "categories": {
+                    "default": "Par Défaut",
+                    "seasonal": "Saisonnier",
+                    "pastel": "Pastel",
+                    "neon": "Néon",
+                    "monochrome": "Monochrome",
+                    "nature": "Nature",
+                    "accessibility": "Accessibilité"
+                },
                 "options": {
                     "light": "Clair",
                     "dark": "Sombre",
                     "colors": {
                         "default": "Par Défaut",
-                        "ocean": "Océan",
+                        "spring": "Printemps",
+                        "summer": "Été",
+                        "autumn": "Automne",
+                        "winter": "Hiver",
+                        "lavender": "Lavande",
+                        "sand": "Sable",
+                        "mint": "Menthe",
+                        "neon": "Néon",
+                        "cyberpunk": "Cyberpunk",
+                        "slate": "Ardoise",
+                        "monochrome": "Monochrome",
                         "forest": "Forêt",
-                        "sunset": "Coucher de Soleil"
+                        "ocean": "Océan",
+                        "sunset": "Coucher de Soleil",
+                        "protanopia": "Adapté Protanopie",
+                        "deuteranopia": "Adapté Deutéranopie",
+                        "tritanopia": "Adapté Tritanopie"
                     }
                 }
             },

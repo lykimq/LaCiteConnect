@@ -10,14 +10,37 @@
                 "title": "Theme",
                 "darkMode": "Dark Mode",
                 "themeColor": "Theme Colors",
+                "categories": {
+                    "default": "Default",
+                    "seasonal": "Seasonal",
+                    "pastel": "Pastel",
+                    "neon": "Neon",
+                    "monochrome": "Monochrome",
+                    "nature": "Nature",
+                    "accessibility": "Accessibility"
+                },
                 "options": {
                     "light": "Light",
                     "dark": "Dark",
                     "colors": {
                         "default": "Default",
-                        "ocean": "Ocean",
+                        "spring": "Spring",
+                        "summer": "Summer",
+                        "autumn": "Autumn",
+                        "winter": "Winter",
+                        "lavender": "Lavender",
+                        "sand": "Sand",
+                        "mint": "Mint",
+                        "neon": "Neon",
+                        "cyberpunk": "Cyberpunk",
+                        "slate": "Slate",
+                        "monochrome": "Monochrome",
                         "forest": "Forest",
-                        "sunset": "Sunset"
+                        "ocean": "Ocean",
+                        "sunset": "Sunset",
+                        "protanopia": "Protanopia-Friendly",
+                        "deuteranopia": "Deuteranopia-Friendly",
+                        "tritanopia": "Tritanopia-Friendly"
                     }
                 }
             },

@@ -1,41 +1,91 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, AccessibilityInfo, SectionList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { themes, ThemeType } from '../services/themeService';
+import * as Haptics from 'expo-haptics';
+import { themes, ThemeType, categorizedThemes, ThemeCategoryType, ColorThemeType, ThemeData } from '../services/themeService';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLocalizedContent } from '../hooks/useLocalizedContent';
 
 interface ThemeSelectorProps {
     compact?: boolean;
 }
 
+interface ThemeItem extends ThemeData {
+    themeId: ColorThemeType;
+}
+
+interface ThemeSection {
+    category: ThemeCategoryType;
+    title: string;
+    data: ThemeItem[];
+}
+
+interface SettingsContent {
+    sections: {
+        preferences: {
+            theme: {
+                categories: Record<ThemeCategoryType, string>;
+            };
+        };
+    };
+}
+
 export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false }) => {
-    const { theme: currentTheme, changeTheme, themeColors } = useTheme();
+    const { theme: currentTheme, colorTheme, category: currentCategory, changeTheme, changeColorTheme, changeCategory, themeColors } = useTheme();
     const [modalVisible, setModalVisible] = useState(false);
+    const { content } = useLocalizedContent<SettingsContent>('settings');
 
-    const handleThemeSelect = async (themeType: ThemeType) => {
+    // Memoize theme sections
+    const themeSections = useMemo(() => {
+        return Object.entries(categorizedThemes).map(([category, themes]) => ({
+            category: category as ThemeCategoryType,
+            title: content?.sections?.preferences?.theme?.categories?.[category as ThemeCategoryType] || category,
+            data: Object.entries(themes).map(([id, theme]) => ({
+                themeId: id as ColorThemeType,
+                ...theme
+            }))
+        }));
+    }, [content]);
+
+    // Get current theme data
+    const currentThemeData = useMemo(() => {
+        const themeData = categorizedThemes[currentCategory][colorTheme];
+        return themeData || categorizedThemes.default.default;
+    }, [currentCategory, colorTheme]);
+
+    const handleThemeSelect = useCallback(async (themeId: ColorThemeType, category: ThemeCategoryType) => {
         try {
-            // Update theme in context
-            await changeTheme(themeType);
-
-            // Close modal
+            await Haptics.selectionAsync();
+            await changeCategory(category);
+            await changeColorTheme(themeId);
             setModalVisible(false);
+
+            const themeName = categorizedThemes[category][themeId]?.name || themeId;
+            const categoryName = content?.sections?.preferences?.theme?.categories?.[category] || category;
+
+            // Announce theme change to screen readers
+            AccessibilityInfo.announceForAccessibility(
+                `Theme changed to ${themeName} from ${categoryName} category`
+            );
         } catch (error) {
             console.error('Error changing theme:', error);
         }
-    };
-
-    // Get current theme data
-    const currentThemeData = themes[currentTheme];
-
-    // Transform themes object to array for FlatList
-    const themesList = Object.entries(themes).map(([key, value]) => ({
-        themeId: key as ThemeType,
-        ...value
-    }));
+    }, [changeColorTheme, changeCategory, content]);
 
     const styles = StyleSheet.create({
         container: {
             marginBottom: 20,
+        },
+        categorySelector: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+        },
+        categoryText: {
+            fontSize: 14,
+            color: themeColors.text,
+            textTransform: 'capitalize',
         },
         label: {
             fontSize: 16,
@@ -53,9 +103,32 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
             borderRadius: 8,
             backgroundColor: themeColors.card,
         },
+        themeInfo: {
+            flex: 1,
+        },
         selectedTheme: {
             fontSize: 16,
             color: themeColors.text,
+        },
+        colorPreview: {
+            flexDirection: 'row',
+            marginTop: 4,
+        },
+        colorSwatch: {
+            width: 20,
+            height: 20,
+            borderRadius: 4,
+            marginRight: 8,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+        },
+        navigationButtons: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        navButton: {
+            padding: 8,
+            marginHorizontal: 4,
         },
         compactContainer: {
             marginHorizontal: 8,
@@ -101,40 +174,86 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
             fontWeight: 'bold',
             color: themeColors.text,
         },
-        themeOption: {
+        themeItem: {
             flexDirection: 'row',
             alignItems: 'center',
             padding: 15,
             borderBottomWidth: 1,
-            borderBottomColor: themeColors.border,
+            borderBottomColor: themeColors.border + '20',
         },
-        selectedThemeOption: {
-            backgroundColor: themeColors.accent,
+        selectedThemeItem: {
+            backgroundColor: themeColors.primary + '10',
         },
-        themeOptionText: {
-            flex: 1,
-            fontSize: 16,
-            color: themeColors.text,
-            marginLeft: 15,
+        themePreview: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
         },
-        themeColorIndicator: {
-            width: 32,
-            height: 32,
-            borderRadius: 16,
+        colorIndicator: {
+            width: 24,
+            height: 24,
+            borderRadius: 12,
             borderWidth: 1,
             borderColor: themeColors.border,
-            justifyContent: 'center',
-            alignItems: 'center',
         },
-        themeColorAccent: {
-            width: 12,
-            height: 12,
-            borderRadius: 6,
+        colorSecondary: {
+            position: 'absolute',
+            right: -4,
+            bottom: -4,
+            width: 16,
+            height: 16,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+        },
+        themeName: {
+            fontSize: 16,
+            color: themeColors.text,
+            marginLeft: 12,
+            flex: 1,
+        },
+        sectionHeader: {
+            backgroundColor: themeColors.card,
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderBottomWidth: 1,
+            borderBottomColor: themeColors.border,
+        },
+        sectionTitle: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: themeColors.primary,
+            textTransform: 'capitalize',
         },
     });
 
+    const renderThemeItem = ({ item, section }: { item: ThemeItem; section: ThemeSection }) => (
+        <TouchableOpacity
+            style={[
+                styles.themeItem,
+                colorTheme === item.themeId && currentCategory === section.category && styles.selectedThemeItem
+            ]}
+            onPress={() => handleThemeSelect(item.themeId, section.category)}
+        >
+            <View style={styles.themePreview}>
+                <View style={[styles.colorIndicator, { backgroundColor: item.primary }]}>
+                    <View style={[styles.colorSecondary, { backgroundColor: item.secondary }]} />
+                </View>
+                <Text style={styles.themeName}>{item.name}</Text>
+            </View>
+            {colorTheme === item.themeId && currentCategory === section.category && (
+                <Ionicons name="checkmark-circle" size={24} color={themeColors.primary} />
+            )}
+        </TouchableOpacity>
+    );
+
+    const renderSectionHeader = ({ section }: { section: ThemeSection }) => (
+        <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+        </View>
+    );
+
     if (compact) {
-        // Compact version (just an icon button)
         return (
             <View style={styles.compactContainer}>
                 <TouchableOpacity
@@ -163,26 +282,12 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
                                 </TouchableOpacity>
                             </View>
 
-                            <FlatList
-                                data={themesList}
+                            <SectionList
+                                sections={themeSections}
+                                renderItem={renderThemeItem}
+                                renderSectionHeader={renderSectionHeader}
                                 keyExtractor={(item) => item.themeId}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.themeOption,
-                                            currentTheme === item.themeId && styles.selectedThemeOption,
-                                        ]}
-                                        onPress={() => handleThemeSelect(item.themeId)}
-                                    >
-                                        <View style={[styles.themeColorIndicator, { backgroundColor: item.colors.background }]}>
-                                            <View style={[styles.themeColorAccent, { backgroundColor: item.colors.primary }]} />
-                                        </View>
-                                        <Text style={styles.themeOptionText}>{item.name}</Text>
-                                        {currentTheme === item.themeId && (
-                                            <Ionicons name="checkmark" size={20} color={themeColors.primary} />
-                                        )}
-                                    </TouchableOpacity>
-                                )}
+                                stickySectionHeadersEnabled={true}
                             />
                         </View>
                     </View>
@@ -191,15 +296,23 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
         );
     }
 
-    // Full version (dropdown selector)
+    // Full version
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>Theme:</Text>
             <TouchableOpacity
                 style={styles.selectorButton}
                 onPress={() => setModalVisible(true)}
             >
-                <Text style={styles.selectedTheme}>{currentThemeData.name}</Text>
+                <View style={styles.themeInfo}>
+                    <Text style={styles.categoryText}>
+                        {content?.sections.preferences.theme.categories[currentCategory] || currentCategory}
+                    </Text>
+                    <Text style={styles.selectedTheme}>{currentThemeData.name}</Text>
+                    <View style={styles.colorPreview}>
+                        <View style={[styles.colorSwatch, { backgroundColor: currentThemeData.primary }]} />
+                        <View style={[styles.colorSwatch, { backgroundColor: currentThemeData.secondary }]} />
+                    </View>
+                </View>
                 <Ionicons name="chevron-down" size={18} color={themeColors.text} />
             </TouchableOpacity>
 
@@ -218,26 +331,12 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
                             </TouchableOpacity>
                         </View>
 
-                        <FlatList
-                            data={themesList}
+                        <SectionList
+                            sections={themeSections}
+                            renderItem={renderThemeItem}
+                            renderSectionHeader={renderSectionHeader}
                             keyExtractor={(item) => item.themeId}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={[
-                                        styles.themeOption,
-                                        currentTheme === item.themeId && styles.selectedThemeOption,
-                                    ]}
-                                    onPress={() => handleThemeSelect(item.themeId)}
-                                >
-                                    <View style={[styles.themeColorIndicator, { backgroundColor: item.colors.background }]}>
-                                        <View style={[styles.themeColorAccent, { backgroundColor: item.colors.primary }]} />
-                                    </View>
-                                    <Text style={styles.themeOptionText}>{item.name}</Text>
-                                    {currentTheme === item.themeId && (
-                                        <Ionicons name="checkmark" size={20} color={themeColors.primary} />
-                                    )}
-                                </TouchableOpacity>
-                            )}
+                            stickySectionHeadersEnabled={true}
                         />
                     </View>
                 </View>

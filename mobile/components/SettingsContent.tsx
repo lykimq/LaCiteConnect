@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -23,7 +23,14 @@ import { useLocalizedContent } from '../hooks/useLocalizedContent';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 import Constants from 'expo-constants';
-import { ThemeType, ColorThemeType, themeColors as themeColorOptions } from '../services/themeService';
+import {
+    ThemeType,
+    ColorThemeType,
+    ThemeCategoryType,
+    themeColors as themeColorOptions,
+    categorizedThemes,
+    ThemeData,
+} from '../services/themeService';
 
 interface SettingsContentData {
     header: {
@@ -37,13 +44,14 @@ interface SettingsContentData {
                 title: string;
                 darkMode: string;
                 themeColor: string;
+                categories: {
+                    [key in ThemeCategoryType]: string;
+                };
                 options: {
                     light: string;
                     dark: string;
                     colors: {
-                        ocean: string;
-                        forest: string;
-                        sunset: string;
+                        [key in ColorThemeType]: string;
                     };
                 };
             };
@@ -88,12 +96,81 @@ export const SettingsContent = () => {
         themeColors,
         theme: currentTheme,
         colorTheme: currentColorTheme,
+        category: currentCategory,
         changeTheme,
         changeColorTheme,
+        changeCategory,
     } = useTheme();
     const { content, isLoading, error, refresh } = useLocalizedContent<SettingsContentData>('settings');
     const [refreshing, setRefreshing] = useState(false);
     const { currentLanguage, setAppLanguage } = useLanguage();
+
+    // Get current theme data
+    const currentThemeData = useMemo(() => {
+        const categoryThemes = categorizedThemes[currentCategory];
+        const themeData = categoryThemes[currentColorTheme as keyof typeof categoryThemes] as ThemeData;
+        return themeData || categorizedThemes.default.default;
+    }, [currentCategory, currentColorTheme]);
+
+    // Theme navigation handlers
+    const handlePreviousTheme = () => {
+        const categories = Object.keys(categorizedThemes) as ThemeCategoryType[];
+        const currentCategoryIndex = categories.indexOf(currentCategory);
+        const currentThemes = Object.keys(categorizedThemes[currentCategory]) as ColorThemeType[];
+        const currentThemeIndex = currentThemes.indexOf(currentColorTheme);
+
+        if (currentThemeIndex > 0) {
+            // Move to previous theme in current category
+            const prevThemeId = currentThemes[currentThemeIndex - 1];
+            changeColorTheme(prevThemeId);
+        } else if (currentCategoryIndex > 0) {
+            // Move to last theme of previous category
+            const prevCategory = categories[currentCategoryIndex - 1];
+            const prevCategoryThemes = Object.keys(categorizedThemes[prevCategory]) as ColorThemeType[];
+            const lastThemeId = prevCategoryThemes[prevCategoryThemes.length - 1];
+            changeCategory(prevCategory);
+            changeColorTheme(lastThemeId);
+        }
+    };
+
+    const handleNextTheme = () => {
+        const categories = Object.keys(categorizedThemes) as ThemeCategoryType[];
+        const currentCategoryIndex = categories.indexOf(currentCategory);
+        const currentThemes = Object.keys(categorizedThemes[currentCategory]) as ColorThemeType[];
+        const currentThemeIndex = currentThemes.indexOf(currentColorTheme);
+
+        if (currentThemeIndex < currentThemes.length - 1) {
+            // Move to next theme in current category
+            const nextThemeId = currentThemes[currentThemeIndex + 1];
+            changeColorTheme(nextThemeId);
+        } else if (currentCategoryIndex < categories.length - 1) {
+            // Move to first theme of next category
+            const nextCategory = categories[currentCategoryIndex + 1];
+            const nextCategoryThemes = Object.keys(categorizedThemes[nextCategory]) as ColorThemeType[];
+            const firstThemeId = nextCategoryThemes[0];
+            changeCategory(nextCategory);
+            changeColorTheme(firstThemeId);
+        }
+    };
+
+    // Calculate if we can navigate
+    const canNavigatePrevious = () => {
+        const categories = Object.keys(categorizedThemes) as ThemeCategoryType[];
+        const currentCategoryIndex = categories.indexOf(currentCategory);
+        const currentThemes = Object.keys(categorizedThemes[currentCategory]) as ColorThemeType[];
+        const currentThemeIndex = currentThemes.indexOf(currentColorTheme);
+
+        return currentThemeIndex > 0 || currentCategoryIndex > 0;
+    };
+
+    const canNavigateNext = () => {
+        const categories = Object.keys(categorizedThemes) as ThemeCategoryType[];
+        const currentCategoryIndex = categories.indexOf(currentCategory);
+        const currentThemes = Object.keys(categorizedThemes[currentCategory]) as ColorThemeType[];
+        const currentThemeIndex = currentThemes.indexOf(currentColorTheme);
+
+        return currentThemeIndex < currentThemes.length - 1 || currentCategoryIndex < categories.length - 1;
+    };
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -124,25 +201,6 @@ export const SettingsContent = () => {
             });
         } catch (error) {
             Alert.alert('Error', 'Failed to share the app');
-        }
-    };
-
-    // Get available themes
-    const availableThemes = Object.entries(themeColorOptions);
-    const currentThemeIndex = availableThemes.findIndex(([id]) => id === currentColorTheme);
-
-    // Theme navigation handlers
-    const handlePreviousTheme = () => {
-        if (currentThemeIndex > 0) {
-            const [prevThemeId] = availableThemes[currentThemeIndex - 1];
-            changeColorTheme(prevThemeId as ColorThemeType);
-        }
-    };
-
-    const handleNextTheme = () => {
-        if (currentThemeIndex < availableThemes.length - 1) {
-            const [nextThemeId] = availableThemes[currentThemeIndex + 1];
-            changeColorTheme(nextThemeId as ColorThemeType);
         }
     };
 
@@ -266,6 +324,7 @@ export const SettingsContent = () => {
             alignSelf: 'flex-end',
         },
         themePreview: {
+            flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
@@ -281,6 +340,15 @@ export const SettingsContent = () => {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 8,
+        },
+        themeInfo: {
+            flexDirection: 'column',
+            gap: 4,
+        },
+        themeCategory: {
+            fontSize: 12,
+            fontWeight: '500',
+            opacity: 0.8,
         },
         themeColorPreview: {
             width: 20,
@@ -514,10 +582,10 @@ export const SettingsContent = () => {
                                 <Pressable
                                     style={[
                                         styles.themeNavButton,
-                                        currentThemeIndex === 0 && { opacity: 0.5 }
+                                        !canNavigatePrevious() && { opacity: 0.5 }
                                     ]}
                                     onPress={handlePreviousTheme}
-                                    disabled={currentThemeIndex === 0}
+                                    disabled={!canNavigatePrevious()}
                                 >
                                     <Ionicons
                                         name="chevron-back"
@@ -530,29 +598,37 @@ export const SettingsContent = () => {
                                     <View style={styles.themePreviewContent}>
                                         <View style={[
                                             styles.themeColorPreview,
-                                            { backgroundColor: themeColorOptions[currentColorTheme].primary }
+                                            { backgroundColor: currentThemeData.primary }
                                         ]}>
                                             <View style={[
                                                 styles.themeColorSecondary,
-                                                { backgroundColor: themeColorOptions[currentColorTheme].secondary }
+                                                { backgroundColor: currentThemeData.secondary }
                                             ]} />
                                         </View>
-                                        <Text style={[
-                                            styles.themeOptionText,
-                                            { color: themeColorOptions[currentColorTheme].primary }
-                                        ]}>
-                                            {content?.sections.preferences.theme.options.colors[currentColorTheme as keyof typeof content.sections.preferences.theme.options.colors] || themeColorOptions[currentColorTheme].name}
-                                        </Text>
+                                        <View style={styles.themeInfo}>
+                                            <Text style={[
+                                                styles.themeCategory,
+                                                { color: themeColors.secondary }
+                                            ]}>
+                                                {content?.sections.preferences.theme.categories[currentCategory] || currentCategory}
+                                            </Text>
+                                            <Text style={[
+                                                styles.themeOptionText,
+                                                { color: currentThemeData.primary }
+                                            ]}>
+                                                {currentThemeData.name}
+                                            </Text>
+                                        </View>
                                     </View>
                                 </View>
 
                                 <Pressable
                                     style={[
                                         styles.themeNavButton,
-                                        currentThemeIndex === availableThemes.length - 1 && { opacity: 0.5 }
+                                        !canNavigateNext() && { opacity: 0.5 }
                                     ]}
                                     onPress={handleNextTheme}
-                                    disabled={currentThemeIndex === availableThemes.length - 1}
+                                    disabled={!canNavigateNext()}
                                 >
                                     <Ionicons
                                         name="chevron-forward"

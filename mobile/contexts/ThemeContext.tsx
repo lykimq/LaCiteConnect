@@ -4,12 +4,17 @@ import {
     setTheme,
     getColorTheme,
     setColorTheme,
+    getThemeCategory,
+    setThemeCategory,
     themes,
     themeColors,
+    categorizedThemes,
     ThemeType,
     ColorThemeType,
+    ThemeCategoryType,
     defaultTheme,
     defaultColorTheme,
+    defaultCategory,
     initializeTheme
 } from '../services/themeService';
 
@@ -17,24 +22,28 @@ import {
 interface ThemeContextType {
     theme: ThemeType;
     colorTheme: ColorThemeType;
+    category: ThemeCategoryType;
     themeColors: typeof themes.light.colors & {
         primary: string;
         secondary: string;
     };
     changeTheme: (newTheme: ThemeType) => Promise<void>;
     changeColorTheme: (newColorTheme: ColorThemeType) => Promise<void>;
+    changeCategory: (newCategory: ThemeCategoryType) => Promise<void>;
 }
 
 // Create context with a default value
 const ThemeContext = createContext<ThemeContextType>({
     theme: defaultTheme,
     colorTheme: defaultColorTheme,
+    category: defaultCategory,
     themeColors: {
         ...themes.light.colors,
         ...themeColors.default
     },
     changeTheme: async () => { },
     changeColorTheme: async () => { },
+    changeCategory: async () => { },
 });
 
 // Props for ThemeProvider
@@ -46,20 +55,23 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const [themeType, setThemeType] = useState<ThemeType>(defaultTheme);
     const [colorThemeType, setColorThemeType] = useState<ColorThemeType>(defaultColorTheme);
+    const [categoryType, setCategoryType] = useState<ThemeCategoryType>(defaultCategory);
     const [initialized, setInitialized] = useState(false);
 
     // Initialize the theme
     useEffect(() => {
         const initTheme = async () => {
             try {
-                const { theme, colorTheme } = await initializeTheme();
+                const { theme, colorTheme, category } = await initializeTheme();
                 setThemeType(theme || defaultTheme);
                 setColorThemeType(colorTheme || defaultColorTheme);
+                setCategoryType(category || defaultCategory);
             } catch (error) {
                 console.error('Failed to initialize theme:', error);
                 // Use defaults if initialization fails
                 setThemeType(defaultTheme);
                 setColorThemeType(defaultColorTheme);
+                setCategoryType(defaultCategory);
             } finally {
                 setInitialized(true);
             }
@@ -88,20 +100,32 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         }
     };
 
+    // Function to change the theme category
+    const changeCategory = async (newCategory: ThemeCategoryType) => {
+        try {
+            await setThemeCategory(newCategory);
+            setCategoryType(newCategory);
+        } catch (error) {
+            console.error('Failed to change theme category:', error);
+        }
+    };
+
     // Get current theme colors merged with color theme
     const currentThemeColors = {
         ...themes[themeType].colors,
-        primary: themeColors[colorThemeType]?.primary || themeColors[defaultColorTheme].primary,
-        secondary: themeColors[colorThemeType]?.secondary || themeColors[defaultColorTheme].secondary,
+        primary: categorizedThemes[categoryType][colorThemeType]?.primary || themeColors[defaultColorTheme].primary,
+        secondary: categorizedThemes[categoryType][colorThemeType]?.secondary || themeColors[defaultColorTheme].secondary,
     };
 
     // The context value
     const contextValue: ThemeContextType = {
         theme: themeType,
         colorTheme: colorThemeType,
+        category: categoryType,
         themeColors: currentThemeColors,
         changeTheme,
         changeColorTheme,
+        changeCategory,
     };
 
     // Don't render children until initialized to prevent flash of default theme
