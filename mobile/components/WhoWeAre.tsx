@@ -125,7 +125,7 @@ export const WhoWeAreContent = () => {
                 <Text style={styles.paragraph}>
                     {section.content?.split('(NCMI)').map((part, i) => {
                         if (i === 0) {
-                            return <React.Fragment key={i}>{part}(
+                            return <React.Fragment key={`ncmi-${i}`}>{part}(
                                 <Text
                                     style={styles.link}
                                     onPress={() => openGenericUrl('https://ncmi.net/')}
@@ -134,7 +134,7 @@ export const WhoWeAreContent = () => {
                                 </Text>
                                 )</React.Fragment>;
                         }
-                        return <React.Fragment key={i}>{part}</React.Fragment>;
+                        return <React.Fragment key={`ncmi-${i}`}>{part}</React.Fragment>;
                     })}
                 </Text>
             </View>
@@ -225,13 +225,13 @@ export const WhoWeAreContent = () => {
                     {content.sections.map((section) => {
                         switch (section.id) {
                             case 'ourChurch':
-                                return renderChurchSection(section);
+                                return <React.Fragment key={section.id}>{renderChurchSection(section)}</React.Fragment>;
                             case 'ourCulture':
-                                return renderCultureSection(section);
+                                return <React.Fragment key={section.id}>{renderCultureSection(section)}</React.Fragment>;
                             case 'ourEldershipTeam':
-                                return renderTeamSection(section);
+                                return <React.Fragment key={section.id}>{renderTeamSection(section)}</React.Fragment>;
                             case 'ourStatement':
-                                return renderStatementSection(section);
+                                return <React.Fragment key={section.id}>{renderStatementSection(section)}</React.Fragment>;
                             default:
                                 return null;
                         }

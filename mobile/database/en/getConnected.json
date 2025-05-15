@@ -5,16 +5,6 @@
   },
   "sections": [
     {
-      "id": "stayUpdated",
-      "icon": "mail",
-      "title": "Stay Updated",
-      "content": "Join our mailing list to receive updates about our services, events, and community news.",
-      "button": {
-        "text": "Subscribe Now",
-        "icon": "paper-plane"
-      }
-    },
-    {
       "id": "socialMedia",
       "icon": "share-social",
       "title": "Connect On Social Media",
@@ -50,16 +40,6 @@
           "url": "https://soundcloud.com/egliselacite/tracks"
         }
       ]
-    },
-    {
-      "id": "getInvolved",
-      "icon": "people",
-      "title": "Get Involved",
-      "content": "Want to get involved in the church, connect with others, and serve God with us? Volunteer with one of our teams!",
-      "button": {
-        "text": "Volunteer Now",
-        "icon": "hand-left"
-      }
     },
     {
       "id": "chezNous",

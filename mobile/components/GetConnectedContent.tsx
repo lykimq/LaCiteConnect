@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
-    Dimensions,
+    RefreshControl,
+    Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS } from '../config/staticData';
@@ -21,6 +22,12 @@ interface GetConnectedContent {
     header: {
         title: string;
         subtitle: string;
+    };
+    ui: {
+        quickActions: {
+            subscribe: string;
+            volunteer: string;
+        };
     };
     sections: Array<{
         id: string;
@@ -44,37 +51,56 @@ interface GetConnectedContent {
     }>;
 }
 
+// Default content for initial state
+const defaultContent: GetConnectedContent = {
+    header: {
+        title: '',
+        subtitle: '',
+    },
+    ui: {
+        quickActions: {
+            subscribe: '',
+            volunteer: '',
+        },
+    },
+    sections: [],
+};
+
 export const GetConnectedContent = () => {
-    const [content, setContent] = useState<GetConnectedContent | null>(null);
+    const [content, setContent] = useState<GetConnectedContent>(defaultContent);
     const [loading, setLoading] = useState<boolean>(true);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({});
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createGetConnectedStyles);
-    const scrollViewRef = useRef<ScrollView>(null);
     const { currentLanguage } = useLanguage();
 
     useEffect(() => {
         loadContent();
     }, []);
 
-    useEffect(() => {
-        if (content) {
-            const initialExpandedState: { [key: string]: boolean } = {};
-            content.sections.forEach(section => {
-                initialExpandedState[section.id] = false;
-            });
-            setExpandedSections(initialExpandedState);
-        }
-    }, [content]);
-
     const loadContent = async () => {
         try {
-            setLoading(true);
+            if (!refreshing) setLoading(true);
             const response = await contentService.getContent<GetConnectedContent>('getConnected');
 
             if (response.success && response.data) {
-                setContent(response.data);
+                // Validate the response data structure
+                const validData = {
+                    header: {
+                        title: response.data.header?.title || '',
+                        subtitle: response.data.header?.subtitle || '',
+                    },
+                    ui: {
+                        quickActions: {
+                            subscribe: response.data.ui?.quickActions?.subscribe || '',
+                            volunteer: response.data.ui?.quickActions?.volunteer || '',
+                        },
+                    },
+                    sections: response.data.sections || [],
+                };
+                setContent(validData);
+                setError(null);
             } else {
                 setError(response.error || 'Failed to load content');
             }
@@ -83,31 +109,15 @@ export const GetConnectedContent = () => {
             setError('An error occurred while loading content');
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
-    const toggleSection = (sectionId: string) => {
-        setExpandedSections(prev => {
-            const newState = { ...prev, [sectionId]: !prev[sectionId] };
-
-            // Scroll to the expanded section if it was expanded
-            if (newState[sectionId] && scrollViewRef.current && content) {
-                const sectionIndex = content.sections.findIndex(s => s.id === sectionId);
-                if (sectionIndex !== -1) {
-                    setTimeout(() => {
-                        if (scrollViewRef.current) {
-                            scrollViewRef.current.scrollTo({
-                                y: sectionIndex * 150,
-                                animated: true
-                            });
-                        }
-                    }, 100);
-                }
-            }
-
-            return newState;
-        });
-    };
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        setError(null);
+        loadContent();
+    }, []);
 
     const handleSubscribe = () => {
         openUrlWithCorrectDomain(STATIC_URLS.subscribe, currentLanguage);
@@ -117,8 +127,14 @@ export const GetConnectedContent = () => {
         openUrlWithCorrectDomain(STATIC_URLS.volunteer, currentLanguage);
     };
 
-    const handlePrayerRequest = () => {
-        openUrlWithCorrectDomain(STATIC_URLS.prayerRequest, currentLanguage);
+    const handleEmail = () => {
+        openGenericUrl('mailto:salut@egliselacite.com');
+    };
+
+    const handleSocialMedia = (url?: string) => {
+        if (url) {
+            openGenericUrl(url);
+        }
     };
 
     const handleChezNous = () => {
@@ -129,15 +145,100 @@ export const GetConnectedContent = () => {
         openUrlWithCorrectDomain(STATIC_URLS.chezNousDetails, currentLanguage);
     };
 
-    const handleSocialMedia = (url: string) => {
-        openGenericUrl(url);
+    const handleContactAction = (type: string, url?: string) => {
+        if (type === 'email') {
+            handleEmail();
+        } else {
+            handleSocialMedia(url);
+        }
     };
 
-    const handleEmail = () => {
-        openGenericUrl('mailto:salut@egliselacite.com');
+    const renderSectionContent = (section: GetConnectedContent['sections'][0]) => {
+        return (
+            <View style={styles.sectionContent}>
+                <Text style={styles.sectionText}>
+                    {section.content}
+                </Text>
+
+                {section.contact && (
+                    <View style={styles.contactGrid}>
+                        {section.contact.map((contact, index) => (
+                            <TouchableOpacity
+                                key={`${section.id}-contact-${index}`}
+                                style={styles.contactButton}
+                                onPress={() => handleContactAction(contact.type, contact.url)}
+                            >
+                                <View style={styles.contactIconContainer}>
+                                    <Ionicons
+                                        name={contact.icon as any}
+                                        size={24}
+                                        color={themeColors.primary}
+                                    />
+                                </View>
+                                <Text style={styles.contactText}>
+                                    {contact.value}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
+
+                {section.button && (
+                    <TouchableOpacity
+                        style={styles.sectionButton}
+                        onPress={section.id === 'stayUpdated' ? handleSubscribe : handleVolunteer}
+                    >
+                        <Ionicons
+                            name={section.button.icon as any}
+                            size={22}
+                            color="#FFFFFF"
+                            style={styles.sectionButtonIcon}
+                        />
+                        <Text style={styles.sectionButtonText}>
+                            {section.button.text}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+
+                {section.id === 'chezNous' && section.buttons && (
+                    <View style={styles.dualButtonContainer}>
+                        <TouchableOpacity
+                            style={styles.dualButton}
+                            onPress={handleChezNous}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons
+                                name={section.buttons[0].icon as any}
+                                size={22}
+                                color="#FFFFFF"
+                                style={styles.sectionButtonIcon}
+                            />
+                            <Text style={styles.sectionButtonText}>
+                                {section.buttons[0].text}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.dualButton}
+                            onPress={handleChezNousDetails}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons
+                                name={section.buttons[1].icon as any}
+                                size={22}
+                                color="#FFFFFF"
+                                style={styles.sectionButtonIcon}
+                            />
+                            <Text style={styles.sectionButtonText}>
+                                {section.buttons[1].text}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </View>
+        );
     };
 
-    if (loading) {
+    if (loading && !refreshing) {
         return (
             <View style={[styles.container, styles.loadingContainer]}>
                 <ActivityIndicator size="large" color={themeColors.primary} />
@@ -145,10 +246,10 @@ export const GetConnectedContent = () => {
         );
     }
 
-    if (error || !content) {
+    if (error) {
         return (
             <View style={[styles.container, styles.loadingContainer]}>
-                <Text style={styles.errorText}>{error || 'Content not available'}</Text>
+                <Text style={styles.errorText}>{error}</Text>
                 <TouchableOpacity
                     style={styles.retryButton}
                     onPress={loadContent}
@@ -159,154 +260,90 @@ export const GetConnectedContent = () => {
         );
     }
 
-    // Helper function to handle button actions based on section ID
-    const handleButtonAction = (sectionId: string) => {
-        switch (sectionId) {
-            case 'stayUpdated':
-                return handleSubscribe;
-            case 'getInvolved':
-                return handleVolunteer;
-            case 'prayerRequest':
-                return handlePrayerRequest;
-            default:
-                return () => console.log(`No action defined for section: ${sectionId}`);
-        }
-    };
+    return (
+        <View style={styles.container}>
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollViewContent}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[themeColors.primary]}
+                        tintColor={themeColors.primary}
+                    />
+                }
+            >
+                {/* Hero Section */}
+                <View style={styles.heroSection}>
+                    <View style={styles.heroContent}>
+                        <Text style={styles.heroTitle}>
+                            {content.header.title || 'Get Connected'}
+                        </Text>
+                        <Text style={styles.heroSubtitle}>
+                            {content.header.subtitle || 'Join our community and stay connected'}
+                        </Text>
+                    </View>
+                </View>
 
-    // Helper function to handle contact item actions
-    const handleContactAction = (contactType: string, url?: string) => {
-        if (contactType === 'email') {
-            return handleEmail;
-        } else if (url) {
-            return () => handleSocialMedia(url);
-        }
-        return () => console.log(`No action defined for contact type: ${contactType}`);
-    };
-
-    // Get appropriate icon for social media platform
-    const getSocialMediaIcon = (type: string, icon: string) => {
-        return icon as any; // Cast to any to avoid type errors with Ionicons
-    };
-
-    const renderSectionContent = (section: GetConnectedContent['sections'][0]) => {
-        if (!expandedSections[section.id]) return null;
-
-        return (
-            <View>
-                <Text style={styles.paragraph}>
-                    {section.content}
-                </Text>
-
-                {section.button && (
-                    <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={handleButtonAction(section.id)}
-                    >
-                        <View style={styles.buttonContent}>
-                            <Ionicons name={section.button.icon as any} size={22} color="#FFFFFF" style={{ marginRight: 10 }} />
-                            <Text style={styles.buttonText}>
-                                {section.button.text}
+                {/* Quick Actions */}
+                <View style={styles.quickActionsContainer}>
+                    <View style={styles.quickActionsRow}>
+                        <TouchableOpacity
+                            style={styles.quickActionButton}
+                            onPress={handleSubscribe}
+                            activeOpacity={0.8}
+                        >
+                            <View style={styles.quickActionIconContainer}>
+                                <Ionicons
+                                    name="mail"
+                                    size={24}
+                                    color={themeColors.primary}
+                                />
+                            </View>
+                            <Text style={styles.quickActionText}>
+                                {content.ui.quickActions.subscribe || 'Subscribe'}
                             </Text>
-                        </View>
-                    </TouchableOpacity>
-                )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.quickActionButton}
+                            onPress={handleVolunteer}
+                            activeOpacity={0.8}
+                        >
+                            <View style={styles.quickActionIconContainer}>
+                                <Ionicons
+                                    name="people"
+                                    size={24}
+                                    color={themeColors.primary}
+                                />
+                            </View>
+                            <Text style={styles.quickActionText}>
+                                {content.ui.quickActions.volunteer || 'Volunteer'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
 
-                {section.contact && (
-                    <View style={styles.contactsContainer}>
-                        {section.contact.map((contactItem, contactIndex) => (
-                            <TouchableOpacity
-                                key={`contact-${contactIndex}`}
-                                style={styles.contactButton}
-                                onPress={handleContactAction(contactItem.type, contactItem.url)}
-                            >
-                                <View style={styles.contactIconContainer}>
+                {/* Content Sections */}
+                <View style={styles.sectionsContainer}>
+                    {content.sections.map((section, index) => (
+                        <View key={section.id} style={styles.sectionCard}>
+                            <View style={styles.sectionHeader}>
+                                <View style={styles.sectionIconContainer}>
                                     <Ionicons
-                                        name={getSocialMediaIcon(contactItem.type, contactItem.icon)}
+                                        name={section.icon as any}
                                         size={24}
                                         color="#FFFFFF"
                                     />
                                 </View>
-                                <Text style={styles.contactButtonText}>
-                                    {contactItem.value}
+                                <Text style={styles.sectionTitle}>
+                                    {section.title}
                                 </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
-
-                {section.id === 'chezNous' && section.buttons && (
-                    <View style={styles.dualButtonContainer}>
-                        <TouchableOpacity
-                            style={styles.dualButton}
-                            onPress={handleChezNous}
-                        >
-                            <Ionicons name={section.buttons[0].icon as any} size={22} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={styles.buttonText}>
-                                {section.buttons[0].text}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.dualButton}
-                            onPress={handleChezNousDetails}
-                        >
-                            <Ionicons name={section.buttons[1].icon as any} size={22} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={styles.buttonText}>
-                                {section.buttons[1].text}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-            </View>
-        );
-    };
-
-    const renderSection = (section: GetConnectedContent['sections'][0], index: number) => {
-        const isExpanded = expandedSections[section.id];
-
-        return (
-            <View key={section.id} style={styles.sectionCard}>
-                <TouchableOpacity
-                    style={styles.sectionHeader}
-                    onPress={() => toggleSection(section.id)}
-                    activeOpacity={0.6}
-                >
-                    <View style={styles.sectionIconContainer}>
-                        <Ionicons name={section.icon as any} size={24} color="#FFFFFF" />
-                    </View>
-                    <Text style={styles.sectionTitle}>{section.title}</Text>
-                    <Ionicons
-                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                        size={24}
-                        color={themeColors.text}
-                        style={styles.expandIcon}
-                    />
-                </TouchableOpacity>
-                {renderSectionContent(section)}
-            </View>
-        );
-    };
-
-    return (
-        <View style={styles.container}>
-            <ScrollView
-                ref={scrollViewRef}
-                style={styles.scrollView}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollViewContent}
-            >
-                <View style={styles.header}>
-                    <Ionicons name="link" size={60} color={themeColors.primary} />
-                    <View style={styles.headerDivider} />
-                    <Text style={styles.title}>
-                        {content.header.title}
-                    </Text>
-                    <Text style={styles.subtitle}>
-                        {content.header.subtitle}
-                    </Text>
-                </View>
-
-                <View style={styles.sectionsContainer}>
-                    {content.sections.map(renderSection)}
+                            </View>
+                            {renderSectionContent(section)}
+                        </View>
+                    ))}
                 </View>
             </ScrollView>
         </View>

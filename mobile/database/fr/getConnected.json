@@ -5,16 +5,6 @@
   },
   "sections": [
     {
-      "id": "stayUpdated",
-      "icon": "mail",
-      "title": "Restez Informés",
-      "content": "Rejoignez notre liste de diffusion pour recevoir des mises à jour sur nos services, événements et nouvelles de la communauté.",
-      "button": {
-        "text": "S'abonner Maintenant",
-        "icon": "paper-plane"
-      }
-    },
-    {
       "id": "socialMedia",
       "icon": "share-social",
       "title": "Connectez-vous sur les Réseaux Sociaux",
@@ -50,16 +40,6 @@
           "url": "https://soundcloud.com/egliselacite/tracks"
         }
       ]
-    },
-    {
-      "id": "getInvolved",
-      "icon": "people",
-      "title": "Impliquez-vous",
-      "content": "Vous voulez vous impliquer dans l'église, vous connecter avec d'autres et servir Dieu avec nous ? Devenez bénévole dans l'une de nos équipes !",
-      "button": {
-        "text": "Devenir Bénévole",
-        "icon": "hand-left"
-      }
     },
     {
       "id": "chezNous",
