@@ -3,43 +3,56 @@
         "title": "Paramètres",
         "subtitle": "Personnalisez votre expérience"
     },
-    "sections": [
-        {
-            "id": "language",
-            "icon": "language",
-            "title": "Langue",
-            "description": "Choisissez votre langue préférée pour l'application"
+    "sections": {
+        "preferences": {
+            "title": "Préférences",
+            "theme": {
+                "title": "Thème",
+                "darkMode": "Mode Sombre",
+                "themeColor": "Couleurs du Thème",
+                "options": {
+                    "light": "Clair",
+                    "dark": "Sombre",
+                    "colors": {
+                        "default": "Par Défaut",
+                        "ocean": "Océan",
+                        "forest": "Forêt",
+                        "sunset": "Coucher de Soleil"
+                    }
+                }
+            },
+            "language": {
+                "title": "Langue",
+                "options": {
+                    "en": "EN",
+                    "fr": "FR"
+                }
+            }
         },
-        {
-            "id": "theme",
-            "icon": "color-palette",
-            "title": "Thème",
-            "description": "Modifier l'apparence de l'application"
-        },
-        {
-            "id": "about",
-            "icon": "information-circle",
-            "title": "À propos",
-            "items": [
-                {
-                    "id": "version",
-                    "label": "Version",
-                    "value": "1.0.0",
-                    "type": "text"
+        "support": {
+            "title": "Support & Légal",
+            "items": {
+                "contactSupport": {
+                    "label": "Contacter le Support",
+                    "type": "email",
+                    "url": "mailto:support@laciteconnect.org"
                 },
-                {
-                    "id": "termsOfService",
-                    "label": "Conditions d'utilisation",
+                "termsOfService": {
+                    "label": "Conditions d'Utilisation",
                     "type": "link",
                     "url": "https://laciteconnect.org/terms"
                 },
-                {
-                    "id": "privacyPolicy",
-                    "label": "Politique de confidentialité",
+                "privacyPolicy": {
+                    "label": "Politique de Confidentialité",
                     "type": "link",
                     "url": "https://laciteconnect.org/privacy"
+                },
+                "shareApp": {
+                    "label": "Partager l'Application",
+                    "type": "action",
+                    "url": "https://laciteconnect.org/app"
                 }
-            ]
+            }
         }
-    ]
+    }
 }

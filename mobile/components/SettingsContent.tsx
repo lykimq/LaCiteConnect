@@ -14,6 +14,8 @@ import {
     Pressable,
     Image,
     StatusBar,
+    Switch,
+    Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
@@ -21,29 +23,74 @@ import { useLocalizedContent } from '../hooks/useLocalizedContent';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 import Constants from 'expo-constants';
+import { ThemeType, ColorThemeType, themeColors as themeColorOptions } from '../services/themeService';
 
 interface SettingsContentData {
     header: {
         title: string;
         subtitle: string;
     };
-    sections: Array<{
-        id: string;
-        icon: string;
-        title: string;
-        description?: string;
-        items?: Array<{
-            id: string;
-            label: string;
-            value?: string;
-            type: string;
-            url?: string;
-        }>;
-    }>;
+    sections: {
+        preferences: {
+            title: string;
+            theme: {
+                title: string;
+                darkMode: string;
+                themeColor: string;
+                options: {
+                    light: string;
+                    dark: string;
+                    colors: {
+                        ocean: string;
+                        forest: string;
+                        sunset: string;
+                    };
+                };
+            };
+            language: {
+                title: string;
+                options: {
+                    en: string;
+                    fr: string;
+                };
+            };
+        };
+        support: {
+            title: string;
+            items: {
+                contactSupport: {
+                    label: string;
+                    type: string;
+                    url: string;
+                };
+                termsOfService: {
+                    label: string;
+                    type: string;
+                    url: string;
+                };
+                privacyPolicy: {
+                    label: string;
+                    type: string;
+                    url: string;
+                };
+                shareApp: {
+                    label: string;
+                    type: string;
+                    url: string;
+                };
+            };
+        };
+    };
 }
 
 export const SettingsContent = () => {
-    const { themeColors, theme: currentTheme, changeTheme } = useTheme();
+    const {
+        themeColors,
+        theme: currentTheme,
+        colorTheme: currentColorTheme,
+        changeTheme,
+        changeColorTheme,
+    } = useTheme();
     const { content, isLoading, error, refresh } = useLocalizedContent<SettingsContentData>('settings');
     const [refreshing, setRefreshing] = useState(false);
     const { currentLanguage, setAppLanguage } = useLanguage();
@@ -77,6 +124,25 @@ export const SettingsContent = () => {
             });
         } catch (error) {
             Alert.alert('Error', 'Failed to share the app');
+        }
+    };
+
+    // Get available themes
+    const availableThemes = Object.entries(themeColorOptions);
+    const currentThemeIndex = availableThemes.findIndex(([id]) => id === currentColorTheme);
+
+    // Theme navigation handlers
+    const handlePreviousTheme = () => {
+        if (currentThemeIndex > 0) {
+            const [prevThemeId] = availableThemes[currentThemeIndex - 1];
+            changeColorTheme(prevThemeId as ColorThemeType);
+        }
+    };
+
+    const handleNextTheme = () => {
+        if (currentThemeIndex < availableThemes.length - 1) {
+            const [nextThemeId] = availableThemes[currentThemeIndex + 1];
+            changeColorTheme(nextThemeId as ColorThemeType);
         }
     };
 
@@ -187,13 +253,72 @@ export const SettingsContent = () => {
             color: themeColors.text,
             flex: 1,
         },
+        themeRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+        themeSelector: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 8,
+            alignSelf: 'flex-end',
+        },
+        themePreview: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: 20,
+            backgroundColor: themeColors.card,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+            minWidth: 100,
+        },
+        themePreviewContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+        themeColorPreview: {
+            width: 20,
+            height: 20,
+            borderRadius: 10,
+            position: 'relative',
+            borderWidth: 1,
+            borderColor: themeColors.border,
+        },
+        themeColorSecondary: {
+            position: 'absolute',
+            right: -4,
+            bottom: -4,
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+        },
+        themeNavButton: {
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: themeColors.card,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        themeNavButtonDisabled: {
+            opacity: 0.5,
+        },
         themeOption: {
             flexDirection: 'row',
             alignItems: 'center',
             paddingVertical: 8,
             paddingHorizontal: 12,
             borderRadius: 20,
-            marginLeft: 8,
             backgroundColor: themeColors.border + '20',
         },
         themeOptionActive: {
@@ -201,10 +326,27 @@ export const SettingsContent = () => {
         },
         themeOptionText: {
             fontSize: 15,
-            color: themeColors.secondary,
-            marginLeft: 4,
+            fontWeight: '500',
         },
         themeOptionTextActive: {
+            color: themeColors.primary,
+            fontWeight: '500',
+        },
+        languageOption: {
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: 20,
+            backgroundColor: themeColors.border + '20',
+            marginLeft: 8,
+        },
+        languageOptionActive: {
+            backgroundColor: themeColors.primary + '20',
+        },
+        languageOptionText: {
+            fontSize: 15,
+            color: themeColors.secondary,
+        },
+        languageOptionTextActive: {
             color: themeColors.primary,
             fontWeight: '500',
         },
@@ -312,13 +454,14 @@ export const SettingsContent = () => {
                                 <Ionicons name="options-outline" size={20} color={themeColors.primary} />
                             </View>
                             <Text style={styles.sectionTitle}>
-                                {currentLanguage === 'fr' ? 'Préférences' : 'Preferences'}
+                                {content?.sections.preferences.title || 'Preferences'}
                             </Text>
                         </View>
 
+                        {/* Dark Mode Toggle */}
                         <View style={styles.optionItem}>
                             <Text style={styles.optionLabel}>
-                                {currentLanguage === 'fr' ? 'Mode Sombre' : 'Dark Mode'}
+                                {content?.sections.preferences.theme.darkMode || 'Dark Mode'}
                             </Text>
                             <View style={{ flexDirection: 'row' }}>
                                 <Pressable
@@ -336,7 +479,9 @@ export const SettingsContent = () => {
                                     <Text style={[
                                         styles.themeOptionText,
                                         currentTheme === 'light' && styles.themeOptionTextActive
-                                    ]}>Light</Text>
+                                    ]}>
+                                        {content?.sections.preferences.theme.options.light || 'Light'}
+                                    </Text>
                                 </Pressable>
                                 <Pressable
                                     style={[
@@ -353,14 +498,75 @@ export const SettingsContent = () => {
                                     <Text style={[
                                         styles.themeOptionText,
                                         currentTheme === 'dark' && styles.themeOptionTextActive
-                                    ]}>Dark</Text>
+                                    ]}>
+                                        {content?.sections.preferences.theme.options.dark || 'Dark'}
+                                    </Text>
                                 </Pressable>
                             </View>
                         </View>
 
+                        {/* Color Theme Selection */}
+                        <View style={styles.optionItem}>
+                            <Text style={styles.optionLabel}>
+                                {content?.sections.preferences.theme.themeColor || 'Theme Colors'}
+                            </Text>
+                            <View style={[styles.themeSelector, { maxWidth: '60%' }]}>
+                                <Pressable
+                                    style={[
+                                        styles.themeNavButton,
+                                        currentThemeIndex === 0 && { opacity: 0.5 }
+                                    ]}
+                                    onPress={handlePreviousTheme}
+                                    disabled={currentThemeIndex === 0}
+                                >
+                                    <Ionicons
+                                        name="chevron-back"
+                                        size={18}
+                                        color={themeColors.text}
+                                    />
+                                </Pressable>
+
+                                <View style={styles.themePreview}>
+                                    <View style={styles.themePreviewContent}>
+                                        <View style={[
+                                            styles.themeColorPreview,
+                                            { backgroundColor: themeColorOptions[currentColorTheme].primary }
+                                        ]}>
+                                            <View style={[
+                                                styles.themeColorSecondary,
+                                                { backgroundColor: themeColorOptions[currentColorTheme].secondary }
+                                            ]} />
+                                        </View>
+                                        <Text style={[
+                                            styles.themeOptionText,
+                                            { color: themeColorOptions[currentColorTheme].primary }
+                                        ]}>
+                                            {content?.sections.preferences.theme.options.colors[currentColorTheme as keyof typeof content.sections.preferences.theme.options.colors] || themeColorOptions[currentColorTheme].name}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <Pressable
+                                    style={[
+                                        styles.themeNavButton,
+                                        currentThemeIndex === availableThemes.length - 1 && { opacity: 0.5 }
+                                    ]}
+                                    onPress={handleNextTheme}
+                                    disabled={currentThemeIndex === availableThemes.length - 1}
+                                >
+                                    <Ionicons
+                                        name="chevron-forward"
+                                        size={18}
+                                        color={themeColors.text}
+                                    />
+                                </Pressable>
+                            </View>
+                        </View>
+
+                        {/* Language Selection */}
                         <View style={[styles.optionItem, { borderBottomWidth: 0 }]}>
                             <Text style={styles.optionLabel}>
-                                {currentLanguage === 'fr' ? 'Langue' : 'Language'}
+                                {content?.sections.preferences.language.title || 'Language'}
                             </Text>
                             <View style={{ flexDirection: 'row' }}>
                                 <Pressable
@@ -373,7 +579,9 @@ export const SettingsContent = () => {
                                     <Text style={[
                                         styles.themeOptionText,
                                         currentLanguage === 'fr' && styles.themeOptionTextActive
-                                    ]}>FR</Text>
+                                    ]}>
+                                        {content?.sections.preferences.language.options.fr || 'FR'}
+                                    </Text>
                                 </Pressable>
                                 <Pressable
                                     style={[
@@ -385,7 +593,9 @@ export const SettingsContent = () => {
                                     <Text style={[
                                         styles.themeOptionText,
                                         currentLanguage === 'en' && styles.themeOptionTextActive
-                                    ]}>EN</Text>
+                                    ]}>
+                                        {content?.sections.preferences.language.options.en || 'EN'}
+                                    </Text>
                                 </Pressable>
                             </View>
                         </View>
