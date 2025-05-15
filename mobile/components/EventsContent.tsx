@@ -19,7 +19,7 @@ const openUrlWithLanguageCheck = (url: string, language: string) => {
 };
 
 // View modes
-type ViewMode = 'calendar' | 'list' | 'timeline';
+type ViewMode = 'calendar' | 'list';
 
 // Add new types for sorting and filtering
 type SortOrder = 'asc' | 'desc';
@@ -96,7 +96,6 @@ interface EventsContent {
         openCalendarText: string;
         calendarViewText: string;
         listViewText: string;
-        timelineViewText: string;
         filterText: string;
         todayText: string;
         upcomingText: string;
@@ -132,20 +131,9 @@ interface EventsContent {
             nextSevenDays: string;
             nextThirtyDays: string;
         };
-        featuredView: {
-            todayTitle: string;
-            tomorrowTitle: string;
-            nextSevenDaysTitle: string;
-            nextThirtyDaysTitle: string;
-            comingUpTitle: string;
-            noUpcomingEventsText: string;
-            addToCalendarButtonText: string;
-            viewLocationButtonText: string;
-        };
         viewModes: {
             calendar: string;
             list: string;
-            featured: string;
         };
     };
     months: string[];
@@ -459,19 +447,6 @@ export const EventsContent = () => {
                     {content?.ui.viewModes?.list}
                 </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-                style={[styles.viewModeButton, viewMode === 'timeline' && styles.activeViewModeButton]}
-                onPress={() => setViewMode('timeline')}
-            >
-                <Ionicons
-                    name="star-outline"
-                    size={20}
-                    color={viewMode === 'timeline' ? '#FFFFFF' : themeColors.text}
-                />
-                <Text style={[styles.viewModeText, viewMode === 'timeline' && styles.activeViewModeText]}>
-                    {content?.ui.viewModes?.featured}
-                </Text>
-            </TouchableOpacity>
         </View>
     );
 
@@ -699,205 +674,13 @@ export const EventsContent = () => {
         </View>
     );
 
-    // Render featured events view
-    const renderFeaturedView = () => {
-        const now = new Date();
-        const upcomingEvents = filteredAndSortedEvents.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date || '');
-            return eventDate >= now;
-        });
-
-        // Group events by time periods
-        const today = new Date(now.setHours(0, 0, 0, 0));
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const nextWeek = new Date(today);
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        const nextMonth = new Date(today);
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-
-        const todayEvents = upcomingEvents.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date || '');
-            return eventDate.toDateString() === today.toDateString();
-        });
-
-        const tomorrowEvents = upcomingEvents.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date || '');
-            return eventDate.toDateString() === tomorrow.toDateString();
-        });
-
-        const nextSevenDaysEvents = upcomingEvents.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date || '');
-            return eventDate > tomorrow && eventDate <= nextWeek;
-        });
-
-        const nextMonthEvents = upcomingEvents.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date || '');
-            return eventDate > nextWeek && eventDate <= nextMonth;
-        });
-
-        const futureEvents = upcomingEvents.filter(event => {
-            const eventDate = new Date(event.start.dateTime || event.start.date || '');
-            return eventDate > nextMonth;
-        });
-
-        return (
-            <View style={styles.featuredContainer}>
-                {todayEvents.length > 0 && (
-                    <View style={styles.featuredSection}>
-                        <View style={styles.featuredHeader}>
-                            <Ionicons name="today-outline" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>
-                                {content?.ui.featuredView.todayTitle || 'Today'}
-                            </Text>
-                        </View>
-                        {todayEvents.map(event => renderFeaturedEventCard(event))}
-                    </View>
-                )}
-
-                {tomorrowEvents.length > 0 && (
-                    <View style={styles.featuredSection}>
-                        <View style={styles.featuredHeader}>
-                            <Ionicons name="sunny-outline" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>
-                                {content?.ui.featuredView.tomorrowTitle || 'Tomorrow'}
-                            </Text>
-                        </View>
-                        {tomorrowEvents.map(event => renderFeaturedEventCard(event))}
-                    </View>
-                )}
-
-                {nextSevenDaysEvents.length > 0 && (
-                    <View style={styles.featuredSection}>
-                        <View style={styles.featuredHeader}>
-                            <Ionicons name="calendar-outline" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>
-                                {content?.ui.featuredView.nextSevenDaysTitle || 'Next 7 Days'}
-                            </Text>
-                        </View>
-                        {nextSevenDaysEvents.map(event => renderFeaturedEventCard(event))}
-                    </View>
-                )}
-
-                {nextMonthEvents.length > 0 && (
-                    <View style={styles.featuredSection}>
-                        <View style={styles.featuredHeader}>
-                            <Ionicons name="calendar" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>
-                                {content?.ui.featuredView.nextThirtyDaysTitle || 'Next 30 Days'}
-                            </Text>
-                        </View>
-                        {nextMonthEvents.map(event => renderFeaturedEventCard(event))}
-                    </View>
-                )}
-
-                {futureEvents.length > 0 && (
-                    <View style={styles.featuredSection}>
-                        <View style={styles.featuredHeader}>
-                            <Ionicons name="star" size={24} color={themeColors.primary} />
-                            <Text style={styles.featuredTitle}>
-                                {content?.ui.featuredView.comingUpTitle || 'Coming Up'}
-                            </Text>
-                        </View>
-                        {futureEvents.map(event => renderFeaturedEventCard(event))}
-                    </View>
-                )}
-
-                {upcomingEvents.length === 0 && (
-                    <View style={styles.noEventsContainer}>
-                        <Text style={styles.noEventsText}>
-                            {content?.ui.featuredView.noUpcomingEventsText || 'No upcoming events found'}
-                        </Text>
-                    </View>
-                )}
-            </View>
-        );
-    };
-
-    // Render featured event card
-    const renderFeaturedEventCard = (event: CalendarEvent) => {
-        const eventDate = new Date(event.start.dateTime || event.start.date || '');
-        const monthIndex = eventDate.getMonth();
-        const isToday = eventDate.toDateString() === new Date().toDateString();
-        const isTomorrow = eventDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
-
-        return (
-            <View key={event.id} style={styles.featuredEventCard}>
-                <View style={styles.featuredEventHeader}>
-                    <View style={styles.featuredDateContainer}>
-                        <Text style={styles.featuredDateDay}>
-                            {eventDate.getDate()}
-                        </Text>
-                        <Text style={styles.featuredDateMonth}>
-                            {content?.months?.[monthIndex] || eventDate.toLocaleString('default', { month: 'short' })}
-                        </Text>
-                    </View>
-                    <View style={styles.featuredEventInfo}>
-                        <Text style={styles.featuredEventTitle}>
-                            {event.summary}
-                        </Text>
-                        <Text style={styles.featuredEventTime}>
-                            {isToday ? content?.ui.featuredView.todayTitle || 'Today' :
-                                isTomorrow ? content?.ui.featuredView.tomorrowTitle || 'Tomorrow' :
-                                    formatDate(eventDate)}
-                            {event.start.dateTime && ` • ${formatTime(eventDate)}`}
-                        </Text>
-                        {event.location && (
-                            <View style={styles.featuredEventLocation}>
-                                <Ionicons name="location-outline" size={14} color={themeColors.text} />
-                                <Text style={styles.featuredEventLocationText}>
-                                    {event.location}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                </View>
-                <View style={styles.featuredEventActions}>
-                    <TouchableOpacity
-                        style={styles.featuredActionButton}
-                        onPress={() => handleAddToCalendar(event)}
-                    >
-                        <Ionicons name="calendar-outline" size={16} color={themeColors.primary} />
-                        <Text style={styles.featuredActionText}>
-                            {content?.ui.featuredView.addToCalendarButtonText || 'Add to Calendar'}
-                        </Text>
-                    </TouchableOpacity>
-                    {event.location && (
-                        <TouchableOpacity
-                            style={styles.featuredActionButton}
-                            onPress={() => handleOpenMap(event.location || '')}
-                        >
-                            <Ionicons name="map-outline" size={16} color={themeColors.primary} />
-                            <Text style={styles.featuredActionText}>
-                                {content?.ui.featuredView.viewLocationButtonText || 'View Location'}
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                    {event.detailsUrl && (
-                        <TouchableOpacity
-                            style={styles.featuredActionButton}
-                            onPress={() => handleViewDetailUrl(event)}
-                        >
-                            <Ionicons name="open-outline" size={16} color={themeColors.primary} />
-                            <Text style={styles.featuredActionText}>
-                                {content?.ui.viewDetailsText || 'View Details'}
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-        );
-    };
-
-    // Update the renderView function to use the new featured view
+    // Update the renderView function to use only calendar and list views
     const renderView = () => {
         switch (viewMode) {
             case 'calendar':
                 return renderCalendarView();
             case 'list':
                 return renderListView();
-            case 'timeline':
-                return renderFeaturedView();
             default:
                 return renderCalendarView();
         }
