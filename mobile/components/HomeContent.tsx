@@ -159,6 +159,13 @@ export const HomeContent = () => {
         loadTodayEvents();
     }, []);
 
+    // Add language change effect
+    useEffect(() => {
+        calendarService.updateLanguage(currentLanguage)
+            .then(() => loadTodayEvents())
+            .catch(err => console.error('Error updating calendar language:', err));
+    }, [currentLanguage]);
+
     const loadTodayEvents = async () => {
         try {
             setLoadingEvents(true);

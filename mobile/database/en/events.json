@@ -48,7 +48,9 @@
     "sortOptions": {
       "date": "Date",
       "title": "Title",
-      "location": "Location"
+      "location": "Location",
+      "oldestFirst": "Oldest First",
+      "newestFirst": "Newest First"
     },
     "sortOrderLabel": "Order:",
     "applyFiltersText": "Apply Filters",
@@ -72,8 +74,8 @@
       "viewLocationButtonText": "View Location"
     },
     "viewModes": {
-      "calendar": "Calendar",
-      "simpleList": "Simple List",
+      "calendar": "Calendar View",
+      "list": "List View",
       "featured": "Featured"
     }
   },

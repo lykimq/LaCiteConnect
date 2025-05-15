@@ -118,6 +118,8 @@ interface EventsContent {
             date: string;
             title: string;
             location: string;
+            oldestFirst: string;
+            newestFirst: string;
         };
         sortOrderLabel: string;
         applyFiltersText: string;
@@ -142,7 +144,7 @@ interface EventsContent {
         };
         viewModes: {
             calendar: string;
-            simpleList: string;
+            list: string;
             featured: string;
         };
     };
@@ -319,9 +321,11 @@ export const EventsContent = () => {
             setContentLoading(true);
             setLoading(true);
 
-            // First load content, then events
-            loadContent()
-                .then(() => calendarService.updateLanguage(currentLanguage))
+            // First update calendar service language
+            calendarService.updateLanguage(currentLanguage)
+                // Then load content
+                .then(() => loadContent())
+                // Then fetch events with updated language
                 .then(() => fetchEvents())
                 .catch(error => {
                     console.error('[EventsContent] Error during language change sequence:', error);
@@ -340,8 +344,11 @@ export const EventsContent = () => {
         setContentLoading(true);
         setLoading(true);
 
-        // Load content first, then events
-        loadContent()
+        // Initialize calendar service with current language
+        calendarService.updateLanguage(currentLanguage)
+            // Then load content
+            .then(() => loadContent())
+            // Then fetch events
             .then(() => fetchEvents())
             .catch(error => {
                 console.error('[EventsContent] Error during initial load:', error);
@@ -436,7 +443,7 @@ export const EventsContent = () => {
                     color={viewMode === 'calendar' ? '#FFFFFF' : themeColors.text}
                 />
                 <Text style={[styles.viewModeText, viewMode === 'calendar' && styles.activeViewModeText]}>
-                    {content?.ui.viewModes.calendar || 'Calendar'}
+                    {content?.ui.viewModes?.calendar}
                 </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -449,7 +456,7 @@ export const EventsContent = () => {
                     color={viewMode === 'list' ? '#FFFFFF' : themeColors.text}
                 />
                 <Text style={[styles.viewModeText, viewMode === 'list' && styles.activeViewModeText]}>
-                    {content?.ui.viewModes.simpleList || 'Simple List'}
+                    {content?.ui.viewModes?.list}
                 </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -462,7 +469,7 @@ export const EventsContent = () => {
                     color={viewMode === 'timeline' ? '#FFFFFF' : themeColors.text}
                 />
                 <Text style={[styles.viewModeText, viewMode === 'timeline' && styles.activeViewModeText]}>
-                    {content?.ui.viewModes.featured || 'Featured'}
+                    {content?.ui.viewModes?.featured}
                 </Text>
             </TouchableOpacity>
         </View>
@@ -583,7 +590,9 @@ export const EventsContent = () => {
                                 color={themeColors.primary}
                             />
                             <Text style={styles.sortButtonText}>
-                                {filterOptions.sortOrder === 'asc' ? 'Oldest First' : 'Newest First'}
+                                {filterOptions.sortOrder === 'asc'
+                                    ? `${content?.ui.sortOptions.date} (${content?.ui.sortOrderLabel || ''} ↑)`
+                                    : `${content?.ui.sortOptions.date} (${content?.ui.sortOrderLabel || ''} ↓)`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -808,6 +817,7 @@ export const EventsContent = () => {
     // Render featured event card
     const renderFeaturedEventCard = (event: CalendarEvent) => {
         const eventDate = new Date(event.start.dateTime || event.start.date || '');
+        const monthIndex = eventDate.getMonth();
         const isToday = eventDate.toDateString() === new Date().toDateString();
         const isTomorrow = eventDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
 
@@ -819,7 +829,7 @@ export const EventsContent = () => {
                             {eventDate.getDate()}
                         </Text>
                         <Text style={styles.featuredDateMonth}>
-                            {eventDate.toLocaleString('default', { month: 'short' })}
+                            {content?.months?.[monthIndex] || eventDate.toLocaleString('default', { month: 'short' })}
                         </Text>
                     </View>
                     <View style={styles.featuredEventInfo}>
@@ -967,6 +977,7 @@ export const EventsContent = () => {
     // Update renderEventCard with improved layout
     const renderEventCard = (event: CalendarEvent) => {
         const eventDate = new Date(event.start.dateTime || event.start.date || '');
+        const monthIndex = eventDate.getMonth();
 
         // Format the description using HTML utils
         const formattedDescription = event.description ? convertHtmlToFormattedText(event.description) : '';
@@ -978,7 +989,9 @@ export const EventsContent = () => {
                     {/* Simplified Date Icon */}
                     <View style={styles.dateIconContainer}>
                         <Text style={styles.dayNumber}>{eventDate.getDate()}</Text>
-                        <Text style={styles.monthName}>{getMonthName(eventDate)}</Text>
+                        <Text style={styles.monthName}>
+                            {content?.months?.[monthIndex] || eventDate.toLocaleString('default', { month: 'short' })}
+                        </Text>
                     </View>
 
                     <View style={styles.eventHeader}>
@@ -1230,7 +1243,7 @@ export const EventsContent = () => {
                                 style={styles.quickActionIcon}
                             />
                             <Text style={styles.quickActionText}>
-                                {content?.ui?.calendarViewText || 'Calendar'}
+                                {content?.ui.viewModes?.calendar || 'Calendar View'}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -1244,7 +1257,7 @@ export const EventsContent = () => {
                                 style={styles.quickActionIcon}
                             />
                             <Text style={styles.quickActionText}>
-                                {content?.ui?.listViewText || 'List View'}
+                                {content?.ui.viewModes?.list || 'List View'}
                             </Text>
                         </TouchableOpacity>
                     </View>
