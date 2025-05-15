@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, RefreshControl, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, RefreshControl, Modal, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, formatTime } from '../utils/dateUtils';
 import { calendarService } from '../services/calendarService';
@@ -10,6 +10,7 @@ import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createEventsStyles } from '../styles/ThemedStyles';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
+import { StatusBar } from 'expo-status-bar';
 
 // Helper function that uses our centralized URL handling utility
 const openUrlWithLanguageCheck = (url: string, language: string) => {
@@ -599,6 +600,25 @@ export const EventsContent = () => {
                         setCalendarError(content?.ui.calendarErrorText || 'Failed to load calendar view. Please try again later.');
                         console.error('WebView error:', e.nativeEvent);
                     }}
+                    injectedJavaScript={`
+                        // Make calendar more mobile-friendly
+                        const style = document.createElement('style');
+                        style.textContent = \`
+                            .fc-toolbar-title { font-size: 1.2em !important; }
+                            .fc-button { padding: 0.2em 0.4em !important; }
+                            .fc-event { padding: 2px !important; }
+                            .fc-daygrid-day-number { font-size: 0.9em !important; }
+                            .fc-col-header-cell-cushion { font-size: 0.9em !important; }
+                            .fc-list-day-cushion { font-size: 0.9em !important; }
+                            .fc-event-title { font-size: 0.9em !important; }
+                            .fc-event-time { font-size: 0.8em !important; }
+                            @media (max-width: 768px) {
+                                .fc-toolbar { flex-direction: column !important; }
+                                .fc-toolbar-chunk { margin: 4px 0 !important; }
+                            }
+                        \`;
+                        document.head.appendChild(style);
+                    `}
                 />
                 {calendarError && (
                     <Text style={styles.errorText}>{calendarError}</Text>
@@ -1071,144 +1091,77 @@ export const EventsContent = () => {
 
     // Render event card
     const renderEventCard = (event: CalendarEvent) => {
-        // Check if this event has any Google Drive attachments
-        const hasDriveAttachments = event.attachments?.some(
-            attachment => isDriveAttachment(attachment.url)
-        );
-
-        // First Drive attachment link (for the View Files button)
-        const driveAttachment = event.attachments?.find(
-            attachment => isDriveAttachment(attachment.url)
-        );
+        const eventDate = new Date(event.start.dateTime || event.start.date || '');
+        const isToday = eventDate.toDateString() === new Date().toDateString();
 
         return (
             <View key={event.id} style={styles.eventCard}>
                 <View style={styles.eventHeader}>
                     <Text style={styles.eventTitle}>
                         {event.summary}
-                        {event.recurrence && <Text style={styles.recurringTag}> (Recurring)</Text>}
-                        {event.reminderSet && (
-                            <Ionicons name="notifications" size={16} color={themeColors.primary} style={{ marginLeft: 5 }} />
+                        {event.recurrence && (
+                            <Text style={{ color: themeColors.primary, fontSize: 12, marginLeft: 6 }}>
+                                {' '}(Recurring)
+                            </Text>
                         )}
                     </Text>
-                    <View style={styles.dateContainer}>
-                        <Text style={styles.dateText}>
-                            {event.start.dateTime
-                                ? new Date(event.start.dateTime).getDate()
-                                : event.start.date
-                                    ? new Date(event.start.date).getDate()
-                                    : ''}
-                        </Text>
-                    </View>
                 </View>
 
                 <Text style={styles.eventDate}>
                     {formatEventDate(event)}
                 </Text>
 
-                {/* Display location with improved formatting */}
-                {event.formattedLocation && (
-                    <TouchableOpacity
-                        style={styles.eventLocation}
-                        onPress={() => event.formattedLocation?.mapUrl
-                            ? openUrlWithLanguageCheck(event.formattedLocation.mapUrl, currentLanguage)
-                            : handleOpenMap(event.location || '')}
+                {event.location && (
+                    <View style={styles.eventLocation}>
+                        <Ionicons name="location-outline" size={18} color={themeColors.primary} />
+                        <Text style={styles.locationText} numberOfLines={2}>
+                            {event.location}
+                        </Text>
+                    </View>
+                )}
+
+                {event.description && (
+                    <Text
+                        style={[styles.eventDate, { marginTop: -4 }]}
+                        numberOfLines={3}
+                        onPress={() => handleViewFullDescription(event)}
                     >
-                        <Ionicons name="location-outline" size={14} color="#666" />
-                        <Text style={styles.eventLocationText}>
-                            {event.formattedLocation.address}
+                        {event.description}
+                    </Text>
+                )}
+
+                <View style={styles.eventActions}>
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => handleAddToCalendar(event)}
+                    >
+                        <Ionicons name="calendar-outline" size={16} color={themeColors.primary} />
+                        <Text style={styles.actionButtonText}>
+                            {content?.ui.addToCalendarText || 'Add to Calendar'}
                         </Text>
                     </TouchableOpacity>
-                )}
 
-                {/* Display formatted description with better styling */}
-                {event.formattedDescription && (
-                    <View style={styles.descriptionContainer}>
-                        <Text style={styles.eventDescription} numberOfLines={3} ellipsizeMode="tail">
-                            {event.formattedDescription}
-                        </Text>
-
-                        {event.formattedDescription.length > 80 && (
-                            <TouchableOpacity
-                                style={styles.readMoreButton}
-                                onPress={() => handleViewFullDescription(event)}
-                            >
-                                <Text style={styles.readMoreText}>{content?.ui.readMoreText || 'Read More'}</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                )}
-
-                {/* Display attachments if available */}
-                {event.attachments && event.attachments.length > 0 && (
-                    <View style={styles.attachmentsContainer}>
-                        <Text style={styles.attachmentsTitle}>{content?.ui.viewAttachmentText || 'Attachments:'}:</Text>
-                        {event.attachments.map((attachment, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={styles.attachmentItem}
-                                onPress={() => openUrlWithLanguageCheck(attachment.url, currentLanguage)}
-                            >
-                                <Ionicons
-                                    name={
-                                        isDriveAttachment(attachment.url)
-                                            ? "document-outline"
-                                            : "link-outline"
-                                    }
-                                    size={14}
-                                    color="#666"
-                                />
-                                <Text style={styles.attachmentText}>
-                                    {attachment.title}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
-
-                <View style={styles.buttonContainer}>
                     {event.location && (
                         <TouchableOpacity
-                            style={styles.detailsButton}
+                            style={styles.actionButton}
                             onPress={() => handleOpenMap(event.location || '')}
                         >
-                            <Text style={styles.buttonText}>{content?.ui.viewLocationText || 'View Location'}</Text>
+                            <Ionicons name="map-outline" size={16} color={themeColors.primary} />
+                            <Text style={styles.actionButtonText}>
+                                {content?.ui.viewLocationText || 'View Location'}
+                            </Text>
                         </TouchableOpacity>
                     )}
 
-                    <TouchableOpacity
-                        style={styles.registerButton}
-                        onPress={() => handleAddToCalendar(event)}
-                    >
-                        <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Additional action buttons */}
-                <View style={styles.additionalButtonsContainer}>
-                    <TouchableOpacity
-                        style={styles.secondaryButton}
-                        onPress={() => handleSetReminder(event)}
-                    >
-                        <Ionicons name="notifications-outline" size={14} color={themeColors.primary} style={{ marginRight: 5 }} />
-                        <Text style={styles.secondaryButtonText}>{content?.ui.setReminderText || 'Set Reminder'}</Text>
-                    </TouchableOpacity>
-
-                    {driveAttachment ? (
+                    {event.detailsUrl && (
                         <TouchableOpacity
-                            style={styles.secondaryButton}
-                            onPress={() => handleViewAttachment(driveAttachment.url)}
-                        >
-                            <Ionicons name="document-outline" size={14} color={themeColors.primary} style={{ marginRight: 5 }} />
-                            <Text style={styles.secondaryButtonText}>{content?.ui.viewFilesText || 'View Files'}</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity
-                            style={styles.secondaryButton}
+                            style={styles.actionButton}
                             onPress={() => handleViewDetailUrl(event)}
                         >
-                            <Ionicons name="open-outline" size={14} color={themeColors.primary} style={{ marginRight: 5 }} />
-                            <Text style={styles.secondaryButtonText}>{content?.ui.viewDetailsText || 'View Details'}</Text>
+                            <Ionicons name="open-outline" size={16} color={themeColors.primary} />
+                            <Text style={styles.actionButtonText}>
+                                {content?.ui.viewDetailsText || 'View Details'}
+                            </Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -1216,110 +1169,62 @@ export const EventsContent = () => {
         );
     };
 
-    // Add handleSetReminder function
-    const handleSetReminder = (event: CalendarEvent) => {
-        const updatedEvents = events.map(e => {
-            if (e.id === event.id) {
-                return { ...e, reminderSet: true };
-            }
-            return e;
-        });
-
-        setEvents(updatedEvents);
-        alert(content?.ui.reminderSetText || 'Reminder set for this event');
-    };
-
     // Render full description modal
     const renderFullDescriptionModal = () => {
         if (!selectedEvent) return null;
-
-        // Process description to properly display all content
-        const formatDescription = (description?: string) => {
-            if (!description) return '';
-
-            // Replace multiple consecutive line breaks with two line breaks
-            return description.replace(/\n{3,}/g, '\n\n');
-        };
 
         return (
             <Modal
                 visible={showFullDescription}
                 transparent={true}
-                animationType="slide"
+                animationType="fade"
                 onRequestClose={() => setShowFullDescription(false)}
             >
-                <View style={styles.descriptionModal}>
+                <View style={styles.modalOverlay}>
                     <View style={styles.descriptionModalContent}>
                         <View style={styles.descriptionModalHeader}>
-                            <Text style={styles.descriptionModalTitle} numberOfLines={2} ellipsizeMode="tail">
+                            <Text style={styles.descriptionModalTitle} numberOfLines={2}>
                                 {selectedEvent.summary}
-                            </Text >
+                            </Text>
                             <TouchableOpacity
                                 style={styles.modalCloseIconButton}
                                 onPress={() => setShowFullDescription(false)}
-                                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
                             >
-                                <Ionicons name="close" size={20} color={themeColors.text} />
+                                <Ionicons name="close" size={18} color={themeColors.text} />
                             </TouchableOpacity>
-                        </View >
+                        </View>
 
-                        <ScrollView
-                            style={styles.descriptionModalScrollView}
-                            showsVerticalScrollIndicator={true}
-                            contentContainerStyle={{ paddingBottom: 20 }}
-                        >
-                            <Text style={styles.modalEventDate}>
-                                {formatEventDate(selectedEvent)}
-                            </Text>
+                        <Text style={styles.modalEventDate}>
+                            {formatEventDate(selectedEvent)}
+                        </Text>
 
-                            {selectedEvent.formattedLocation && (
-                                <TouchableOpacity
-                                    style={styles.eventLocation}
-                                    onPress={() => {
-                                        setShowFullDescription(false);
-                                        selectedEvent.formattedLocation?.mapUrl
-                                            ? openUrlWithLanguageCheck(selectedEvent.formattedLocation.mapUrl, currentLanguage)
-                                            : handleOpenMap(selectedEvent.location || '');
-                                    }}
-                                >
-                                    <Ionicons name="location-outline" size={14} color={themeColors.text} />
-                                    <Text style={[styles.eventLocationText, { color: themeColors.primary }]} numberOfLines={1}>
-                                        {selectedEvent.formattedLocation.address}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-
-                            {selectedEvent.formattedDescription && (
+                        <ScrollView style={styles.descriptionModalScrollView}>
+                            {selectedEvent.description && (
                                 <Text style={styles.descriptionModalText}>
-                                    {formatDescription(selectedEvent.formattedDescription)}
+                                    {selectedEvent.description}
                                 </Text>
                             )}
 
                             {selectedEvent.attachments && selectedEvent.attachments.length > 0 && (
                                 <View style={styles.modalPhotoAttachmentsContainer}>
                                     <Text style={styles.modalAttachmentsTitle}>
-                                        {selectedEvent.attachments.length > 1 ?
-                                            `${content?.ui.viewAttachmentText || 'Files'} (${selectedEvent.attachments.length})` :
-                                            content?.ui.viewAttachmentText || 'File'}
+                                        {content?.ui.viewFilesText || 'Attachments'}
                                     </Text>
                                     {selectedEvent.attachments.map((attachment, index) => (
                                         <TouchableOpacity
                                             key={index}
                                             style={styles.modalPhotoItem}
-                                            onPress={() => {
-                                                setShowFullDescription(false);
-                                                handleViewAttachment(attachment.url);
-                                            }}
+                                            onPress={() => handleViewAttachment(attachment.url)}
                                         >
                                             <Ionicons
-                                                name={isDriveAttachment(attachment.url) ? "document-outline" : "link-outline"}
-                                                size={14}
-                                                color={themeColors.primary}
-                                                style={{ marginRight: 6 }}
+                                                name={isDriveAttachment(attachment.url) ? 'document-outline' : 'image-outline'}
+                                                size={16}
+                                                color={themeColors.text}
                                             />
-                                            <Text style={[styles.modalAttachmentText, { color: themeColors.primary }]} numberOfLines={1}>
+                                            <Text style={styles.modalAttachmentText} numberOfLines={1}>
                                                 {attachment.title}
                                             </Text>
+                                            <Ionicons name="open-outline" size={16} color={themeColors.text} />
                                         </TouchableOpacity>
                                     ))}
                                 </View>
@@ -1327,46 +1232,48 @@ export const EventsContent = () => {
                         </ScrollView>
 
                         <View style={styles.modalButtonsContainer}>
-                            {selectedEvent.detailsUrl ? (
-                                <View style={styles.modalButtonsRow}>
-                                    <TouchableOpacity
-                                        style={[styles.modalActionButton, { backgroundColor: themeColors.primary, flex: 1, marginRight: 8 }]}
-                                        onPress={() => {
-                                            setShowFullDescription(false);
-                                            handleAddToCalendar(selectedEvent);
-                                        }}
-                                    >
-                                        <Ionicons name="calendar-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                                        <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={[styles.modalActionButton, { backgroundColor: themeColors.secondary, flex: 1, marginLeft: 8 }]}
-                                        onPress={() => {
-                                            setShowFullDescription(false);
-                                            handleViewDetailUrl(selectedEvent);
-                                        }}
-                                    >
-                                        <Ionicons name="open-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                                        <Text style={styles.buttonText}>{content?.ui.viewDetailsText || 'View Details'}</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ) : (
+                            <View style={styles.modalButtonsRow}>
                                 <TouchableOpacity
-                                    style={[styles.modalActionButton, { backgroundColor: themeColors.primary }]}
+                                    style={[styles.modalActionButton, { flex: 1, backgroundColor: themeColors.primary + '15', marginRight: 8 }]}
+                                    onPress={() => handleAddToCalendar(selectedEvent)}
+                                >
+                                    <Ionicons name="calendar-outline" size={18} color={themeColors.primary} />
+                                    <Text style={[styles.actionButtonText, { marginLeft: 6 }]}>
+                                        {content?.ui.addToCalendarText || 'Add to Calendar'}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {selectedEvent.location && (
+                                    <TouchableOpacity
+                                        style={[styles.modalActionButton, { flex: 1, backgroundColor: themeColors.primary + '15' }]}
+                                        onPress={() => handleOpenMap(selectedEvent.location || '')}
+                                    >
+                                        <Ionicons name="map-outline" size={18} color={themeColors.primary} />
+                                        <Text style={[styles.actionButtonText, { marginLeft: 6 }]}>
+                                            {content?.ui.viewLocationText || 'View Location'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+
+                            {selectedEvent.detailsUrl && (
+                                <TouchableOpacity
+                                    style={[styles.modalActionButton, { marginTop: 8, backgroundColor: themeColors.primary }]}
                                     onPress={() => {
                                         setShowFullDescription(false);
-                                        handleAddToCalendar(selectedEvent);
+                                        handleViewDetailUrl(selectedEvent);
                                     }}
                                 >
-                                    <Ionicons name="calendar-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                                    <Text style={styles.buttonText}>{content?.ui.addToCalendarText || 'Add to Calendar'}</Text>
+                                    <Ionicons name="open-outline" size={18} color="#FFFFFF" />
+                                    <Text style={[styles.actionButtonText, { marginLeft: 6, color: '#FFFFFF' }]}>
+                                        {content?.ui.viewDetailsText || 'View Details'}
+                                    </Text>
                                 </TouchableOpacity>
                             )}
                         </View>
-                    </View >
-                </View >
-            </Modal >
+                    </View>
+                </View>
+            </Modal>
         );
     };
 
@@ -1411,41 +1318,137 @@ export const EventsContent = () => {
         <View style={styles.container}>
             <ScrollView
                 style={styles.scrollView}
+                contentContainerStyle={styles.scrollViewContent}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
                         colors={[themeColors.primary]}
+                        tintColor={themeColors.primary}
                     />
                 }
             >
-                <View style={styles.header}>
-                    <Ionicons name="calendar" size={60} color={themeColors.primary} />
-                    <View style={styles.headerDivider} />
-                    <Text style={styles.title}>
-                        {content?.header.title || 'Events'}
-                    </Text>
-                    <Text style={styles.subtitle}>
-                        {content?.header.subtitle || 'Join us for upcoming church events'}
-                    </Text>
+                {/* Hero Section */}
+                <View style={styles.heroSection}>
+                    <View style={styles.heroContent}>
+                        <Text style={styles.heroTitle}>
+                            {content?.header?.title || 'Events'}
+                        </Text>
+                        <Text style={styles.heroSubtitle}>
+                            {content?.header?.subtitle || 'Stay updated with our upcoming events'}
+                        </Text>
+                    </View>
                 </View>
 
-                {/* View Mode Selector */}
-                {renderViewModeSelector()}
+                {/* Quick Actions */}
+                <View style={styles.quickActionsContainer}>
+                    <View style={styles.quickActionsRow}>
+                        <TouchableOpacity
+                            style={styles.quickActionButton}
+                            onPress={() => setViewMode('calendar')}
+                        >
+                            <Ionicons
+                                name="calendar-outline"
+                                size={28}
+                                color={themeColors.primary}
+                                style={styles.quickActionIcon}
+                            />
+                            <Text style={styles.quickActionText}>
+                                {content?.ui?.calendarViewText || 'Calendar'}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.quickActionButton}
+                            onPress={() => setViewMode('list')}
+                        >
+                            <Ionicons
+                                name="list-outline"
+                                size={28}
+                                color={themeColors.primary}
+                                style={styles.quickActionIcon}
+                            />
+                            <Text style={styles.quickActionText}>
+                                {content?.ui?.listViewText || 'List View'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
 
-                {/* Filter Button */}
-                {renderFilterButton()}
+                {/* View Mode Content */}
+                <View style={styles.viewContent}>
+                    {/* Month Navigation (for Calendar and List views) */}
+                    {viewMode !== 'timeline' && (
+                        <View style={styles.monthNavigation}>
+                            <TouchableOpacity onPress={prevMonth}>
+                                <Ionicons name="chevron-back" size={24} color={themeColors.primary} />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.monthYearButton}
+                                onPress={() => setShowMonthPicker(true)}
+                            >
+                                <Text style={styles.monthYearText}>{getCurrentMonthYearString()}</Text>
+                                <Ionicons name="calendar" size={20} color={themeColors.primary} />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={nextMonth}>
+                                <Ionicons name="chevron-forward" size={24} color={themeColors.primary} />
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
-                {/* Main Content View */}
-                {renderView()}
+                    {/* Filter Bar */}
+                    <View style={styles.filterBar}>
+                        <TouchableOpacity
+                            style={styles.filterButton}
+                            onPress={() => setShowFilterModal(true)}
+                        >
+                            <Ionicons name="filter" size={20} color={themeColors.primary} />
+                            <Text style={styles.filterButtonText}>
+                                {content?.ui?.filterText || 'Filter'}
+                            </Text>
+                        </TouchableOpacity>
+                        {viewMode === 'list' && (
+                            <View style={styles.viewToggle}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.toggleButton,
+                                        selectedListPeriod === 'quick' && styles.activeToggleButton
+                                    ]}
+                                    onPress={() => setSelectedListPeriod('quick')}
+                                >
+                                    <Text style={[
+                                        styles.toggleButtonText,
+                                        selectedListPeriod === 'quick' && styles.activeToggleButtonText
+                                    ]}>
+                                        {content?.ui?.quickViewText || 'Quick View'}
+                                    </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.toggleButton,
+                                        selectedListPeriod === 'month' && styles.activeToggleButton
+                                    ]}
+                                    onPress={() => setSelectedListPeriod('month')}
+                                >
+                                    <Text style={[
+                                        styles.toggleButtonText,
+                                        selectedListPeriod === 'month' && styles.activeToggleButtonText
+                                    ]}>
+                                        {content?.ui?.monthViewText || 'Month View'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </View>
 
-                {/* Filter Modal */}
-                {renderFilterModal()}
-
-                {/* Full Description Modal */}
-                {showFullDescription && selectedEvent && renderFullDescriptionModal()}
+                    {renderView()}
+                </View>
             </ScrollView>
+
+            {/* Modals */}
+            {renderFilterModal()}
+            {renderMonthPicker()}
+            {renderFullDescriptionModal()}
         </View>
     );
 };
