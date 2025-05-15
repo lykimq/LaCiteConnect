@@ -301,7 +301,7 @@ export const SettingsContent = () => {
         optionItem: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 16,
+            paddingVertical: 10,
             paddingHorizontal: 20,
             borderBottomWidth: 1,
             borderBottomColor: themeColors.border + '10',
@@ -311,90 +311,26 @@ export const SettingsContent = () => {
             color: themeColors.text,
             flex: 1,
         },
-        themeRow: {
+        themeToggleContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 8,
-        },
-        themeSelector: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 8,
-            alignSelf: 'flex-end',
-        },
-        themePreview: {
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-            borderRadius: 20,
-            backgroundColor: themeColors.card,
-            borderWidth: 1,
-            borderColor: themeColors.border,
-            minWidth: 100,
-        },
-        themePreviewContent: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-        },
-        themeInfo: {
-            flexDirection: 'column',
-            gap: 4,
-        },
-        themeCategory: {
-            fontSize: 12,
-            fontWeight: '500',
-            opacity: 0.8,
-        },
-        themeColorPreview: {
-            width: 20,
-            height: 20,
-            borderRadius: 10,
-            position: 'relative',
-            borderWidth: 1,
-            borderColor: themeColors.border,
-        },
-        themeColorSecondary: {
-            position: 'absolute',
-            right: -4,
-            bottom: -4,
-            width: 12,
-            height: 12,
-            borderRadius: 6,
-            borderWidth: 1,
-            borderColor: themeColors.border,
-        },
-        themeNavButton: {
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-            backgroundColor: themeColors.card,
-            borderWidth: 1,
-            borderColor: themeColors.border,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        themeNavButtonDisabled: {
-            opacity: 0.5,
         },
         themeOption: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-            borderRadius: 20,
+            paddingVertical: 6,
+            paddingHorizontal: 10,
+            borderRadius: 16,
             backgroundColor: themeColors.border + '20',
         },
         themeOptionActive: {
             backgroundColor: themeColors.primary + '20',
         },
         themeOptionText: {
-            fontSize: 15,
+            fontSize: 13,
             fontWeight: '500',
+            flexShrink: 1,
+            marginLeft: 8,
         },
         themeOptionTextActive: {
             color: themeColors.primary,
@@ -451,6 +387,90 @@ export const SettingsContent = () => {
             color: themeColors.secondary,
             marginTop: 4,
             opacity: 0.6,
+        },
+        themeSelectionRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 8,
+            flex: 1,
+            maxWidth: '75%',
+        },
+        categorySelector: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: themeColors.card,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+            padding: 2,
+            minWidth: 80,
+            maxWidth: 160,
+            flex: 0,
+        },
+        categoryPreview: {
+            paddingHorizontal: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        categoryText: {
+            fontSize: 13,
+            fontWeight: '500',
+            textTransform: 'capitalize',
+            textAlign: 'center',
+            flexShrink: 1,
+        },
+        colorSelector: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: themeColors.card,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: themeColors.border,
+            padding: 2,
+            minWidth: 140,
+            maxWidth: 200,
+        },
+        themeNavButton: {
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            backgroundColor: themeColors.background,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        themePreview: {
+            flex: 1,
+            paddingHorizontal: 8,
+        },
+        themePreviewContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            maxWidth: '100%',
+        },
+        themeColorPreview: {
+            width: 18,
+            height: 18,
+            borderRadius: 9,
+            position: 'relative',
+            borderWidth: 1,
+            borderColor: themeColors.border,
+            flexShrink: 0,
+        },
+        themeColorSecondary: {
+            position: 'absolute',
+            right: -4,
+            bottom: -4,
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            borderWidth: 1,
+            borderColor: themeColors.border,
         },
     });
 
@@ -531,11 +551,12 @@ export const SettingsContent = () => {
                             <Text style={styles.optionLabel}>
                                 {content?.sections.preferences.theme.darkMode || 'Dark Mode'}
                             </Text>
-                            <View style={{ flexDirection: 'row' }}>
+                            <View style={styles.themeToggleContainer}>
                                 <Pressable
                                     style={[
                                         styles.themeOption,
-                                        currentTheme === 'light' && styles.themeOptionActive
+                                        currentTheme === 'light' && styles.themeOptionActive,
+                                        { marginRight: 8 }
                                     ]}
                                     onPress={() => changeTheme('light')}
                                 >
@@ -543,6 +564,7 @@ export const SettingsContent = () => {
                                         name="sunny-outline"
                                         size={18}
                                         color={currentTheme === 'light' ? themeColors.primary : themeColors.secondary}
+                                        style={{ marginRight: 4 }}
                                     />
                                     <Text style={[
                                         styles.themeOptionText,
@@ -562,6 +584,7 @@ export const SettingsContent = () => {
                                         name="moon-outline"
                                         size={18}
                                         color={currentTheme === 'dark' ? themeColors.primary : themeColors.secondary}
+                                        style={{ marginRight: 4 }}
                                     />
                                     <Text style={[
                                         styles.themeOptionText,
@@ -573,69 +596,129 @@ export const SettingsContent = () => {
                             </View>
                         </View>
 
-                        {/* Color Theme Selection */}
-                        <View style={styles.optionItem}>
+                        {/* Theme Selection Row */}
+                        <View style={[styles.optionItem, { paddingVertical: 12 }]}>
                             <Text style={styles.optionLabel}>
                                 {content?.sections.preferences.theme.themeColor || 'Theme Colors'}
                             </Text>
-                            <View style={[styles.themeSelector, { maxWidth: '60%' }]}>
-                                <Pressable
-                                    style={[
-                                        styles.themeNavButton,
-                                        !canNavigatePrevious() && { opacity: 0.5 }
-                                    ]}
-                                    onPress={handlePreviousTheme}
-                                    disabled={!canNavigatePrevious()}
-                                >
-                                    <Ionicons
-                                        name="chevron-back"
-                                        size={18}
-                                        color={themeColors.text}
-                                    />
-                                </Pressable>
+                            <View style={styles.themeSelectionRow}>
+                                {/* Category Selector */}
+                                <View style={styles.categorySelector}>
+                                    <Pressable
+                                        style={[
+                                            styles.themeNavButton,
+                                            currentCategory === Object.keys(categorizedThemes)[0] && { opacity: 0.5 }
+                                        ]}
+                                        onPress={() => {
+                                            const categories = Object.keys(categorizedThemes) as ThemeCategoryType[];
+                                            const currentIndex = categories.indexOf(currentCategory);
+                                            if (currentIndex > 0) {
+                                                const prevCategory = categories[currentIndex - 1];
+                                                const firstThemeId = Object.keys(categorizedThemes[prevCategory])[0] as ColorThemeType;
+                                                changeCategory(prevCategory);
+                                                changeColorTheme(firstThemeId);
+                                            }
+                                        }}
+                                        disabled={currentCategory === Object.keys(categorizedThemes)[0]}
+                                    >
+                                        <Ionicons
+                                            name="chevron-back"
+                                            size={16}
+                                            color={themeColors.text}
+                                        />
+                                    </Pressable>
 
-                                <View style={styles.themePreview}>
-                                    <View style={styles.themePreviewContent}>
-                                        <View style={[
-                                            styles.themeColorPreview,
-                                            { backgroundColor: currentThemeData.primary }
-                                        ]}>
+                                    <View style={styles.categoryPreview}>
+                                        <Text
+                                            style={[styles.categoryText, { color: themeColors.primary }]}
+                                            numberOfLines={1}
+                                            ellipsizeMode="tail"
+                                        >
+                                            {content?.sections.preferences.theme.categories[currentCategory] || currentCategory}
+                                        </Text>
+                                    </View>
+
+                                    <Pressable
+                                        style={[
+                                            styles.themeNavButton,
+                                            currentCategory === Object.keys(categorizedThemes)[Object.keys(categorizedThemes).length - 1] && { opacity: 0.5 }
+                                        ]}
+                                        onPress={() => {
+                                            const categories = Object.keys(categorizedThemes) as ThemeCategoryType[];
+                                            const currentIndex = categories.indexOf(currentCategory);
+                                            if (currentIndex < categories.length - 1) {
+                                                const nextCategory = categories[currentIndex + 1];
+                                                const firstThemeId = Object.keys(categorizedThemes[nextCategory])[0] as ColorThemeType;
+                                                changeCategory(nextCategory);
+                                                changeColorTheme(firstThemeId);
+                                            }
+                                        }}
+                                        disabled={currentCategory === Object.keys(categorizedThemes)[Object.keys(categorizedThemes).length - 1]}
+                                    >
+                                        <Ionicons
+                                            name="chevron-forward"
+                                            size={16}
+                                            color={themeColors.text}
+                                        />
+                                    </Pressable>
+                                </View>
+
+                                {/* Color Theme Selector */}
+                                <View style={styles.colorSelector}>
+                                    <Pressable
+                                        style={[
+                                            styles.themeNavButton,
+                                            !canNavigatePrevious() && { opacity: 0.5 }
+                                        ]}
+                                        onPress={handlePreviousTheme}
+                                        disabled={!canNavigatePrevious()}
+                                    >
+                                        <Ionicons
+                                            name="chevron-back"
+                                            size={16}
+                                            color={themeColors.text}
+                                        />
+                                    </Pressable>
+
+                                    <View style={styles.themePreview}>
+                                        <View style={styles.themePreviewContent}>
                                             <View style={[
-                                                styles.themeColorSecondary,
-                                                { backgroundColor: currentThemeData.secondary }
-                                            ]} />
-                                        </View>
-                                        <View style={styles.themeInfo}>
-                                            <Text style={[
-                                                styles.themeCategory,
-                                                { color: themeColors.secondary }
+                                                styles.themeColorPreview,
+                                                { backgroundColor: currentThemeData.primary }
                                             ]}>
-                                                {content?.sections.preferences.theme.categories[currentCategory] || currentCategory}
-                                            </Text>
-                                            <Text style={[
-                                                styles.themeOptionText,
-                                                { color: currentThemeData.primary }
-                                            ]}>
+                                                <View style={[
+                                                    styles.themeColorSecondary,
+                                                    { backgroundColor: currentThemeData.secondary }
+                                                ]} />
+                                            </View>
+                                            <Text
+                                                style={[
+                                                    styles.themeOptionText,
+                                                    { color: currentThemeData.primary }
+                                                ]}
+                                                numberOfLines={1}
+                                                ellipsizeMode="tail"
+                                            >
                                                 {currentThemeData.name}
                                             </Text>
                                         </View>
                                     </View>
-                                </View>
 
-                                <Pressable
-                                    style={[
-                                        styles.themeNavButton,
-                                        !canNavigateNext() && { opacity: 0.5 }
-                                    ]}
-                                    onPress={handleNextTheme}
-                                    disabled={!canNavigateNext()}
-                                >
-                                    <Ionicons
-                                        name="chevron-forward"
-                                        size={18}
-                                        color={themeColors.text}
-                                    />
-                                </Pressable>
+                                    <Pressable
+                                        style={[
+                                            styles.themeNavButton,
+                                            !canNavigateNext() && { opacity: 0.5 }
+                                        ]}
+                                        onPress={handleNextTheme}
+                                        disabled={!canNavigateNext()}
+                                    >
+                                        <Ionicons
+                                            name="chevron-forward"
+                                            size={16}
+                                            color={themeColors.text}
+                                        />
+                                    </Pressable>
+                                </View>
                             </View>
                         </View>
 
