@@ -8,7 +8,7 @@ import { convertHtmlToFormattedText, extractAttachmentLinks, parseLocationString
 import WebView from 'react-native-webview';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
-import { createEventsStyles } from '../styles/ThemedStyles';
+import { createEventsStyles } from '../styles/EventsContent.styles';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 
