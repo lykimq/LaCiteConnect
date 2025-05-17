@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet } from 'react-native';
 import { WhoWeAreContent } from '../components/WhoWeAre';
 import { GetConnectedContent } from '../components/GetConnectedContent';
 import { DonationContent } from '../components/DonationContent';
@@ -12,18 +13,10 @@ import { useTheme } from '../contexts/ThemeContext';
 import { withTheming } from '../components/withTheming';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LanguageAwareScreen } from '../components/LanguageAwareScreen';
+import { MainTabParamList } from '../types/navigation';
 
-// Define the tab navigator param list
-export type TabParamList = {
-    Home: undefined;
-    WhoWeAre: undefined;
-    GetConnected: undefined;
-    Events: undefined;
-    Donations: undefined;
-    Settings: undefined;
-};
-
-const Tab = createBottomTabNavigator<TabParamList>();
+// Use the MainTabParamList for type safety
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // Apply theming to all screens and make them language-aware
 const ThemedHomeContent = withTheming((props) => (
@@ -86,12 +79,29 @@ const getLocalizedTabTitles = (language: string) => {
     };
 };
 
+// Navigation-specific styles defined locally since they're only used here
+const createNavigatorStyles = (colors: any) => ({
+    tabBarStyle: {
+        backgroundColor: colors.card,
+        borderTopWidth: 0,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        borderTopColor: colors.border,
+    }
+});
+
 export const AppNavigator = () => {
     const { themeColors } = useTheme();
     const { currentLanguage } = useLanguage();
 
     // Get localized tab titles
     const tabTitles = getLocalizedTabTitles(currentLanguage);
+
+    // Create styles with current theme colors
+    const styles = createNavigatorStyles(themeColors);
 
     return (
         <NavigationContainer>
@@ -120,16 +130,7 @@ export const AppNavigator = () => {
                     },
                     tabBarActiveTintColor: themeColors.primary,
                     tabBarInactiveTintColor: themeColors.text,
-                    tabBarStyle: {
-                        backgroundColor: themeColors.card,
-                        borderTopWidth: 0,
-                        elevation: 10,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: -3 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 4,
-                        borderTopColor: themeColors.border,
-                    },
+                    tabBarStyle: styles.tabBarStyle,
                     headerShown: false,
                 })}
             >

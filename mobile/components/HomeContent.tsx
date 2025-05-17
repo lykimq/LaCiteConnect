@@ -12,7 +12,7 @@ import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
-import type { TabParamList } from '../navigation/AppNavigator';
+import type { MainTabParamList } from '../types/navigation';
 import { formatTime } from '../utils/dateUtils';
 
 // Define the UI strings interface
@@ -153,7 +153,7 @@ export const HomeContent = () => {
     const { themeColors, theme } = useTheme();
     const styles = useThemedStyles(createHomeStyles);
     const { currentLanguage } = useLanguage();
-    const navigation = useNavigation<NavigationProp<TabParamList>>();
+    const navigation = useNavigation<NavigationProp<MainTabParamList>>();
 
     useEffect(() => {
         loadContent();
