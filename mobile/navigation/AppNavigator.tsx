@@ -13,7 +13,16 @@ import { useTheme } from '../contexts/ThemeContext';
 import { withTheming } from '../components/withTheming';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LanguageAwareScreen } from '../components/LanguageAwareScreen';
-import { MainTabParamList } from '../types/navigation';
+
+// Main tab navigation routes
+export type MainTabParamList = {
+    Home: undefined;
+    WhoWeAre: undefined;
+    GetConnected: undefined;
+    Events: undefined;
+    Donations: undefined;
+    Settings: undefined;
+};
 
 // Use the MainTabParamList for type safety
 const Tab = createBottomTabNavigator<MainTabParamList>();
