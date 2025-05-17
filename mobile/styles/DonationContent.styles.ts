@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { theme, createThemedStyles } from './Theme';
+import { theme, createThemedStyles, layoutStyles } from './Theme';
 
 /**
  * Creates themed styles for the DonationContent component
@@ -10,8 +10,13 @@ export const createDonationStyles = (colors: any) => {
 
     return StyleSheet.create({
         // Reuse the base layout and common elements
-        container: baseTheme.container,
-        scrollView: baseTheme.scrollView,
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        scrollView: {
+            flex: 1,
+        },
         heroSection: baseTheme.heroSection,
         heroContent: baseTheme.heroContent,
         heroTitle: baseTheme.textHeroTitle,

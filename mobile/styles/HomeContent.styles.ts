@@ -1,5 +1,5 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { theme, createThemedStyles } from './Theme';
+import { theme, createThemedStyles, layoutStyles } from './Theme';
 
 /**
  * Creates themed styles for the HomeContent component
@@ -10,9 +10,16 @@ export const createHomeStyles = (colors: any) => {
 
     return StyleSheet.create({
         // Reuse the base layout and common elements
-        container: baseTheme.container,
-        scrollView: baseTheme.scrollView,
-        scrollViewContent: baseTheme.scrollViewContent,
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        scrollView: {
+            flex: 1,
+        },
+        scrollViewContent: {
+            paddingBottom: 30,
+        },
         heroSection: baseTheme.heroSection,
         heroContent: baseTheme.heroContent,
         heroTitle: baseTheme.textHeroTitle,
