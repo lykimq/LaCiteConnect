@@ -7,27 +7,22 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Platform,
-    Linking,
     Alert,
     RefreshControl,
     Share,
     Pressable,
     Image,
     StatusBar,
-    Switch,
-    Animated,
 } from 'react-native';
+import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocalizedContent } from '../hooks/useLocalizedContent';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
-import Constants from 'expo-constants';
 import {
-    ThemeType,
     ColorThemeType,
     ThemeCategoryType,
-    themeColors as themeColorOptions,
     categorizedThemes,
     ThemeData,
 } from '../services/themeService';

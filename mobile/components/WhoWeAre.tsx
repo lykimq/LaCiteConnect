@@ -6,7 +6,6 @@ import {
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
-    Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { STATIC_URLS } from '../config/staticData';

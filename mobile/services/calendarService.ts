@@ -82,9 +82,6 @@ export const calendarService = {
                 return;
             }
 
-            // Store previous language for logging
-            const previousLanguage = this.currentLanguage;
-
             // Update the language
             this.currentLanguage = language;
 

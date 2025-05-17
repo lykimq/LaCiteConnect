@@ -1,13 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
-    getTheme,
     setTheme,
-    getColorTheme,
     setColorTheme,
-    getThemeCategory,
     setThemeCategory,
     themes,
-    themeColors,
     categorizedThemes,
     ThemeType,
     ColorThemeType,

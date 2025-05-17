@@ -140,21 +140,10 @@ const isDriveAttachment = (url: string): boolean => {
     return url.includes('drive.google.com');
 };
 
-// Add helper function for getting day name
-const getDayName = (date: Date): string => {
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
-};
-
-// Add helper function for getting month name
-const getMonthName = (date: Date): string => {
-    return date.toLocaleDateString('en-US', { month: 'short' });
-};
-
 export const EventsContent = () => {
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
     const { currentLanguage } = useLanguage();
-    const currentDate = new Date();
 
     // Track previous language to detect changes
     const prevLanguageRef = useRef(currentLanguage);
@@ -165,10 +154,8 @@ export const EventsContent = () => {
     const [contentError, setContentError] = useState<string | null>(null);
 
     // View state
-    const [activeTab, setActiveTab] = useState('upcoming');
     const [viewMode, setViewMode] = useState<ViewMode>('calendar');
     const [showFilterModal, setShowFilterModal] = useState(false);
-    const [selectedListPeriod, setSelectedListPeriod] = useState<'quick' | 'month'>('quick');
     const [selectedQuickPeriod, setSelectedQuickPeriod] = useState<'all' | 'today' | 'tomorrow' | 'week' | 'month'>('all');
 
     // Events state
@@ -414,37 +401,6 @@ export const EventsContent = () => {
         openUrlWithLanguageCheck(attachmentUrl, currentLanguage);
     };
 
-    // Render view mode selector with improved labels
-    const renderViewModeSelector = () => (
-        <View style={styles.viewModeContainer}>
-            <TouchableOpacity
-                style={[styles.viewModeButton, viewMode === 'calendar' && styles.activeViewModeButton]}
-                onPress={() => setViewMode('calendar')}
-            >
-                <Ionicons
-                    name="calendar-outline"
-                    size={20}
-                    color={viewMode === 'calendar' ? '#FFFFFF' : themeColors.text}
-                />
-                <Text style={[styles.viewModeText, viewMode === 'calendar' && styles.activeViewModeText]}>
-                    {content?.ui.viewModes?.calendar}
-                </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={[styles.viewModeButton, viewMode === 'list' && styles.activeViewModeButton]}
-                onPress={() => setViewMode('list')}
-            >
-                <Ionicons
-                    name="list-outline"
-                    size={20}
-                    color={viewMode === 'list' ? '#FFFFFF' : themeColors.text}
-                />
-                <Text style={[styles.viewModeText, viewMode === 'list' && styles.activeViewModeText]}>
-                    {content?.ui.viewModes?.list}
-                </Text>
-            </TouchableOpacity>
-        </View>
-    );
 
     // Add this new component for quick filters
     const renderQuickFilters = () => (

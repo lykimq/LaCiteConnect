@@ -5,7 +5,7 @@ import { STATIC_URLS } from '../config/staticData';
 import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
-import { createDonationStyles } from '../styles/ThemedStyles';
+import { createDonationStyles } from '../styles/DonationContent.styles';
 
 // Define the donation content interface
 interface DonationContent {

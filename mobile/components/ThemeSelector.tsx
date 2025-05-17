@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, AccessibilityInfo, SectionList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { themes, ThemeType, categorizedThemes, ThemeCategoryType, ColorThemeType, ThemeData } from '../services/themeService';
+import { categorizedThemes, ThemeCategoryType, ColorThemeType, ThemeData } from '../services/themeService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocalizedContent } from '../hooks/useLocalizedContent';
 
