@@ -203,14 +203,17 @@ export const createEventsStyles = (colors: any) => {
         },
         eventLocation: {
             flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: 8,
+            alignItems: 'flex-start',
+            marginBottom: 10,
+            paddingRight: 60,
         },
         locationText: {
             fontSize: 14,
             color: colors.text,
             marginLeft: 6,
             opacity: 0.8,
+            flex: 1,
+            flexWrap: 'wrap',
         },
         detailsContainer: {
             marginTop: 6,

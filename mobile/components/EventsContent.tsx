@@ -738,12 +738,20 @@ export const EventsContent = () => {
                     </View>
 
                     {locationDetails && (
-                        <View style={styles.eventLocation}>
-                            <Ionicons name="location-outline" size={18} color={themeColors.primary} />
-                            <Text style={[styles.locationText, { marginRight: 60 }]} numberOfLines={1}>
+                        <TouchableOpacity
+                            style={styles.eventLocation}
+                            onPress={() => handleOpenMap(event.location || '')}
+                        >
+                            <Ionicons
+                                name="location-outline"
+                                size={18}
+                                color={themeColors.primary}
+                                style={{ marginTop: 2 }}
+                            />
+                            <Text style={styles.locationText}>
                                 {locationDetails.address}
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                     )}
 
                     {formattedDescription && (
