@@ -431,15 +431,14 @@ export const EventsContent = () => {
             animationType="slide"
             onRequestClose={() => setShowFilterModal(false)}
         >
-            <TouchableOpacity
+            <View
                 style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={() => setShowFilterModal(false)}
+                onStartShouldSetResponder={() => true}
+                onResponderRelease={() => setShowFilterModal(false)}
             >
-                <TouchableOpacity
-                    activeOpacity={1}
+                <View
                     style={styles.filterModalContent}
-                    onPress={(e) => e.stopPropagation()}
+                    onStartShouldSetResponder={() => true}
                 >
                     <View style={styles.filterModalHeader}>
                         <Text style={styles.filterModalTitle}>
@@ -534,8 +533,8 @@ export const EventsContent = () => {
                             {content?.ui.applyFiltersText || 'Apply Filters'}
                         </Text>
                     </TouchableOpacity>
-                </TouchableOpacity>
-            </TouchableOpacity>
+                </View>
+            </View>
         </Modal>
     );
 
@@ -585,68 +584,35 @@ export const EventsContent = () => {
     // Render list view with enhanced organization
     const renderListView = () => (
         <View style={styles.listContainer}>
-            {/* Period Selector */}
-            <View style={styles.periodSelectorContainer}>
-                <View style={styles.periodTypeSelector}>
-                    <TouchableOpacity
-                        style={[
-                            styles.periodTypeButton,
-                            selectedListPeriod === 'quick' && styles.activePeriodTypeButton
-                        ]}
-                        onPress={() => setSelectedListPeriod('quick')}
-                    >
-                        <Text style={[
-                            styles.periodTypeText,
-                            selectedListPeriod === 'quick' && styles.activePeriodTypeText
-                        ]}>{content?.ui.quickViewText || 'Quick View'}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[
-                            styles.periodTypeButton,
-                            selectedListPeriod === 'month' && styles.activePeriodTypeButton
-                        ]}
-                        onPress={() => setSelectedListPeriod('month')}
-                    >
-                        <Text style={[
-                            styles.periodTypeText,
-                            selectedListPeriod === 'month' && styles.activePeriodTypeText
-                        ]}>{content?.ui.monthViewText || 'Month View'}</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {selectedListPeriod === 'quick' ? (
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.quickPeriodSelector}
-                    >
-                        {[
-                            { value: 'all', label: content?.ui.quickPeriodOptions.allEvents || 'All Events' },
-                            { value: 'today', label: content?.ui.quickPeriodOptions.today || 'Today' },
-                            { value: 'tomorrow', label: content?.ui.quickPeriodOptions.tomorrow || 'Tomorrow' },
-                            { value: 'week', label: content?.ui.quickPeriodOptions.nextSevenDays || 'Next 7 Days' },
-                            { value: 'month', label: content?.ui.quickPeriodOptions.nextThirtyDays || 'Next 30 Days' }
-                        ].map(period => (
-                            <TouchableOpacity
-                                key={period.value}
-                                style={[
-                                    styles.quickPeriodButton,
-                                    selectedQuickPeriod === period.value && styles.activeQuickPeriodButton
-                                ]}
-                                onPress={() => setSelectedQuickPeriod(period.value as any)}
-                            >
-                                <Text style={[
-                                    styles.quickPeriodText,
-                                    selectedQuickPeriod === period.value && styles.activeQuickPeriodText
-                                ]}>{period.label}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                ) : (
-                    <View style={styles.monthSelector}>
-                        {/* Month selector content here */}
-                    </View>
-                )}
+            {/* Quick Period Selector - Only show quick view options */}
+            <View style={styles.quickPeriodContainer}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.quickPeriodSelector}
+                >
+                    {[
+                        { value: 'all', label: content?.ui.quickPeriodOptions.allEvents || 'All Events' },
+                        { value: 'today', label: content?.ui.quickPeriodOptions.today || 'Today' },
+                        { value: 'tomorrow', label: content?.ui.quickPeriodOptions.tomorrow || 'Tomorrow' },
+                        { value: 'week', label: content?.ui.quickPeriodOptions.nextSevenDays || 'Next 7 Days' },
+                        { value: 'month', label: content?.ui.quickPeriodOptions.nextThirtyDays || 'Next 30 Days' }
+                    ].map(period => (
+                        <TouchableOpacity
+                            key={period.value}
+                            style={[
+                                styles.quickPeriodButton,
+                                selectedQuickPeriod === period.value && styles.activeQuickPeriodButton
+                            ]}
+                            onPress={() => setSelectedQuickPeriod(period.value as any)}
+                        >
+                            <Text style={[
+                                styles.quickPeriodText,
+                                selectedQuickPeriod === period.value && styles.activeQuickPeriodText
+                            ]}>{period.label}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
             </View>
 
             {/* Events List */}

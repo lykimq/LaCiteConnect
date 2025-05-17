@@ -92,6 +92,30 @@ export const createEventsStyles = (colors: any) => {
             marginLeft: 6,
         },
 
+        // Quick filters
+        quickFiltersContainer: {
+            marginHorizontal: 20,
+            marginBottom: 16,
+        },
+        quickFiltersContent: {
+            paddingVertical: 5,
+        },
+        moreFiltersButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.card,
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            borderRadius: 20,
+            ...baseTheme.shadowSmall,
+        },
+        moreFiltersText: {
+            fontSize: 14,
+            color: colors.primary,
+            marginLeft: 6,
+            fontWeight: '500',
+        },
+
         // View toggle
         viewToggle: {
             flexDirection: 'row',
@@ -174,6 +198,20 @@ export const createEventsStyles = (colors: any) => {
             marginRight: 60,
             marginBottom: 10,
         },
+        eventHeader: {
+            marginBottom: 8,
+        },
+        eventLocation: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 8,
+        },
+        locationText: {
+            fontSize: 14,
+            color: colors.text,
+            marginLeft: 6,
+            opacity: 0.8,
+        },
         detailsContainer: {
             marginTop: 6,
         },
@@ -199,6 +237,7 @@ export const createEventsStyles = (colors: any) => {
             opacity: 0.7,
             marginTop: 8,
             lineHeight: 20,
+            marginBottom: 8,
         },
         eventFooter: {
             flexDirection: 'row',
@@ -217,17 +256,22 @@ export const createEventsStyles = (colors: any) => {
         },
         eventActions: {
             flexDirection: 'row',
+            marginTop: 8,
         },
         actionButton: {
-            width: 36,
-            height: 36,
-            borderRadius: 18,
+            width: 40,
+            height: 40,
+            borderRadius: 20,
             backgroundColor: colors.background,
             justifyContent: 'center',
             alignItems: 'center',
-            marginLeft: 8,
+            marginRight: 10,
             borderWidth: 1,
             borderColor: colors.border,
+        },
+        secondaryActionButton: {
+            backgroundColor: colors.primary + '15',
+            borderColor: colors.primary + '30',
         },
 
         // Event details
@@ -305,7 +349,7 @@ export const createEventsStyles = (colors: any) => {
             borderRadius: 12,
             marginBottom: 10,
         },
-        secondaryActionButton: {
+        detailSecondaryActionButton: {
             backgroundColor: 'transparent',
             flexDirection: 'row',
             justifyContent: 'center',
@@ -387,25 +431,25 @@ export const createEventsStyles = (colors: any) => {
         },
 
         // Filter modal
-        modalContainer: {
+        modalOverlay: {
             flex: 1,
             justifyContent: 'flex-end',
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
         },
-        modalContent: {
+        filterModalContent: {
             backgroundColor: colors.background,
             borderTopLeftRadius: 25,
             borderTopRightRadius: 25,
             padding: 20,
             maxHeight: '80%',
         },
-        modalHeader: {
+        filterModalHeader: {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: 20,
         },
-        modalTitle: {
+        filterModalTitle: {
             fontSize: 18,
             fontWeight: 'bold',
             color: colors.text,
@@ -451,30 +495,90 @@ export const createEventsStyles = (colors: any) => {
             color: colors.primary,
             fontWeight: '500',
         },
-        applyFilterButton: {
-            ...baseTheme.buttonPrimary,
-            paddingVertical: 14,
-            borderRadius: 12,
-            marginTop: 10,
-        },
-        applyFilterButtonText: {
-            color: '#FFFFFF',
-            fontSize: 16,
-            fontWeight: '600',
-            textAlign: 'center',
-        },
-        resetFilterButton: {
-            backgroundColor: 'transparent',
-            paddingVertical: 14,
-            borderRadius: 12,
-            marginTop: 10,
+
+        // Search container
+        searchContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.card,
+            borderRadius: 10,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            marginBottom: 20,
             borderWidth: 1,
             borderColor: colors.border,
         },
-        resetFilterButtonText: {
+        searchInput: {
+            flex: 1,
+            fontSize: 14,
             color: colors.text,
-            fontSize: 16,
+            marginLeft: 8,
+            padding: 0,
+        },
+
+        // Filter options grid
+        filterOptionsGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            marginBottom: 20,
+        },
+        filterOptionCard: {
+            width: '48%',
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 10,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        activeFilterOptionCard: {
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+        },
+        filterOptionCardText: {
+            fontSize: 14,
+            color: colors.text,
+            marginTop: 8,
+            fontWeight: '500',
             textAlign: 'center',
+        },
+        activeFilterOptionCardText: {
+            color: '#FFFFFF',
+        },
+
+        // Sort options
+        sortOptionsContainer: {
+            marginBottom: 20,
+        },
+        sortButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.card,
+            borderRadius: 10,
+            paddingVertical: 10,
+            paddingHorizontal: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        sortButtonText: {
+            fontSize: 14,
+            color: colors.text,
+            marginLeft: 8,
+        },
+
+        // Apply button
+        applyButton: {
+            backgroundColor: colors.primary,
+            borderRadius: 12,
+            paddingVertical: 14,
+            alignItems: 'center',
+        },
+        applyButtonText: {
+            color: '#FFFFFF',
+            fontSize: 16,
+            fontWeight: '600',
         },
 
         // Loading states
@@ -527,53 +631,25 @@ export const createEventsStyles = (colors: any) => {
             backgroundColor: colors.background,
         },
 
-        // Period selector components
-        periodSelectorContainer: {
+        // Quick period selector (simplified from period selector)
+        quickPeriodContainer: {
             marginBottom: 16,
             backgroundColor: colors.card,
             borderRadius: 15,
             padding: 12,
             ...baseTheme.shadowMedium,
         },
-        periodTypeSelector: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginBottom: 10,
-        },
-        periodTypeButton: {
-            flex: 1,
-            paddingVertical: 10,
-            paddingHorizontal: 12,
-            borderRadius: 8,
-            alignItems: 'center',
-            marginHorizontal: 4,
-            backgroundColor: colors.background,
-            borderWidth: 1,
-            borderColor: colors.border,
-        },
-        activePeriodTypeButton: {
-            backgroundColor: colors.primary,
-        },
-        periodTypeText: {
-            fontSize: 14,
-            fontWeight: '600',
-            color: colors.text,
-        },
-        activePeriodTypeText: {
-            color: '#FFFFFF',
-            fontWeight: '600',
-        },
-
-        // Quick period selector
         quickPeriodSelector: {
             flexDirection: 'row',
             paddingVertical: 5,
+            flexWrap: 'wrap',
         },
         quickPeriodButton: {
             paddingVertical: 8,
             paddingHorizontal: 16,
             borderRadius: 20,
             marginRight: 8,
+            marginBottom: 8,
             backgroundColor: colors.background,
             borderWidth: 1,
             borderColor: colors.border,
@@ -589,6 +665,119 @@ export const createEventsStyles = (colors: any) => {
         activeQuickPeriodText: {
             color: '#FFFFFF',
             fontWeight: '500',
+        },
+
+        // Description modal
+        descriptionModalContent: {
+            backgroundColor: colors.background,
+            borderRadius: 20,
+            padding: 20,
+            marginHorizontal: 20,
+            marginVertical: 40,
+            maxHeight: '80%',
+            ...baseTheme.shadowLarge,
+        },
+        descriptionModalHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: 10,
+        },
+        descriptionModalTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.text,
+            flex: 1,
+            marginRight: 10,
+        },
+        modalCloseIconButton: {
+            padding: 5,
+        },
+        modalEventDate: {
+            fontSize: 14,
+            color: colors.text,
+            opacity: 0.7,
+            marginBottom: 15,
+        },
+        descriptionModalScrollView: {
+            marginVertical: 10,
+        },
+        descriptionModalText: {
+            fontSize: 15,
+            color: colors.text,
+            lineHeight: 22,
+        },
+        modalPhotoAttachmentsContainer: {
+            marginTop: 20,
+        },
+        modalAttachmentsTitle: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: colors.text,
+            marginBottom: 10,
+        },
+        modalPhotoItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.card,
+            borderRadius: 10,
+            padding: 12,
+            marginBottom: 8,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        modalAttachmentText: {
+            flex: 1,
+            fontSize: 14,
+            color: colors.text,
+            marginHorizontal: 8,
+        },
+        modalButtonsContainer: {
+            marginTop: 20,
+        },
+        modalButtonsRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        },
+        modalActionButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderRadius: 12,
+        },
+        actionButtonText: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.primary,
+        },
+
+        // No events container
+        noEventsContainer: {
+            padding: 30,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        noEventsText: {
+            fontSize: 16,
+            color: colors.text,
+            opacity: 0.7,
+            textAlign: 'center',
+        },
+
+        // Buttons
+        button: {
+            backgroundColor: colors.primary,
+            paddingVertical: 12,
+            paddingHorizontal: 20,
+            borderRadius: 10,
+        },
+        buttonText: {
+            color: '#FFFFFF',
+            fontSize: 16,
+            fontWeight: '600',
+            textAlign: 'center',
         },
 
         // Month selector
