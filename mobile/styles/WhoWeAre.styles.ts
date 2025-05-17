@@ -1,187 +1,127 @@
 import { StyleSheet, Dimensions } from 'react-native';
+import { theme, createThemedStyles } from './Theme';
 
 /**
  * Creates themed styles for the WhoWeAre component
  */
-export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollViewContent: {
-        paddingBottom: 30,
-    },
-    heroSection: {
-        height: 200,
-        backgroundColor: colors.primary,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        padding: 20,
-        justifyContent: 'flex-end',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    heroContent: {
-        marginBottom: 20,
-    },
-    heroTitle: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-        marginBottom: 8,
-    },
-    heroSubtitle: {
-        fontSize: 16,
-        color: '#FFFFFF',
-        opacity: 0.9,
-    },
-    sectionsContainer: {
-        padding: 20,
-    },
-    sectionCard: {
-        backgroundColor: colors.card,
-        borderRadius: 20,
-        marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        borderColor: colors.border,
-        borderWidth: 1,
-        overflow: 'hidden',
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: colors.primary + '10',
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    sectionIconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: colors.text,
-        flex: 1,
-    },
-    sectionContent: {
-        padding: 16,
-    },
-    paragraph: {
-        fontSize: 16,
-        color: colors.text,
-        opacity: 0.8,
-        lineHeight: 24,
-        marginBottom: 15,
-    },
-    link: {
-        color: colors.primary,
-        textDecorationLine: 'underline',
-    },
-    valueItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    valueIcon: {
-        marginRight: 12,
-    },
-    valueText: {
-        fontSize: 16,
-        color: colors.text,
-        flex: 1,
-    },
-    teamGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        padding: 16,
-    },
-    teamMemberCard: {
-        width: (Dimensions.get('window').width - 80) / 2,
-        backgroundColor: colors.background,
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 16,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 2,
-        borderColor: colors.border,
-        borderWidth: 1,
-    },
-    teamMemberImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        marginBottom: 12,
-        borderWidth: 3,
-        borderColor: colors.primary,
-    },
-    teamMemberInfo: {
-        alignItems: 'center',
-    },
-    teamMemberName: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: colors.text,
-        textAlign: 'center',
-    },
-    teamMemberLastName: {
-        fontSize: 14,
-        color: colors.text,
-        opacity: 0.7,
-        textAlign: 'center',
-    },
-    downloadButton: {
-        backgroundColor: colors.primary,
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 25,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation: 3,
-    },
-    downloadButtonText: {
-        color: '#FFFFFF',
-        fontSize: 15,
-        fontWeight: '600',
-    },
-    retryButton: {
-        marginTop: 20,
-        padding: 12,
-        backgroundColor: colors.primary,
-        borderRadius: 8,
-        minWidth: 100,
-        alignItems: 'center',
-    },
-    retryButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-});
+export const createWhoWeAreStyles = (colors: any) => {
+    // Get base themed styles
+    const baseTheme = createThemedStyles(colors);
+
+    return StyleSheet.create({
+        // Reuse the base layout and common elements
+        container: baseTheme.container,
+        scrollView: baseTheme.scrollView,
+        scrollViewContent: baseTheme.scrollViewContent,
+        heroSection: baseTheme.heroSection,
+        heroContent: baseTheme.heroContent,
+        heroTitle: baseTheme.textHeroTitle,
+        heroSubtitle: baseTheme.textHeroSubtitle,
+
+        // Section containers
+        sectionsContainer: {
+            padding: 20,
+        },
+        sectionCard: baseTheme.card,
+        sectionHeader: baseTheme.cardHeader,
+        sectionContent: baseTheme.cardContent,
+
+        // Custom section elements
+        sectionIconContainer: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: colors.primary,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 12,
+        },
+        sectionTitle: baseTheme.textSubheading,
+        paragraph: baseTheme.textParagraph,
+        link: {
+            color: colors.primary,
+            textDecorationLine: 'underline',
+        },
+
+        // Value items
+        valueItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        valueIcon: {
+            marginRight: 12,
+        },
+        valueText: {
+            fontSize: 16,
+            color: colors.text,
+            flex: 1,
+        },
+
+        // Team grid
+        teamGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            padding: 16,
+        },
+        teamMemberCard: {
+            width: (Dimensions.get('window').width - 80) / 2,
+            backgroundColor: colors.background,
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 16,
+            alignItems: 'center',
+            ...baseTheme.shadowSmall,
+            borderColor: colors.border,
+            borderWidth: 1,
+        },
+        teamMemberImage: {
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            marginBottom: 12,
+            borderWidth: 3,
+            borderColor: colors.primary,
+        },
+        teamMemberInfo: {
+            alignItems: 'center',
+        },
+        teamMemberName: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: colors.text,
+            textAlign: 'center',
+        },
+        teamMemberLastName: {
+            fontSize: 14,
+            color: colors.text,
+            opacity: 0.7,
+            textAlign: 'center',
+        },
+
+        // Action buttons
+        downloadButton: {
+            ...baseTheme.buttonPill,
+            alignSelf: 'center',
+        },
+        downloadButtonText: {
+            color: '#FFFFFF',
+            fontSize: 15,
+            fontWeight: '600',
+        },
+        retryButton: {
+            marginTop: 20,
+            padding: 12,
+            backgroundColor: colors.primary,
+            borderRadius: 8,
+            minWidth: 100,
+            alignItems: 'center',
+        },
+        retryButtonText: {
+            color: '#FFFFFF',
+            fontSize: 16,
+            fontWeight: '600',
+        },
+    });
+};

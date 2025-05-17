@@ -1,195 +1,128 @@
 import { StyleSheet } from 'react-native';
+import { theme, createThemedStyles } from './Theme';
 
 /**
  * Creates themed styles for the DonationContent component
  */
-export const createDonationStyles = (colors: any) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    heroSection: {
-        height: 200,
-        backgroundColor: colors.primary,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        padding: 20,
-        justifyContent: 'flex-end',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    heroContent: {
-        marginBottom: 20,
-    },
-    heroTitle: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-        marginBottom: 8,
-    },
-    heroSubtitle: {
-        fontSize: 16,
-        color: '#FFFFFF',
-        opacity: 0.9,
-    },
-    cardContainer: {
-        backgroundColor: colors.card,
-        borderRadius: 20,
-        marginHorizontal: 20,
-        marginBottom: 25,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: colors.border,
-        overflow: 'hidden',
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: colors.primary + '10',
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    cardHeaderIcon: {
-        marginRight: 12,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: colors.text,
-        flex: 1,
-    },
-    paragraph: {
-        fontSize: 16,
-        color: colors.text,
-        opacity: 0.8,
-        lineHeight: 24,
-        padding: 16,
-    },
-    bankDetailsContainer: {
-        marginTop: 16,
-        backgroundColor: colors.card,
-        padding: 18,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 2,
-        marginHorizontal: 16,
-        marginBottom: 16,
-    },
-    bankDetailRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-        paddingBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        paddingHorizontal: 4,
-    },
-    bankDetailLabel: {
-        fontSize: 14,
-        color: colors.text,
-        fontWeight: '500',
-        opacity: 0.8,
-        flex: 1,
-        marginRight: 10,
-    },
-    bankDetailValueContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    bankDetailValue: {
-        fontSize: 14,
-        color: colors.primary,
-        fontWeight: '600',
-        marginRight: 8,
-        textAlign: 'right',
-    },
-    donateNowContainer: {
-        paddingHorizontal: 16,
-        paddingVertical: 24,
-        marginTop: 8,
-        marginBottom: 16,
-    },
-    donateNowButton: {
-        backgroundColor: colors.primary,
-        paddingVertical: 18,
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.35,
-        shadowRadius: 4,
-    },
-    donateNowButtonText: {
-        color: '#fff',
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    quickActionsContainer: {
-        marginTop: -30,
-        paddingHorizontal: 20,
-        marginBottom: 25,
-    },
-    quickActionsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    quickActionButton: {
-        backgroundColor: colors.card,
-        borderRadius: 15,
-        padding: 15,
-        width: '48%',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-    quickActionIcon: {
-        marginBottom: 8,
-    },
-    quickActionText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: colors.text,
-        textAlign: 'center',
-    },
-    fab: {
-        position: 'absolute',
-        bottom: 20,
-        right: 20,
-        backgroundColor: colors.primary,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-});
+export const createDonationStyles = (colors: any) => {
+    // Get base themed styles
+    const baseTheme = createThemedStyles(colors);
+
+    return StyleSheet.create({
+        // Reuse the base layout and common elements
+        container: baseTheme.container,
+        scrollView: baseTheme.scrollView,
+        heroSection: baseTheme.heroSection,
+        heroContent: baseTheme.heroContent,
+        heroTitle: baseTheme.textHeroTitle,
+        heroSubtitle: baseTheme.textHeroSubtitle,
+
+        // Card elements
+        cardContainer: {
+            ...baseTheme.card,
+            marginHorizontal: 20,
+            marginBottom: 25,
+        },
+        cardHeader: baseTheme.cardHeader,
+        cardHeaderIcon: {
+            marginRight: 12,
+        },
+        sectionTitle: baseTheme.textSubheading,
+        paragraph: {
+            ...baseTheme.textParagraph,
+            padding: 16,
+        },
+
+        // Bank details
+        bankDetailsContainer: {
+            marginTop: 16,
+            backgroundColor: colors.card,
+            padding: 18,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            ...baseTheme.shadowSmall,
+            marginHorizontal: 16,
+            marginBottom: 16,
+        },
+        bankDetailRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+            paddingBottom: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            paddingHorizontal: 4,
+        },
+        bankDetailLabel: {
+            fontSize: 14,
+            color: colors.text,
+            fontWeight: '500',
+            opacity: 0.8,
+            flex: 1,
+            marginRight: 10,
+        },
+        bankDetailValueContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        bankDetailValue: {
+            fontSize: 14,
+            color: colors.primary,
+            fontWeight: '600',
+            marginRight: 8,
+            textAlign: 'right',
+        },
+
+        // Donation button
+        donateNowContainer: {
+            paddingHorizontal: 16,
+            paddingVertical: 24,
+            marginTop: 8,
+            marginBottom: 16,
+        },
+        donateNowButton: {
+            backgroundColor: colors.primary,
+            paddingVertical: 18,
+            borderRadius: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            ...baseTheme.shadowLarge,
+        },
+        donateNowButtonText: {
+            color: '#fff',
+            fontSize: 20,
+            fontWeight: 'bold',
+        },
+
+        // Quick actions
+        quickActionsContainer: baseTheme.quickActionsContainer,
+        quickActionsRow: baseTheme.quickActionsRow,
+        quickActionButton: baseTheme.quickActionButton,
+        quickActionIcon: {
+            marginBottom: 8,
+        },
+        quickActionText: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text,
+            textAlign: 'center',
+        },
+
+        // Floating action button
+        fab: {
+            position: 'absolute',
+            bottom: 20,
+            right: 20,
+            backgroundColor: colors.primary,
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            justifyContent: 'center',
+            alignItems: 'center',
+            ...baseTheme.shadowLarge,
+        },
+    });
+};
