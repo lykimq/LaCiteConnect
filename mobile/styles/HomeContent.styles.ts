@@ -1,107 +1,291 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 
-export const homeStyles = StyleSheet.create({
+/**
+ * Creates themed styles for the HomeContent component
+ */
+export const createHomeStyles = (colors: any) => StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: colors.background,
     },
-    header: {
+    scrollView: {
+        flex: 1,
+    },
+    scrollViewContent: {
+        paddingBottom: 20,
+    },
+    heroSection: {
+        height: 200,
+        backgroundColor: colors.primary,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        padding: 20,
+        justifyContent: 'flex-end',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    heroContent: {
         marginBottom: 20,
-        marginTop: 30,
+    },
+    heroTitle: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
+        marginBottom: 8,
+    },
+    heroSubtitle: {
+        fontSize: 16,
+        color: '#FFFFFF',
+        opacity: 0.9,
+    },
+    quickActionsContainer: {
+        marginTop: -30,
+        paddingHorizontal: 20,
+        marginBottom: 25,
+    },
+    quickActionsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    quickActionButton: {
+        backgroundColor: colors.card,
+        borderRadius: 15,
+        padding: 15,
+        width: '48%',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    quickActionIcon: {
+        marginBottom: 8,
+    },
+    quickActionText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.text,
+        textAlign: 'center',
+    },
+    sectionContainer: {
+        paddingHorizontal: 20,
+        marginBottom: 25,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 15,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: colors.text,
+    },
+    seeAllButton: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
-    logo: {
-        width: 50,
-        height: 50,
-        resizeMode: 'contain',
+    seeAllText: {
+        fontSize: 14,
+        color: colors.primary,
+        marginRight: 4,
     },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#333',
-        marginTop: 10,
-        marginBottom: 5,
-        textAlign: 'center',
-    },
-    subtitle: {
-        fontSize: 18,
-        color: '#666',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    cardContainer: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 16,
+    liveStreamCard: {
+        backgroundColor: colors.card,
+        borderRadius: 20,
+        overflow: 'hidden',
         marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 2,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 15,
-    },
-    infoText: {
-        fontSize: 16,
-        color: '#555',
-        lineHeight: 24,
-        marginBottom: 12,
-    },
-    image: {
+    liveStreamThumbnail: {
         width: '100%',
         height: 200,
-        borderRadius: 8,
-        marginTop: 10,
+        backgroundColor: '#000',
+    },
+    liveStreamInfo: {
+        padding: 15,
+    },
+    liveStreamTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: colors.text,
+        marginBottom: 8,
+    },
+    liveStreamMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    liveIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FF3B30',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        marginRight: 10,
+    },
+    liveText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginLeft: 4,
+    },
+    viewerCount: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    viewerText: {
+        color: colors.text,
+        opacity: 0.7,
+        fontSize: 12,
+        marginLeft: 4,
+    },
+    upcomingEventsContainer: {
+        marginBottom: 20,
+    },
+    eventCard: {
+        backgroundColor: colors.card,
+        borderRadius: 15,
+        padding: 15,
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    eventDate: {
+        width: 50,
+        height: 50,
+        backgroundColor: colors.primary + '15',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    eventDay: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: colors.primary,
+    },
+    eventMonth: {
+        fontSize: 12,
+        color: colors.primary,
+        textTransform: 'uppercase',
+    },
+    eventInfo: {
+        flex: 1,
+    },
+    eventTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: colors.text,
+        marginBottom: 4,
+    },
+    eventTime: {
+        fontSize: 14,
+        color: colors.text,
+        opacity: 0.7,
+    },
+    locationSection: {
+        backgroundColor: colors.card,
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    locationHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: 15,
     },
-    button: {
-        backgroundColor: '#FF9843',
-        borderRadius: 8,
+    locationTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: colors.text,
+        marginLeft: 10,
+    },
+    locationAddress: {
+        fontSize: 15,
+        color: colors.text,
+        opacity: 0.8,
+        marginBottom: 15,
+        lineHeight: 22,
+    },
+    mapButton: {
+        backgroundColor: colors.primary,
+        borderRadius: 12,
         padding: 12,
         alignItems: 'center',
-        marginTop: 10,
+        flexDirection: 'row',
+        justifyContent: 'center',
     },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
+    mapButtonText: {
+        color: '#FFFFFF',
+        fontSize: 15,
+        fontWeight: '600',
+        marginLeft: 8,
     },
-    divider: {
-        height: 1,
-        backgroundColor: '#e0e0e0',
-        marginVertical: 15,
+    fab: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        backgroundColor: colors.primary,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
     },
-    serviceItem: {
+    eventLocation: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 10,
+        marginTop: 4,
     },
-    serviceTime: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginRight: 10,
-        color: '#333',
+    eventLocationText: {
+        fontSize: 12,
+        color: colors.text,
+        opacity: 0.7,
+        marginLeft: 4,
     },
-    serviceDesc: {
-        fontSize: 16,
-        color: '#555',
-    },
-    contactRow: {
-        flexDirection: 'row',
+    noEventsContainer: {
+        padding: 20,
         alignItems: 'center',
-        marginBottom: 10,
+        justifyContent: 'center',
     },
-    contactIcon: {
-        width: 24,
-        marginRight: 10,
+    noEventsText: {
+        fontSize: 14,
+        color: colors.text,
+        opacity: 0.7,
+        textAlign: 'center',
     },
-    scrollView: {
-        flex: 1,
-    }
 });

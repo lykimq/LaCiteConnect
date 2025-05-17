@@ -13,7 +13,7 @@ import { STATIC_URLS } from '../config/staticData';
 import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
-import { createGetConnectedStyles } from '../styles/ThemedStyles';
+import { createGetConnectedStyles } from '../styles/GetConnectedContent.styles';
 import { openUrlWithCorrectDomain, openGenericUrl } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
 

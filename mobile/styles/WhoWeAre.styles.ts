@@ -1,118 +1,187 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 
-export const whoWeAreStyles = StyleSheet.create({
+/**
+ * Creates themed styles for the WhoWeAre component
+ */
+export const createWhoWeAreStyles = (colors: any) => StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: colors.background,
     },
     scrollView: {
         flex: 1,
     },
-    header: {
+    scrollViewContent: {
+        paddingBottom: 30,
+    },
+    heroSection: {
+        height: 200,
+        backgroundColor: colors.primary,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        padding: 20,
+        justifyContent: 'flex-end',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    heroContent: {
         marginBottom: 20,
-        marginTop: 30,
-        alignItems: 'center',
     },
-    title: {
-        fontSize: 28,
+    heroTitle: {
+        fontSize: 32,
         fontWeight: 'bold',
-        color: '#333',
-        marginVertical: 10,
-        textAlign: 'center',
+        color: '#FFFFFF',
+        marginBottom: 8,
     },
-    subtitle: {
-        fontSize: 18,
-        color: '#666',
-        marginBottom: 10,
-        textAlign: 'center',
-    },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 15,
-        marginTop: 20,
-    },
-    paragraph: {
+    heroSubtitle: {
         fontSize: 16,
-        color: '#555',
-        lineHeight: 24,
-        marginBottom: 15,
+        color: '#FFFFFF',
+        opacity: 0.9,
     },
-    cardContainer: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 16,
+    sectionsContainer: {
+        padding: 20,
+    },
+    sectionCard: {
+        backgroundColor: colors.card,
+        borderRadius: 20,
         marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 2,
+        elevation: 3,
+        borderColor: colors.border,
+        borderWidth: 1,
+        overflow: 'hidden',
     },
-    image: {
-        width: '100%',
-        height: 200,
-        borderRadius: 8,
-        marginTop: 10,
-        marginBottom: 15,
-    },
-    leaderCard: {
+    sectionHeader: {
         flexDirection: 'row',
-        backgroundColor: '#f9f9f9',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 1,
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: colors.primary + '10',
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
     },
-    leaderImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+    sectionIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
         marginRight: 12,
     },
-    leaderInfo: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    leaderName: {
+    sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 4,
+        color: colors.text,
+        flex: 1,
     },
-    leaderRole: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 8,
+    sectionContent: {
+        padding: 16,
     },
-    leaderBio: {
-        fontSize: 14,
-        color: '#555',
-        lineHeight: 20,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#e0e0e0',
-        marginVertical: 15,
-    },
-    valueItem: {
+    paragraph: {
+        fontSize: 16,
+        color: colors.text,
+        opacity: 0.8,
+        lineHeight: 24,
         marginBottom: 15,
     },
-    valueTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 5,
+    link: {
+        color: colors.primary,
+        textDecorationLine: 'underline',
     },
-    valueDescription: {
+    valueItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    valueIcon: {
+        marginRight: 12,
+    },
+    valueText: {
+        fontSize: 16,
+        color: colors.text,
+        flex: 1,
+    },
+    teamGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        padding: 16,
+    },
+    teamMemberCard: {
+        width: (Dimensions.get('window').width - 80) / 2,
+        backgroundColor: colors.background,
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 16,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+        borderColor: colors.border,
+        borderWidth: 1,
+    },
+    teamMemberImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 12,
+        borderWidth: 3,
+        borderColor: colors.primary,
+    },
+    teamMemberInfo: {
+        alignItems: 'center',
+    },
+    teamMemberName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: colors.text,
+        textAlign: 'center',
+    },
+    teamMemberLastName: {
+        fontSize: 14,
+        color: colors.text,
+        opacity: 0.7,
+        textAlign: 'center',
+    },
+    downloadButton: {
+        backgroundColor: colors.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 25,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    downloadButtonText: {
+        color: '#FFFFFF',
         fontSize: 15,
-        color: '#555',
-        lineHeight: 22,
+        fontWeight: '600',
+    },
+    retryButton: {
+        marginTop: 20,
+        padding: 12,
+        backgroundColor: colors.primary,
+        borderRadius: 8,
+        minWidth: 100,
+        alignItems: 'center',
+    },
+    retryButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });

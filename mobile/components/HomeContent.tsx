@@ -7,7 +7,7 @@ import { contentService } from '../services/contentService';
 import { calendarService } from '../services/calendarService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
-import { createHomeStyles } from '../styles/ThemedStyles';
+import { createHomeStyles } from '../styles/HomeContent.styles';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
