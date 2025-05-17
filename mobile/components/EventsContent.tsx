@@ -740,7 +740,7 @@ export const EventsContent = () => {
                     {locationDetails && (
                         <View style={styles.eventLocation}>
                             <Ionicons name="location-outline" size={18} color={themeColors.primary} />
-                            <Text style={styles.locationText} numberOfLines={1}>
+                            <Text style={[styles.locationText, { marginRight: 60 }]} numberOfLines={1}>
                                 {locationDetails.address}
                             </Text>
                         </View>
@@ -805,8 +805,15 @@ export const EventsContent = () => {
                 animationType="fade"
                 onRequestClose={() => setShowFullDescription(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.descriptionModalContent}>
+                <View
+                    style={styles.modalOverlay}
+                    onStartShouldSetResponder={() => true}
+                    onResponderRelease={() => setShowFullDescription(false)}
+                >
+                    <View
+                        style={styles.descriptionModalContent}
+                        onStartShouldSetResponder={() => true}
+                    >
                         <View style={styles.descriptionModalHeader}>
                             <Text style={styles.descriptionModalTitle} numberOfLines={2}>
                                 {selectedEvent.summary}
