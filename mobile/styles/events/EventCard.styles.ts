@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { createThemedStyles } from '../Theme';
+import { MixedStyleDeclaration } from 'react-native-render-html';
 
 /**
  * Styles specific to the EventCard component
@@ -106,10 +107,12 @@ export const createEventCardStyles = (colors: any) => {
         eventDescription: {
             fontSize: 14, // Medium text size
             color: colors.text, // Uses theme text color
-            opacity: 0.7, // More transparent than other text
+            opacity: 0.9, // Less transparent for better readability
             marginTop: 8, // Spacing above description
-            lineHeight: 20, // Space between lines
             marginBottom: 8, // Spacing below description
+            paddingRight: 60, // Makes space for date icon
+            minHeight: 40, // Minimum height to ensure consistent card sizing
+            overflow: 'hidden', // Ensures text doesn't overflow
         },
         // Container for the footer of the event card
         eventFooter: {
@@ -152,4 +155,96 @@ export const createEventCardStyles = (colors: any) => {
             borderColor: colors.primary + '30', // Semi-transparent primary color for border
         },
     });
+};
+
+/**
+ * Creates themed styles for HTML tags used in RenderHtml component
+ * These styles control how HTML content is displayed in the event cards
+ *
+ * @param colors - The theme colors object
+ * @returns Record of HTML tag styles
+ */
+export const createEventCardHtmlStyles = (colors: any): Record<string, MixedStyleDeclaration> => {
+    return {
+        // Base body text styling
+        body: {
+            color: colors.text, // Uses theme text color
+            fontSize: 14, // Medium text size for readability
+            lineHeight: 20, // Comfortable line spacing
+            fontFamily: 'System', // System font for consistent display
+            fontWeight: '400' // Regular weight for normal text
+        },
+
+        // Bold text styling
+        b: {
+            fontWeight: '700', // Bold weight for emphasis
+            color: colors.text // Uses theme text color
+        },
+
+        // Strong text (alternative to bold)
+        strong: {
+            fontWeight: '700', // Bold weight for emphasis
+            color: colors.text // Uses theme text color
+        },
+
+        // Italic text styling
+        i: {
+            fontStyle: 'italic', // Italic for emphasis or titles
+            color: colors.text // Uses theme text color
+        },
+
+        // Emphasis text (alternative to italic)
+        em: {
+            fontStyle: 'italic', // Italic for emphasis
+            color: colors.text // Uses theme text color
+        },
+
+        // Paragraph styling
+        p: {
+            marginVertical: 0, // No vertical margin to save space in preview
+            color: colors.text // Uses theme text color
+        },
+
+        // Heading level 1
+        h1: {
+            fontSize: 18, // Slightly larger than body text
+            fontWeight: '700', // Bold for headings
+            marginVertical: 4, // Minimal spacing to save space
+            color: colors.text // Uses theme text color
+        },
+
+        // Heading level 2
+        h2: {
+            fontSize: 16, // Medium size for subheadings
+            fontWeight: '700', // Bold for headings
+            marginVertical: 3, // Minimal spacing to save space
+            color: colors.text // Uses theme text color
+        },
+
+        // Heading level 3
+        h3: {
+            fontSize: 15, // Slightly larger than body text
+            fontWeight: '700', // Bold for headings
+            marginVertical: 2, // Minimal spacing to save space
+            color: colors.text // Uses theme text color
+        },
+
+        // Link styling
+        a: {
+            color: colors.primary, // Uses primary theme color for links
+            textDecorationLine: 'underline' // Underline to indicate a link
+        },
+
+        // Unordered list container
+        ul: {
+            marginLeft: 10, // Indentation for list
+            color: colors.text // Uses theme text color
+        },
+
+        // List item styling
+        li: {
+            marginBottom: 4, // Minimal spacing between items
+            color: colors.text // Uses theme text color
+        }
+    };
 };

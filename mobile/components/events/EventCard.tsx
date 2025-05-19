@@ -6,13 +6,15 @@
  * Provides action buttons for calendar integration, opening external links, and viewing on map.
  */
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { createEventsStyles } from '../../styles/events/EventsContent.styles';
 import { CalendarEvent } from './types'
 import { convertHtmlToFormattedText, parseLocationString } from '../../utils/htmlUtils';
+import RenderHtml, { CustomBlockRenderer } from 'react-native-render-html';
+import { createEventCardHtmlStyles } from '../../styles/events/EventCard.styles';
 
 /**
  * Props for the EventCard component
@@ -32,6 +34,25 @@ interface EventCardProps {
     onOpenMap: (location: string) => void;                  // Handler for opening map with location
 }
 
+/**
+ * Custom Text Renderer that limits text to 2 lines with ellipsis
+ */
+const TruncatedTextRenderer: CustomBlockRenderer = function TruncatedTextRenderer({
+    TDefaultRenderer,
+    ...props
+}) {
+    return (
+        <TDefaultRenderer
+            {...props}
+            textProps={{
+                ...props.textProps,
+                numberOfLines: 2,
+                ellipsizeMode: 'tail'
+            }}
+        />
+    );
+};
+
 export const EventCard: React.FC<EventCardProps> = ({
     event,
     content,
@@ -42,14 +63,23 @@ export const EventCard: React.FC<EventCardProps> = ({
 }) => {
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
+    const { width } = useWindowDimensions();
 
     // Process event date for display
     const eventDate = new Date(event.start.dateTime || event.start.date || '');
     const monthIndex = eventDate.getMonth();
 
     // Process event description and location
-    const formattedDescription = event.description ? convertHtmlToFormattedText(event.description) : '';
+    const htmlContent = event.description ? { html: event.description } : { html: '' };
     const locationDetails = event.location ? parseLocationString(event.location) : null;
+
+    // Get HTML styles from the styles file
+    const tagsStyles = createEventCardHtmlStyles(themeColors);
+
+    // Custom renderers that enforce 2-line limit
+    const renderers = {
+        p: TruncatedTextRenderer
+    };
 
     return (
         <View key={event.id} style={styles.eventCard}>
@@ -87,15 +117,21 @@ export const EventCard: React.FC<EventCardProps> = ({
                     </TouchableOpacity>
                 )}
 
-                {/* Event Description Preview - Limited to 2 lines */}
-                {formattedDescription && (
-                    <Text
+                {/* Event Description Preview with HTML rendering */}
+                {event.description && (
+                    <TouchableOpacity
                         style={styles.eventDescription}
-                        numberOfLines={2}
                         onPress={() => onViewFullDescription(event)}
+                        activeOpacity={0.7}
                     >
-                        {formattedDescription}
-                    </Text>
+                        <RenderHtml
+                            contentWidth={width - 100} // Account for padding and date icon
+                            source={htmlContent}
+                            tagsStyles={tagsStyles}
+                            renderers={renderers}
+                            enableExperimentalMarginCollapsing={true}
+                        />
+                    </TouchableOpacity>
                 )}
 
                 {/* Action Buttons */}

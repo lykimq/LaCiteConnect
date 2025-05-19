@@ -28,7 +28,8 @@ import {
     extractAttachmentLinks,
     parseLocationString
 } from '../../utils/htmlUtils';
-import RenderHtml, { TBlock, MixedStyleDeclaration } from 'react-native-render-html';
+import RenderHtml from 'react-native-render-html';
+import { createEventDetailsHtmlStyles } from '../../styles/events/EventDetailsModal.styles';
 
 /**
  * Props for the EventDetailsModal component
@@ -80,66 +81,8 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         ? parseLocationString(selectedEvent.location)
         : null;
 
-    // Define the tagsStyles for the HTML renderer using the correct types
-    const tagsStyles: Record<string, MixedStyleDeclaration> = {
-        body: {
-            color: themeColors.text,
-            fontSize: 16,
-            lineHeight: 24,
-            fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-            fontWeight: '400'
-        },
-        b: {
-            fontWeight: '700',
-            color: themeColors.text
-        },
-        strong: {
-            fontWeight: '700',
-            color: themeColors.text
-        },
-        i: {
-            fontStyle: 'italic',
-            color: themeColors.text
-        },
-        em: {
-            fontStyle: 'italic',
-            color: themeColors.text
-        },
-        h1: {
-            fontSize: 22,
-            fontWeight: '700',
-            marginVertical: 10,
-            color: themeColors.text
-        },
-        h2: {
-            fontSize: 20,
-            fontWeight: '700',
-            marginVertical: 8,
-            color: themeColors.text
-        },
-        h3: {
-            fontSize: 18,
-            fontWeight: '700',
-            marginVertical: 6,
-            color: themeColors.text
-        },
-        p: {
-            marginVertical: 4,
-            color: themeColors.text
-        },
-        a: {
-            color: themeColors.primary,
-            textDecorationLine: 'underline'
-        },
-        ul: {
-            marginLeft: 10,
-            color: themeColors.text
-        },
-        li: {
-            marginBottom: 4,
-            color: themeColors.text
-        }
-    };
+    // Get HTML styles from the styles file
+    const tagsStyles = createEventDetailsHtmlStyles(themeColors);
 
     return (
         <Modal

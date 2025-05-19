@@ -1,5 +1,6 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { createThemedStyles } from '../Theme';
+import { MixedStyleDeclaration } from 'react-native-render-html';
 
 /**
  * Styles specific to the EventDetailsModal component
@@ -150,4 +151,96 @@ export const createEventDetailsModalStyles = (colors: any) => {
             elevation: 5, // Android elevation (shadow)
         },
     });
+};
+
+/**
+ * Creates themed styles for HTML tags used in the EventDetailsModal RenderHtml component
+ * These styles control how HTML content is displayed in the full event description
+ *
+ * @param colors - The theme colors object
+ * @returns Record of HTML tag styles for the event details modal
+ */
+export const createEventDetailsHtmlStyles = (colors: any): Record<string, MixedStyleDeclaration> => {
+    return {
+        // Base body text styling
+        body: {
+            color: colors.text, // Uses theme text color
+            fontSize: 16, // Larger size for better readability in details view
+            lineHeight: 24, // More comfortable line height for detailed reading
+            fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto', // Platform-specific fonts
+            fontWeight: '400' // Regular weight for normal text
+        },
+
+        // Bold text styling
+        b: {
+            fontWeight: '700', // Bold weight for emphasis
+            color: colors.text // Uses theme text color
+        },
+
+        // Strong text (alternative to bold)
+        strong: {
+            fontWeight: '700', // Bold weight for emphasis
+            color: colors.text // Uses theme text color
+        },
+
+        // Italic text styling
+        i: {
+            fontStyle: 'italic', // Italic for emphasis or titles
+            color: colors.text // Uses theme text color
+        },
+
+        // Emphasis text (alternative to italic)
+        em: {
+            fontStyle: 'italic', // Italic for emphasis
+            color: colors.text // Uses theme text color
+        },
+
+        // Paragraph styling - more spacing for better readability in details view
+        p: {
+            marginVertical: 4, // Provides spacing between paragraphs
+            color: colors.text // Uses theme text color
+        },
+
+        // Heading level 1 - used for main section headers
+        h1: {
+            fontSize: 22, // Large size for main headings
+            fontWeight: '700', // Bold for headings
+            marginVertical: 10, // Good spacing around main headings
+            color: colors.text // Uses theme text color
+        },
+
+        // Heading level 2 - used for subsection headers
+        h2: {
+            fontSize: 20, // Medium-large size for subheadings
+            fontWeight: '700', // Bold for headings
+            marginVertical: 8, // Medium spacing around subheadings
+            color: colors.text // Uses theme text color
+        },
+
+        // Heading level 3 - used for minor section headers
+        h3: {
+            fontSize: 18, // Medium size for minor headings
+            fontWeight: '700', // Bold for headings
+            marginVertical: 6, // Smaller spacing around minor headings
+            color: colors.text // Uses theme text color
+        },
+
+        // Link styling
+        a: {
+            color: colors.primary, // Uses primary theme color for links
+            textDecorationLine: 'underline' // Underline to indicate a link
+        },
+
+        // Unordered list container
+        ul: {
+            marginLeft: 10, // Indentation for list items
+            color: colors.text // Uses theme text color
+        },
+
+        // List item styling
+        li: {
+            marginBottom: 4, // Spacing between list items
+            color: colors.text // Uses theme text color
+        }
+    };
 };
