@@ -1,13 +1,19 @@
 /**
  * HTML Parsing Utilities
- * Handles HTML content in event descriptions
+ * This module provides utility functions for handling and parsing HTML content in event descriptions.
+ * It handles formatting, URL extraction, location parsing, and content transformation.
  */
 
 import { Platform } from 'react-native';
 
 /**
  * Extract Google Drive links from HTML content
- * Looks for Google Drive file and folder links
+ *
+ * This function scans HTML content for Google Drive file and folder links and extracts them.
+ * It supports various Google Drive URL formats and returns a list of normalized direct links.
+ *
+ * @param html - The HTML content to scan for Drive links
+ * @returns Array of Google Drive URLs found in the content
  */
 export const extractDriveLinksFromHtml = (html: string): string[] => {
     if (!html) return [];
@@ -84,7 +90,12 @@ export const extractDriveLinksFromHtml = (html: string): string[] => {
 
 /**
  * Convert HTML to formatted plain text
- * Handles common HTML elements like <b>, <p>, <br>, etc.
+ *
+ * Transforms HTML content into formatted plain text, preserving important text formatting
+ * and structure. Handles common HTML elements like paragraphs, headings, lists, and formatting tags.
+ *
+ * @param html - The HTML content to convert
+ * @returns Formatted plain text with preserved structure
  */
 export const convertHtmlToFormattedText = (html: string): string => {
     if (!html) return '';
@@ -111,20 +122,21 @@ export const convertHtmlToFormattedText = (html: string): string => {
     // Extract and format key-value pairs (common in event descriptions)
     const keyValuePairs = extractKeyValuePairs(text);
 
-    // Preserve bold and italic formatting by replacing with markers
-    text = text.replace(/<b>(.*?)<\/b>/gi, '*$1*')
-        .replace(/<strong>(.*?)<\/strong>/gi, '*$1*')
-        .replace(/<i>(.*?)<\/i>/gi, '_$1_')
-        .replace(/<em>(.*?)<\/em>/gi, '_$1_');
+    // Keep HTML formatting for bold and italic instead of converting to Markdown-style
+    // This preserves the HTML tags for proper rendering in React Native
+    text = text.replace(/<b>(.*?)<\/b>/gi, '<b>$1</b>')
+        .replace(/<strong>(.*?)<\/strong>/gi, '<b>$1</b>')
+        .replace(/<i>(.*?)<\/i>/gi, '<i>$1</i>')
+        .replace(/<em>(.*?)<\/em>/gi, '<i>$1</i>');
 
     // Replace <br> and <p> tags with newlines
     text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n');
     text = text.replace(/<p[^>]*>/gi, '');  // Remove opening <p> tags
 
-    // Handle headings
-    text = text.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\n\n*$1*\n\n')
-        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n\n*$1*\n\n')
-        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n\n*$1*\n\n');
+    // Handle headings with preserved formatting
+    text = text.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\n\n<b>$1</b>\n\n')
+        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n\n<b>$1</b>\n\n')
+        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n\n<b>$1</b>\n\n');
 
     // Handle divs with spacing
     text = text.replace(/<div[^>]*>(.*?)<\/div>/gi, '$1\n');
@@ -137,8 +149,8 @@ export const convertHtmlToFormattedText = (html: string): string => {
     // Replace links with formatted text - keep the URL
     text = text.replace(/<a[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/gi, '$2 ($1)');
 
-    // Remove all other HTML tags
-    text = text.replace(/<[^>]*>/g, '');
+    // Remove all HTML tags except the ones we want to preserve for formatting (<b> and <i>)
+    text = text.replace(/<(?!\/?(b|i)>)[^>]*>/g, '');
 
     // Trim extra spaces and newlines
     text = text.replace(/\n{3,}/g, '\n\n').trim();
@@ -146,7 +158,7 @@ export const convertHtmlToFormattedText = (html: string): string => {
     // If we extracted key-value pairs, append them in a nicely formatted way
     if (keyValuePairs.length > 0) {
         const formattedPairs = keyValuePairs
-            .map(pair => `${pair.key}: ${pair.value}`)
+            .map(pair => `<b>${pair.key}</b>: ${pair.value}`)
             .join('\n');
 
         if (!text.includes(formattedPairs)) {
@@ -159,7 +171,12 @@ export const convertHtmlToFormattedText = (html: string): string => {
 
 /**
  * Extract key-value pairs from HTML content
- * Often event descriptions have formatted fields like "Event Name: XYZ"
+ *
+ * Identifies structured data in the form of key-value pairs from HTML content,
+ * which is common in event descriptions (like "Event Name: XYZ").
+ *
+ * @param html - The HTML content to extract key-value pairs from
+ * @returns Array of key-value pair objects
  */
 const extractKeyValuePairs = (html: string): Array<{ key: string, value: string }> => {
     const pairs: Array<{ key: string, value: string }> = [];
@@ -211,6 +228,12 @@ const extractKeyValuePairs = (html: string): Array<{ key: string, value: string 
 
 /**
  * Convert HTML tables to formatted text
+ *
+ * Transforms HTML tables into a plain text representation with columns separated
+ * by pipe characters and rows by newlines.
+ *
+ * @param html - The HTML content containing tables
+ * @returns Text with tables represented in a readable text format
  */
 const convertTableToText = (html: string): string => {
     // Replace each table with a text representation
@@ -245,7 +268,12 @@ const convertTableToText = (html: string): string => {
 
 /**
  * Extract location details from location string
- * Can handle Google Maps links and addresses
+ *
+ * Parses a location string to determine if it's a Google Maps URL or a regular address.
+ * For Maps URLs, extracts both the address and the URL for navigation.
+ *
+ * @param location - The location string to parse
+ * @returns Object containing the address and optional map URL
  */
 export const parseLocationString = (location: string): { address: string, mapUrl?: string } => {
     if (!location) return { address: '' };
@@ -269,6 +297,11 @@ export const parseLocationString = (location: string): { address: string, mapUrl
 
 /**
  * Check if a string contains a Google Drive link
+ *
+ * Simple utility to detect if a text contains any Google Drive URL.
+ *
+ * @param text - The text to check for Drive links
+ * @returns Boolean indicating if a Drive link was found
  */
 export const containsDriveLink = (text: string): boolean => {
     return /https:\/\/drive\.google\.com\//.test(text);
@@ -276,7 +309,12 @@ export const containsDriveLink = (text: string): boolean => {
 
 /**
  * Extract attachment links from HTML content
- * Focuses on Google Drive links and regular attachments
+ *
+ * Identifies and extracts links from HTML content that could be considered
+ * attachments, including both explicitly marked links and standalone URLs.
+ *
+ * @param description - The HTML description to extract attachments from
+ * @returns Array of objects containing titles and URLs of attachments
  */
 export const extractAttachmentLinks = (description: string): Array<{ title: string, url: string }> => {
     if (!description) return [];
@@ -333,9 +371,13 @@ export const extractAttachmentLinks = (description: string): Array<{ title: stri
 
 /**
  * Extract "Details:" URL from event description with language preferences
- * Prioritizes URLs based on current language setting
- * @param description The event description text
- * @param currentLanguage The current language code ('en' or 'fr')
+ *
+ * Analyzes event descriptions to find the most appropriate URL for "Details" link,
+ * prioritizing URLs based on current language setting and following a fallback hierarchy.
+ *
+ * @param description - The event description text to extract URLs from
+ * @param currentLanguage - The current language code ('en' or 'fr')
+ * @returns The most appropriate URL for the "Details" link, or null if none found
  */
 export const extractDetailsUrl = (description: string, currentLanguage: string = 'en'): string | null => {
     if (!description) {
@@ -508,6 +550,12 @@ export const extractDetailsUrl = (description: string, currentLanguage: string =
 
 /**
  * Helper function to clean and validate URLs
+ *
+ * Processes URLs to clean up formatting issues, handle encodings,
+ * and ensure they're properly formatted for use in the app.
+ *
+ * @param url - The URL to clean and validate
+ * @returns A cleaned and validated URL string
  */
 const cleanUrl = (url: string): string => {
     // Remove any trailing characters that aren't part of the URL

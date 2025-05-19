@@ -10,7 +10,6 @@ import { View, Text } from 'react-native';
 import WebView from 'react-native-webview';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
-import { createEventsStyles } from '../../styles/events/EventsContent.styles';
 import { EventsContent } from './types';
 import { createCalendarViewStyles, getCalendarInjectionScript } from '../../styles/events/CalendarView.styles';
 

@@ -15,7 +15,8 @@ import {
     KeyboardAvoidingView,
     Platform,
     Pressable,
-    StyleSheet
+    StyleSheet,
+    useWindowDimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -27,6 +28,7 @@ import {
     extractAttachmentLinks,
     parseLocationString
 } from '../../utils/htmlUtils';
+import RenderHtml, { TBlock, MixedStyleDeclaration } from 'react-native-render-html';
 
 /**
  * Props for the EventDetailsModal component
@@ -56,20 +58,88 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 }) => {
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
+    const { width } = useWindowDimensions();
 
     // If no event is selected, don't render anything
     if (!selectedEvent) return null;
 
-    // Process event data for display
+    // Convert the description to a format suitable for HTML rendering
+    const htmlContent = selectedEvent.description ? {
+        html: selectedEvent.description
+    } : { html: '' };
+
+    // Get plain text for parts that don't need HTML rendering
     const formattedDescription = selectedEvent.description
         ? convertHtmlToFormattedText(selectedEvent.description)
         : '';
+
     const attachments = selectedEvent.description
         ? extractAttachmentLinks(selectedEvent.description)
         : [];
     const locationDetails = selectedEvent.location
         ? parseLocationString(selectedEvent.location)
         : null;
+
+    // Define the tagsStyles for the HTML renderer using the correct types
+    const tagsStyles: Record<string, MixedStyleDeclaration> = {
+        body: {
+            color: themeColors.text,
+            fontSize: 16,
+            lineHeight: 24,
+            fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+            fontWeight: '400'
+        },
+        b: {
+            fontWeight: '700',
+            color: themeColors.text
+        },
+        strong: {
+            fontWeight: '700',
+            color: themeColors.text
+        },
+        i: {
+            fontStyle: 'italic',
+            color: themeColors.text
+        },
+        em: {
+            fontStyle: 'italic',
+            color: themeColors.text
+        },
+        h1: {
+            fontSize: 22,
+            fontWeight: '700',
+            marginVertical: 10,
+            color: themeColors.text
+        },
+        h2: {
+            fontSize: 20,
+            fontWeight: '700',
+            marginVertical: 8,
+            color: themeColors.text
+        },
+        h3: {
+            fontSize: 18,
+            fontWeight: '700',
+            marginVertical: 6,
+            color: themeColors.text
+        },
+        p: {
+            marginVertical: 4,
+            color: themeColors.text
+        },
+        a: {
+            color: themeColors.primary,
+            textDecorationLine: 'underline'
+        },
+        ul: {
+            marginLeft: 10,
+            color: themeColors.text
+        },
+        li: {
+            marginBottom: 4,
+            color: themeColors.text
+        }
+    };
 
     return (
         <Modal
@@ -136,16 +206,17 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                                     </View>
                                 )}
 
-                                {/* Full Event Description */}
-                                <Text
-                                    style={[
-                                        styles.descriptionModalText,
-                                        { lineHeight: 24 }
-                                    ]}
-                                    selectable
-                                >
-                                    {formattedDescription}
-                                </Text>
+                                {/* Full Event Description using HTML renderer */}
+                                <View style={styles.descriptionModalText}>
+                                    <RenderHtml
+                                        contentWidth={width - 64} // Account for padding
+                                        source={htmlContent}
+                                        tagsStyles={tagsStyles}
+                                        defaultTextProps={{
+                                            selectable: true
+                                        }}
+                                    />
+                                </View>
 
                                 {/* Attachments Section - Only displayed if attachments exist */}
                                 {attachments.length > 0 && (
