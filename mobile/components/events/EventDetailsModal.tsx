@@ -47,31 +47,6 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
 
-    // Create custom styles to center modal vertically
-    const customStyles = StyleSheet.create({
-        centeredModalOverlay: {
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            justifyContent: 'center', // Center vertically
-            alignItems: 'center', // Center horizontally
-        },
-        centeredModalContent: {
-            backgroundColor: themeColors.card,
-            borderRadius: 20,
-            padding: 20,
-            width: '90%',
-            maxHeight: '80%', // Slightly smaller to ensure it stays centered
-            shadowColor: "#000",
-            shadowOffset: {
-                width: 0,
-                height: 2,
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-            elevation: 5,
-        }
-    });
-
     if (!selectedEvent) return null;
 
     const formattedDescription = selectedEvent.description
@@ -91,14 +66,14 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             animationType="fade"
             onRequestClose={onClose}
         >
-            <View style={customStyles.centeredModalOverlay}>
+            <View style={styles.centeredModalOverlay}>
                 <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={{ width: '100%', alignItems: 'center' }}
                 >
-                    <View style={customStyles.centeredModalContent}>
+                    <View style={styles.centeredModalContent}>
                         <View style={styles.descriptionModalHeader}>
                             <Text style={styles.descriptionModalTitle} numberOfLines={2}>
                                 {selectedEvent.summary}
