@@ -203,24 +203,20 @@ export const calendarService = {
 
             // If no URL found in description, check if event has a detailsUrl already
             if (event.detailsUrl) {
-                // Convert existing URL to correct language domain
-                const correctDomainUrl = this.processUrlForLanguage(event.detailsUrl);
-                return correctDomainUrl;
+                // Only process if it's an event-details URL
+                if (event.detailsUrl.includes('/event-details/')) {
+                    // Convert existing URL to correct language domain
+                    const correctDomainUrl = this.processUrlForLanguage(event.detailsUrl);
+                    return correctDomainUrl;
+                }
             }
 
-            // No URL found, use a fallback to events2 listing page (updated from events to events2)
-            const fallbackUrl = this.currentLanguage === 'fr'
-                ? 'https://fr.egliselacite.com/events2'
-                : 'https://www.egliselacite.com/events2';
-
-            return fallbackUrl;
+            // No valid event details URL found, use the default events page
+            return this.getBaseUrl();
         } catch (error) {
             console.error(`[CalendarService] Error in getEventDetailsUrl:`, error);
-
-            // Final fallback - just return a language-appropriate base URL (updated from events to events2)
-            return this.currentLanguage === 'fr'
-                ? 'https://fr.egliselacite.com/events2'
-                : 'https://www.egliselacite.com/events2';
+            // Return default events page URL
+            return this.getBaseUrl();
         }
     },
 

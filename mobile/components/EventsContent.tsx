@@ -667,7 +667,6 @@ export const EventsContent = () => {
     const handleViewDetailUrl = (event: CalendarEvent) => {
         try {
             // Get the event detail URL from the calendar service
-            // This will already handle finding the correct language URL
             const detailUrl = calendarService.getEventDetailsUrl(event);
 
             if (detailUrl) {
@@ -675,19 +674,17 @@ export const EventsContent = () => {
                 openUrlWithCorrectDomain(detailUrl, currentLanguage)
                     .catch(err => {
                         console.error(`Error opening URL:`, err);
-                        showFallbackUrl();
+                        // Fallback to default events page
+                        const fallbackUrl = calendarService.getBaseUrl();
+                        openUrlWithCorrectDomain(fallbackUrl, currentLanguage)
+                            .catch(fallbackErr => {
+                                console.error('Error opening fallback URL:', fallbackErr);
+                                showErrorAlert();
+                            });
                     });
             } else {
-                console.error('No URL could be generated for event');
-                showFallbackUrl();
-            }
-
-            function showFallbackUrl() {
-                // Simple fallback to events page in correct language
-                const fallbackUrl = currentLanguage === 'fr'
-                    ? 'https://fr.egliselacite.com/events'
-                    : 'https://www.egliselacite.com/events';
-
+                // If no URL is returned, use the default events page
+                const fallbackUrl = calendarService.getBaseUrl();
                 openUrlWithCorrectDomain(fallbackUrl, currentLanguage)
                     .catch(fallbackErr => {
                         console.error('Error opening fallback URL:', fallbackErr);
@@ -700,7 +697,13 @@ export const EventsContent = () => {
             }
         } catch (error) {
             console.error('Unexpected error in handleViewDetailUrl:', error);
-            alert(content?.ui.viewDetailsText ? `${content.ui.viewDetailsText} - Error` : 'Could not open the event details. Please try again later.');
+            // Fallback to default events page
+            const fallbackUrl = calendarService.getBaseUrl();
+            openUrlWithCorrectDomain(fallbackUrl, currentLanguage)
+                .catch(fallbackErr => {
+                    console.error('Error opening fallback URL:', fallbackErr);
+                    alert(content?.ui.viewDetailsText ? `${content.ui.viewDetailsText} - Error` : 'Could not open the event details. Please try again later.');
+                });
         }
     };
 
