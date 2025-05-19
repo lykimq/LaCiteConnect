@@ -23,7 +23,7 @@ type ViewMode = 'calendar' | 'list';
 // Add new types for sorting and filtering
 type SortOrder = 'asc' | 'desc';
 type EventCategory = 'all' | 'upcoming' | 'past' | 'thisWeek' | 'thisMonth';
-type SortBy = 'date' | 'title' | 'location';
+type SortBy = 'date' | 'title';
 
 interface FilterOptions {
     category: EventCategory;
@@ -157,7 +157,7 @@ export const EventsContent = () => {
     const [viewMode, setViewMode] = useState<ViewMode>('calendar');
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [selectedQuickPeriod, setSelectedQuickPeriod] = useState<'all' | 'today' | 'tomorrow' | 'week' | 'month'>('all');
-    const [selectedListPeriod, setSelectedListPeriod] = useState<'quick' | 'month'>('quick');
+
 
     // Events state
     const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -225,10 +225,6 @@ export const EventsContent = () => {
                 case 'title':
                     aValue = a.summary.toLowerCase();
                     bValue = b.summary.toLowerCase();
-                    break;
-                case 'location':
-                    aValue = (a.location || '').toLowerCase();
-                    bValue = (b.location || '').toLowerCase();
                     break;
                 default:
                     aValue = '';
@@ -857,9 +853,21 @@ export const EventsContent = () => {
                             contentContainerStyle={{ paddingHorizontal: 16 }}
                             showsVerticalScrollIndicator={true}
                             bounces={true}
-                            decelerationRate="normal"
+                            decelerationRate="fast"
+                            scrollEventThrottle={16}
+                            overScrollMode="always"
+                            keyboardShouldPersistTaps="handled"
+                            scrollToOverflowEnabled={true}
+                            directionalLockEnabled={true}
+                            automaticallyAdjustContentInsets={false}
+                            contentInsetAdjustmentBehavior="automatic"
                         >
-                            <View style={{ paddingBottom: 16 }}>
+                            <View style={{
+                                paddingBottom: 16,
+                                paddingTop: 8,
+                                backgroundColor: themeColors.card,
+                                borderRadius: 12,
+                            }}>
                                 {locationDetails && (
                                     <View style={styles.eventLocation}>
                                         <Ionicons
