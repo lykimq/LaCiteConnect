@@ -3,133 +3,153 @@ import { createThemedStyles } from './Theme';
 
 /**
  * Styles specific to the EventCard component
+ * This file contains all styles related to the event card UI element displayed in the events list
  */
 export const createEventCardStyles = (colors: any) => {
     // Get base themed styles
     const baseTheme = createThemedStyles(colors);
 
     return StyleSheet.create({
-        // Event cards
+        // Main event card container
         eventCard: {
-            backgroundColor: colors.card,
-            borderRadius: 15,
-            marginBottom: 16,
-            overflow: 'hidden',
-            ...baseTheme.shadowMedium,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 16,
+            backgroundColor: colors.card, // Background color of the card
+            borderRadius: 15, // Rounded corners for the card
+            marginBottom: 16, // Space between cards when stacked
+            overflow: 'hidden', // Ensures content doesn't spill outside borders
+            ...baseTheme.shadowMedium, // Applies shadow effect from theme
+            borderWidth: 1, // Card border thickness
+            borderColor: colors.border, // Card border color
+            padding: 16, // Internal spacing within the card
         },
+        // Container for the main content of the event card
         eventContent: {
-            flex: 1,
-            position: 'relative',
-            minHeight: 100,
+            flex: 1, // Takes up available space
+            position: 'relative', // For absolute positioning of child elements
+            minHeight: 100, // Ensures minimum height for the card
         },
+        // Container for the date icon/calendar in top right
         dateIconContainer: {
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            backgroundColor: colors.primary + '15',
-            borderRadius: 10,
-            padding: 8,
-            alignItems: 'center',
-            minWidth: 50,
-            zIndex: 1,
+            position: 'absolute', // Positioned independently of normal flow
+            top: 0, // Aligned to top
+            right: 0, // Aligned to right
+            backgroundColor: colors.primary + '15', // Semi-transparent primary color (15% opacity)
+            borderRadius: 10, // Rounded corners
+            padding: 8, // Internal spacing
+            alignItems: 'center', // Centers content horizontally
+            minWidth: 50, // Ensures minimum width
+            zIndex: 1, // Places above other elements
         },
+        // Style for the day number in the date icon
         dayNumber: {
-            fontSize: 22,
-            fontWeight: 'bold',
-            color: colors.primary,
+            fontSize: 22, // Large text size
+            fontWeight: 'bold', // Bold text
+            color: colors.primary, // Uses primary theme color
         },
+        // Style for the month name in the date icon
         monthName: {
-            fontSize: 12,
-            color: colors.primary,
-            textTransform: 'uppercase',
+            fontSize: 12, // Small text size
+            color: colors.primary, // Uses primary theme color
+            textTransform: 'uppercase', // Converts text to uppercase
         },
+        // Style for the event title
         eventTitle: {
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: colors.text,
-            marginRight: 60,
-            marginBottom: 10,
+            fontSize: 18, // Large text size for title
+            fontWeight: 'bold', // Bold text
+            color: colors.text, // Uses theme text color
+            marginRight: 60, // Makes space for date icon on right
+            marginBottom: 10, // Spacing below title
         },
+        // Style for the event header section
         eventHeader: {
-            marginBottom: 8,
+            marginBottom: 8, // Spacing below header
         },
+        // Container for location information
         eventLocation: {
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            marginBottom: 10,
-            paddingRight: 60,
+            flexDirection: 'row', // Arranges children horizontally
+            alignItems: 'flex-start', // Aligns items to the top
+            marginBottom: 10, // Spacing below location
+            paddingRight: 60, // Makes space for date icon
         },
+        // Style for the location text
         locationText: {
-            fontSize: 14,
-            color: colors.text,
-            marginLeft: 6,
-            opacity: 0.8,
-            flex: 1,
-            flexWrap: 'wrap',
+            fontSize: 14, // Medium text size
+            color: colors.text, // Uses theme text color
+            marginLeft: 6, // Spacing to the left (after icon)
+            opacity: 0.8, // Slightly transparent
+            flex: 1, // Takes up available space
+            flexWrap: 'wrap', // Allows text to wrap
         },
+        // Container for event details
         detailsContainer: {
-            marginTop: 6,
+            marginTop: 6, // Spacing above details
         },
+        // Style for each row of details
         detailRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: 8,
+            flexDirection: 'row', // Arranges children horizontally
+            alignItems: 'center', // Centers items vertically
+            marginBottom: 8, // Spacing below each row
         },
+        // Style for icons in detail rows
         detailIcon: {
-            marginRight: 8,
-            width: 16,
-            justifyContent: 'center',
-            alignItems: 'center',
+            marginRight: 8, // Spacing to the right
+            width: 16, // Fixed width
+            justifyContent: 'center', // Centers content vertically
+            alignItems: 'center', // Centers content horizontally
         },
+        // Style for text in detail rows
         detailText: {
-            fontSize: 14,
-            color: colors.text,
-            opacity: 0.8,
+            fontSize: 14, // Medium text size
+            color: colors.text, // Uses theme text color
+            opacity: 0.8, // Slightly transparent
         },
+        // Style for event description text
         eventDescription: {
-            fontSize: 14,
-            color: colors.text,
-            opacity: 0.7,
-            marginTop: 8,
-            lineHeight: 20,
-            marginBottom: 8,
+            fontSize: 14, // Medium text size
+            color: colors.text, // Uses theme text color
+            opacity: 0.7, // More transparent than other text
+            marginTop: 8, // Spacing above description
+            lineHeight: 20, // Space between lines
+            marginBottom: 8, // Spacing below description
         },
+        // Container for the footer of the event card
         eventFooter: {
-            flexDirection: 'row',
-            marginTop: 12,
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            flexDirection: 'row', // Arranges children horizontally
+            marginTop: 12, // Spacing above footer
+            justifyContent: 'space-between', // Distributes space between items
+            alignItems: 'center', // Centers items vertically
         },
+        // Style for the "Read More" button
         readMoreButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
+            flexDirection: 'row', // Arranges children horizontally
+            alignItems: 'center', // Centers items vertically
         },
+        // Style for the "Read More" text
         readMoreText: {
-            fontSize: 14,
-            color: colors.primary,
-            marginRight: 4,
+            fontSize: 14, // Medium text size
+            color: colors.primary, // Uses primary theme color
+            marginRight: 4, // Spacing to the right
         },
+        // Container for action buttons
         eventActions: {
-            flexDirection: 'row',
-            marginTop: 8,
+            flexDirection: 'row', // Arranges children horizontally
+            marginTop: 8, // Spacing above actions
         },
+        // Style for action buttons
         actionButton: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: colors.background,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: 10,
-            borderWidth: 1,
-            borderColor: colors.border,
+            width: 40, // Fixed width
+            height: 40, // Fixed height
+            borderRadius: 20, // Fully rounded (circle)
+            backgroundColor: colors.background, // Uses theme background color
+            justifyContent: 'center', // Centers content vertically
+            alignItems: 'center', // Centers content horizontally
+            marginRight: 10, // Spacing to the right
+            borderWidth: 1, // Button border thickness
+            borderColor: colors.border, // Button border color
         },
+        // Style for secondary action buttons
         secondaryActionButton: {
-            backgroundColor: colors.primary + '15',
-            borderColor: colors.primary + '30',
+            backgroundColor: colors.primary + '15', // Semi-transparent primary color
+            borderColor: colors.primary + '30', // Semi-transparent primary color for border
         },
     });
 };

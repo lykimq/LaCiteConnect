@@ -3,153 +3,156 @@ import { createThemedStyles } from './Theme';
 
 /**
  * Common styles shared across event components
+ * These styles provide a consistent look and feel for all event-related screens and components
  */
 export const createEventCommonStyles = (colors: any) => {
     // Get base themed styles
     const baseTheme = createThemedStyles(colors);
 
     return StyleSheet.create({
-        // Reuse the base layout and common elements
+        // Basic layout containers
         container: {
-            flex: 1,
-            backgroundColor: colors.background,
+            flex: 1, // Takes up the entire screen
+            backgroundColor: colors.background, // Uses theme background color
         },
         scrollView: {
-            flex: 1,
+            flex: 1, // Takes up available space
         },
         scrollViewContent: {
-            paddingBottom: 30,
+            paddingBottom: 30, // Adds padding at the bottom for better scrolling experience
         },
-        heroSection: baseTheme.heroSection,
-        heroContent: baseTheme.heroContent,
-        heroTitle: baseTheme.textHeroTitle,
-        heroSubtitle: baseTheme.textHeroSubtitle,
 
-        // Quick actions
-        quickActionsContainer: baseTheme.quickActionsContainer,
-        quickActionsRow: baseTheme.quickActionsRow,
-        quickActionButton: baseTheme.quickActionButton,
+        // Hero section at the top of event screens
+        heroSection: baseTheme.heroSection, // Uses themed hero section style
+        heroContent: baseTheme.heroContent, // Uses themed hero content style
+        heroTitle: baseTheme.textHeroTitle, // Uses themed hero title text style
+        heroSubtitle: baseTheme.textHeroSubtitle, // Uses themed hero subtitle text style
+
+        // Quick actions section (buttons for common tasks)
+        quickActionsContainer: baseTheme.quickActionsContainer, // Container for quick action buttons
+        quickActionsRow: baseTheme.quickActionsRow, // Row layout for action buttons
+        quickActionButton: baseTheme.quickActionButton, // Individual action button
         quickActionIcon: {
-            marginBottom: 8,
+            marginBottom: 8, // Space between icon and text
         },
         quickActionText: {
-            fontSize: 14,
-            fontWeight: '600',
-            color: colors.text,
-            textAlign: 'center',
+            fontSize: 14, // Medium text size
+            fontWeight: '600', // Semi-bold text
+            color: colors.text, // Uses theme text color
+            textAlign: 'center', // Centers text horizontally
         },
 
-        // View content
+        // Main view content area
         viewContent: {
-            paddingHorizontal: 20,
+            paddingHorizontal: 20, // Horizontal padding on both sides
         },
 
-        // Month navigation
+        // Month navigation bar for calendar view
         monthNavigation: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 16,
-            backgroundColor: colors.card,
-            borderRadius: 15,
-            padding: 10,
-            ...baseTheme.shadowMedium,
+            flexDirection: 'row', // Arranges children horizontally
+            alignItems: 'center', // Centers items vertically
+            justifyContent: 'space-between', // Distributes space between items
+            marginBottom: 16, // Space below the navigation
+            backgroundColor: colors.card, // Uses theme card color
+            borderRadius: 15, // Rounded corners
+            padding: 10, // Internal padding
+            ...baseTheme.shadowMedium, // Applies shadow effect from theme
         },
         monthYearButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.background,
-            borderRadius: 10,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
+            flexDirection: 'row', // Arranges children horizontally
+            alignItems: 'center', // Centers items vertically
+            backgroundColor: colors.background, // Uses theme background color
+            borderRadius: 10, // Rounded corners
+            paddingVertical: 8, // Vertical padding
+            paddingHorizontal: 12, // Horizontal padding
         },
         monthYearText: {
-            fontSize: 16,
-            fontWeight: '600',
-            color: colors.text,
-            marginRight: 8,
+            fontSize: 16, // Medium-large text size
+            fontWeight: '600', // Semi-bold text
+            color: colors.text, // Uses theme text color
+            marginRight: 8, // Space to the right
         },
 
-        // View toggle
+        // View toggle between calendar and list views
         viewToggle: {
-            flexDirection: 'row',
-            backgroundColor: colors.card,
-            borderRadius: 10,
-            padding: 4,
+            flexDirection: 'row', // Arranges children horizontally
+            backgroundColor: colors.card, // Uses theme card color
+            borderRadius: 10, // Rounded corners
+            padding: 4, // Internal padding
         },
         toggleButton: {
-            paddingVertical: 6,
-            paddingHorizontal: 12,
-            borderRadius: 8,
+            paddingVertical: 6, // Vertical padding
+            paddingHorizontal: 12, // Horizontal padding
+            borderRadius: 8, // Rounded corners
         },
         activeToggleButton: {
-            backgroundColor: colors.primary,
+            backgroundColor: colors.primary, // Uses primary theme color for active state
         },
         toggleButtonText: {
-            fontSize: 14,
-            color: colors.text,
+            fontSize: 14, // Medium text size
+            color: colors.text, // Uses theme text color
         },
         activeToggleButtonText: {
-            color: '#FFFFFF',
+            color: '#FFFFFF', // White text for active toggle button
         },
 
-        // Loading states
+        // Loading, error, and empty states
         loadingContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 20,
+            flex: 1, // Takes up available space
+            justifyContent: 'center', // Centers content vertically
+            alignItems: 'center', // Centers content horizontally
+            padding: 20, // Internal padding
         },
         errorContainer: {
-            padding: 20,
-            alignItems: 'center',
+            padding: 20, // Internal padding
+            alignItems: 'center', // Centers content horizontally
         },
         errorText: {
-            fontSize: 16,
-            color: '#FF3B30',
-            marginBottom: 16,
-            textAlign: 'center',
+            fontSize: 16, // Medium-large text size
+            color: '#FF3B30', // Error red color
+            marginBottom: 16, // Space below error text
+            textAlign: 'center', // Centers text horizontally
         },
         retryButton: {
-            ...baseTheme.buttonPrimary,
-            paddingHorizontal: 20,
+            ...baseTheme.buttonPrimary, // Uses themed primary button style
+            paddingHorizontal: 20, // Horizontal padding
         },
         retryButtonText: {
-            color: '#FFFFFF',
-            fontSize: 16,
-            fontWeight: '600',
+            color: '#FFFFFF', // White text
+            fontSize: 16, // Medium-large text size
+            fontWeight: '600', // Semi-bold text
         },
         emptyContainer: {
-            padding: 20,
-            alignItems: 'center',
-            justifyContent: 'center',
+            padding: 20, // Internal padding
+            alignItems: 'center', // Centers content horizontally
+            justifyContent: 'center', // Centers content vertically
         },
         emptyText: {
-            fontSize: 16,
-            color: colors.text,
-            opacity: 0.7,
-            textAlign: 'center',
-            marginBottom: 16,
+            fontSize: 16, // Medium-large text size
+            color: colors.text, // Uses theme text color
+            opacity: 0.7, // Slightly transparent
+            textAlign: 'center', // Centers text horizontally
+            marginBottom: 16, // Space below empty text
         },
         emptyImage: {
-            width: 120,
-            height: 120,
-            marginBottom: 16,
-            opacity: 0.7,
+            width: 120, // Fixed width
+            height: 120, // Fixed height
+            marginBottom: 16, // Space below image
+            opacity: 0.7, // Slightly transparent
         },
 
-        // Buttons
+        // Common button styles
         button: {
-            backgroundColor: colors.primary,
-            paddingVertical: 12,
-            paddingHorizontal: 20,
-            borderRadius: 10,
+            backgroundColor: colors.primary, // Uses primary theme color
+            paddingVertical: 12, // Vertical padding
+            paddingHorizontal: 20, // Horizontal padding
+            borderRadius: 10, // Rounded corners
         },
         buttonText: {
-            color: '#FFFFFF',
-            fontSize: 16,
-            fontWeight: '600',
-            textAlign: 'center',
+            color: '#FFFFFF', // White text
+            fontSize: 16, // Medium-large text size
+            fontWeight: '600', // Semi-bold text
+            textAlign: 'center', // Centers text horizontally
         },
     });
 };
