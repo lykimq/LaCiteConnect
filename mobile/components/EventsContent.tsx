@@ -802,12 +802,22 @@ export const EventsContent = () => {
     const renderFullDescriptionModal = () => {
         if (!selectedEvent) return null;
 
+        // Format the description and ensure it's not empty
         const formattedDescription = selectedEvent.description ?
             convertHtmlToFormattedText(selectedEvent.description) : '';
         const attachments = selectedEvent.description ?
             extractAttachmentLinks(selectedEvent.description) : [];
         const locationDetails = selectedEvent.location ?
             parseLocationString(selectedEvent.location) : null;
+
+        console.log('Event Modal Debug:', {
+            title: selectedEvent.summary,
+            hasDescription: !!formattedDescription,
+            descriptionLength: formattedDescription.length,
+            hasLocation: !!locationDetails,
+            attachmentsCount: attachments.length,
+            date: formatEventDate(selectedEvent)
+        });
 
         return (
             <Modal
@@ -816,14 +826,15 @@ export const EventsContent = () => {
                 animationType="fade"
                 onRequestClose={() => setShowFullDescription(false)}
             >
-                <View
+                <TouchableOpacity
                     style={styles.modalOverlay}
-                    onStartShouldSetResponder={() => true}
-                    onResponderRelease={() => setShowFullDescription(false)}
+                    activeOpacity={1}
+                    onPress={() => setShowFullDescription(false)}
                 >
-                    <View
+                    <TouchableOpacity
                         style={styles.descriptionModalContent}
-                        onStartShouldSetResponder={() => true}
+                        activeOpacity={1}
+                        onPress={(e) => e.stopPropagation()}
                     >
                         <View style={styles.descriptionModalHeader}>
                             <Text style={styles.descriptionModalTitle} numberOfLines={2}>
@@ -841,37 +852,63 @@ export const EventsContent = () => {
                             {formatEventDate(selectedEvent)}
                         </Text>
 
-                        <ScrollView style={styles.descriptionModalScrollView}>
-                            {formattedDescription && (
-                                <Text style={styles.descriptionModalText}>
+                        <ScrollView
+                            style={styles.descriptionModalScrollView}
+                            contentContainerStyle={{ paddingHorizontal: 16 }}
+                            showsVerticalScrollIndicator={true}
+                            bounces={true}
+                            decelerationRate="normal"
+                        >
+                            <View style={{ paddingBottom: 16 }}>
+                                {locationDetails && (
+                                    <View style={styles.eventLocation}>
+                                        <Ionicons
+                                            name="location-outline"
+                                            size={18}
+                                            color={themeColors.primary}
+                                            style={{ marginTop: 2 }}
+                                        />
+                                        <Text style={styles.locationText}>
+                                            {locationDetails.address}
+                                        </Text>
+                                    </View>
+                                )}
+
+                                <Text
+                                    style={[
+                                        styles.descriptionModalText,
+                                        { lineHeight: 24 }
+                                    ]}
+                                    selectable={true}
+                                >
                                     {formattedDescription}
                                 </Text>
-                            )}
 
-                            {attachments.length > 0 && (
-                                <View style={styles.modalPhotoAttachmentsContainer}>
-                                    <Text style={styles.modalAttachmentsTitle}>
-                                        {content?.ui.viewFilesText || 'Attachments'}
-                                    </Text>
-                                    {attachments.map((attachment, index) => (
-                                        <TouchableOpacity
-                                            key={index}
-                                            style={styles.modalPhotoItem}
-                                            onPress={() => handleViewAttachment(attachment.url)}
-                                        >
-                                            <Ionicons
-                                                name={isDriveAttachment(attachment.url) ? 'document-outline' : 'link-outline'}
-                                                size={16}
-                                                color={themeColors.text}
-                                            />
-                                            <Text style={styles.modalAttachmentText} numberOfLines={1}>
-                                                {attachment.title}
-                                            </Text>
-                                            <Ionicons name="open-outline" size={16} color={themeColors.text} />
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            )}
+                                {attachments.length > 0 && (
+                                    <View style={[styles.modalPhotoAttachmentsContainer, { marginTop: 16 }]}>
+                                        <Text style={styles.modalAttachmentsTitle}>
+                                            {content?.ui.viewFilesText || 'Attachments'}
+                                        </Text>
+                                        {attachments.map((attachment, index) => (
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={styles.modalPhotoItem}
+                                                onPress={() => handleViewAttachment(attachment.url)}
+                                            >
+                                                <Ionicons
+                                                    name={isDriveAttachment(attachment.url) ? 'document-outline' : 'link-outline'}
+                                                    size={16}
+                                                    color={themeColors.text}
+                                                />
+                                                <Text style={styles.modalAttachmentText} numberOfLines={1}>
+                                                    {attachment.title}
+                                                </Text>
+                                                <Ionicons name="open-outline" size={16} color={themeColors.text} />
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                )}
+                            </View>
                         </ScrollView>
 
                         <View style={styles.modalButtonsContainer}>
@@ -914,8 +951,8 @@ export const EventsContent = () => {
                                 </TouchableOpacity>
                             )}
                         </View>
-                    </View>
-                </View>
+                    </TouchableOpacity>
+                </TouchableOpacity>
             </Modal>
         );
     };
