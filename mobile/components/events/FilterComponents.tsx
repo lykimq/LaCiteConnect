@@ -1,3 +1,10 @@
+/**
+ * Filter Components for Events
+ *
+ * This file contains multiple components related to filtering and sorting events:
+ * 1. QuickFilters - A simple filter button that opens the detailed filter modal
+ * 2. FilterModal - A modal with comprehensive filtering and sorting options
+ */
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,9 +13,15 @@ import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { createEventsStyles } from '../../styles/events/EventsContent.styles';
 import { EventsContent, FilterOptions, EventCategory } from './types';
 
+/**
+ * QuickFilters Component
+ *
+ * Displays a horizontal bar with a "Filter" button that opens the detailed filter modal.
+ * Provides a convenient way for users to access filtering options.
+ */
 interface QuickFiltersProps {
-    onShowFilterModal: () => void;
-    content: EventsContent | null;
+    onShowFilterModal: () => void;     // Handler to open the filter modal
+    content: EventsContent | null;     // Localized content strings
 }
 
 export const QuickFilters: React.FC<QuickFiltersProps> = ({ onShowFilterModal, content }) => {
@@ -22,6 +35,7 @@ export const QuickFilters: React.FC<QuickFiltersProps> = ({ onShowFilterModal, c
             style={styles.quickFiltersContainer}
             contentContainerStyle={styles.quickFiltersContent}
         >
+            {/* Filter Button - Opens the detailed filter modal */}
             <TouchableOpacity
                 style={styles.moreFiltersButton}
                 onPress={onShowFilterModal}
@@ -35,12 +49,21 @@ export const QuickFilters: React.FC<QuickFiltersProps> = ({ onShowFilterModal, c
     );
 };
 
+/**
+ * FilterModal Component
+ *
+ * Displays a comprehensive modal with filtering and sorting options for events.
+ * Allows users to:
+ * - Search events by text
+ * - Filter by time period (All, Upcoming, This Week, This Month, Past)
+ * - Sort events by date in ascending or descending order
+ */
 interface FilterModalProps {
-    showFilterModal: boolean;
-    onClose: () => void;
-    filterOptions: FilterOptions;
-    onFilterChange: (options: FilterOptions) => void;
-    content: EventsContent | null;
+    showFilterModal: boolean;                     // Whether the modal is visible
+    onClose: () => void;                          // Handler to close the modal
+    filterOptions: FilterOptions;                 // Current filter options
+    onFilterChange: (options: FilterOptions) => void;  // Handler to update filter options
+    content: EventsContent | null;                // Localized content strings
 }
 
 export const FilterModal: React.FC<FilterModalProps> = ({
@@ -69,6 +92,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     style={styles.filterModalContent}
                     onStartShouldSetResponder={() => true}
                 >
+                    {/* Modal Header - Title and Close Button */}
                     <View style={styles.filterModalHeader}>
                         <Text style={styles.filterModalTitle}>
                             {content?.ui.filterModalTitle || 'Filter Events'}
@@ -81,7 +105,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                         </TouchableOpacity>
                     </View>
 
-                    {/* Search Bar */}
+                    {/* Search Bar - Text search for events */}
                     <View style={styles.searchContainer}>
                         <Ionicons name="search" size={20} color={themeColors.text} />
                         <TextInput
@@ -93,7 +117,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                         />
                     </View>
 
-                    {/* Time Period Selection */}
+                    {/* Time Period Filters - Grid of category options */}
                     <Text style={styles.filterSectionTitle}>
                         {content?.ui.filterSectionTitle || 'Time Period'}
                     </Text>
@@ -128,7 +152,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                         ))}
                     </View>
 
-                    {/* Sort Options */}
+                    {/* Sort Options - Toggle between ascending and descending */}
                     <Text style={styles.filterSectionTitle}>
                         {content?.ui.sortSectionTitle || 'Sort By'}
                     </Text>
@@ -153,7 +177,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                         </TouchableOpacity>
                     </View>
 
-                    {/* Apply Button */}
+                    {/* Apply Button - Closes the modal and applies filters */}
                     <TouchableOpacity
                         style={styles.applyButton}
                         onPress={onClose}

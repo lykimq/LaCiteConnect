@@ -1,3 +1,10 @@
+/**
+ * EventDetailsModal Component
+ *
+ * Displays a modal with detailed information about a selected event.
+ * Shows the full event description, location, date/time, and attachments.
+ * Provides action buttons for adding to calendar, viewing on map, and opening external details.
+ */
 import React from 'react';
 import {
     View,
@@ -21,16 +28,19 @@ import {
     parseLocationString
 } from '../../utils/htmlUtils';
 
+/**
+ * Props for the EventDetailsModal component
+ */
 interface EventDetailsModalProps {
-    showFullDescription: boolean;
-    onClose: () => void;
-    selectedEvent: CalendarEvent | null;
-    content: EventsContent | null;
-    formatEventDate: (event: CalendarEvent) => string;
-    onAddToCalendar: (event: CalendarEvent) => void;
-    onViewDetailUrl: (event: CalendarEvent) => void;
-    onOpenMap: (location: string) => void;
-    onViewAttachment: (url: string) => void;
+    showFullDescription: boolean;                  // Whether the modal is visible
+    onClose: () => void;                           // Handler to close the modal
+    selectedEvent: CalendarEvent | null;           // The event being displayed
+    content: EventsContent | null;                 // Localized content strings
+    formatEventDate: (event: CalendarEvent) => string;  // Function to format event date
+    onAddToCalendar: (event: CalendarEvent) => void;    // Handler for adding event to device calendar
+    onViewDetailUrl: (event: CalendarEvent) => void;    // Handler for opening event detail URL
+    onOpenMap: (location: string) => void;              // Handler for opening map with location
+    onViewAttachment: (url: string) => void;            // Handler for viewing attachments
 }
 
 export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
@@ -47,8 +57,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
 
+    // If no event is selected, don't render anything
     if (!selectedEvent) return null;
 
+    // Process event data for display
     const formattedDescription = selectedEvent.description
         ? convertHtmlToFormattedText(selectedEvent.description)
         : '';
@@ -67,6 +79,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             onRequestClose={onClose}
         >
             <View style={styles.centeredModalOverlay}>
+                {/* Background press handler to close modal */}
                 <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
                 <KeyboardAvoidingView
@@ -74,6 +87,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     style={{ width: '100%', alignItems: 'center' }}
                 >
                     <View style={styles.centeredModalContent}>
+                        {/* Modal Header - Title and Close Button */}
                         <View style={styles.descriptionModalHeader}>
                             <Text style={styles.descriptionModalTitle} numberOfLines={2}>
                                 {selectedEvent.summary}
@@ -86,10 +100,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                             </TouchableOpacity>
                         </View>
 
+                        {/* Event Date/Time */}
                         <Text style={styles.modalEventDate}>
                             {formatEventDate(selectedEvent)}
                         </Text>
 
+                        {/* Scrollable Content Area */}
                         <ScrollView
                             style={styles.descriptionModalScrollView}
                             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
@@ -105,6 +121,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                                     borderRadius: 12,
                                 }}
                             >
+                                {/* Event Location - Only displayed if available */}
                                 {locationDetails && (
                                     <View style={styles.eventLocation}>
                                         <Ionicons
@@ -119,6 +136,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                                     </View>
                                 )}
 
+                                {/* Full Event Description */}
                                 <Text
                                     style={[
                                         styles.descriptionModalText,
@@ -129,6 +147,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                                     {formattedDescription}
                                 </Text>
 
+                                {/* Attachments Section - Only displayed if attachments exist */}
                                 {attachments.length > 0 && (
                                     <View style={[styles.modalPhotoAttachmentsContainer, { marginTop: 16 }]}>
                                         <Text style={styles.modalAttachmentsTitle}>
@@ -156,8 +175,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                             </View>
                         </ScrollView>
 
+                        {/* Action Buttons */}
                         <View style={styles.modalButtonsContainer}>
                             <View style={styles.modalButtonsRow}>
+                                {/* Add to Calendar Button */}
                                 <TouchableOpacity
                                     style={[
                                         styles.modalActionButton,
@@ -175,6 +196,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                                     </Text>
                                 </TouchableOpacity>
 
+                                {/* View Location Button - Only displayed if location available */}
                                 {locationDetails && (
                                     <TouchableOpacity
                                         style={[
@@ -191,6 +213,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                                 )}
                             </View>
 
+                            {/* View Details Button - Only displayed if details URL available */}
                             {selectedEvent.detailsUrl && (
                                 <TouchableOpacity
                                     style={[

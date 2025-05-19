@@ -1,3 +1,10 @@
+/**
+ * CalendarView Component
+ *
+ * Displays a web-based calendar view of events using a WebView.
+ * Renders an embedded calendar that shows events visually on a calendar interface.
+ * Injects custom CSS to make the calendar more mobile-friendly.
+ */
 import React from 'react';
 import { View, Text } from 'react-native';
 import WebView from 'react-native-webview';
@@ -5,11 +12,15 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { createEventsStyles } from '../../styles/events/EventsContent.styles';
 import { EventsContent } from './types';
+import { createCalendarViewStyles, getCalendarInjectionScript } from '../../styles/events/CalendarView.styles';
 
+/**
+ * Props for the CalendarView component
+ */
 interface CalendarViewProps {
-    calendarUrl: string;
-    calendarError: string | null;
-    content: EventsContent | null;
+    calendarUrl: string;            // URL of the calendar to display (e.g., Google Calendar embed URL)
+    calendarError: string | null;   // Error message if calendar fails to load
+    content: EventsContent | null;  // Localized content strings
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -18,10 +29,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     content
 }) => {
     const { themeColors } = useTheme();
-    const styles = useThemedStyles(createEventsStyles);
+    const styles = useThemedStyles(createCalendarViewStyles);
 
     return (
         <View style={styles.calendarContainer}>
+            {/* WebView Calendar - Embeds external calendar */}
             <WebView
                 source={{ uri: calendarUrl }}
                 style={styles.calendar}
@@ -30,26 +42,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 onError={(e) => {
                     console.error('WebView error:', e.nativeEvent);
                 }}
-                injectedJavaScript={`
-          // Make calendar more mobile-friendly
-          const style = document.createElement('style');
-          style.textContent = \`
-              .fc-toolbar-title { font-size: 1.2em !important; }
-              .fc-button { padding: 0.2em 0.4em !important; }
-              .fc-event { padding: 2px !important; }
-              .fc-daygrid-day-number { font-size: 0.9em !important; }
-              .fc-col-header-cell-cushion { font-size: 0.9em !important; }
-              .fc-list-day-cushion { font-size: 0.9em !important; }
-              .fc-event-title { font-size: 0.9em !important; }
-              .fc-event-time { font-size: 0.8em !important; }
-              @media (max-width: 768px) {
-                  .fc-toolbar { flex-direction: column !important; }
-                  .fc-toolbar-chunk { margin: 4px 0 !important; }
-              }
-          \`;
-          document.head.appendChild(style);
-        `}
+                injectedJavaScript={getCalendarInjectionScript()}
             />
+
+            {/* Error Message - Displayed if calendar fails to load */}
             {calendarError && (
                 <Text style={styles.errorText}>{calendarError}</Text>
             )}

@@ -1,3 +1,10 @@
+/**
+ * EventCard Component
+ *
+ * Displays a single calendar event in a card format for the list view.
+ * Shows event details including date, title, location, and a preview of the description.
+ * Provides action buttons for calendar integration, opening external links, and viewing on map.
+ */
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,19 +15,22 @@ import { CalendarEvent } from './types';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { convertHtmlToFormattedText, parseLocationString } from '../../utils/htmlUtils';
 
+/**
+ * Props for the EventCard component
+ */
 interface EventCardProps {
-    event: CalendarEvent;
-    content: {
-        months?: string[];
+    event: CalendarEvent;                  // The event data to display
+    content: {                             // Localized content strings
+        months?: string[];                 // Localized month names
         ui?: {
-            allDayText?: string;
-            dateNotSpecifiedText?: string;
+            allDayText?: string;           // Text for all-day events
+            dateNotSpecifiedText?: string; // Text for events with no date
         };
     };
-    onViewFullDescription: (event: CalendarEvent) => void;
-    onAddToCalendar: (event: CalendarEvent) => void;
-    onViewDetailUrl: (event: CalendarEvent) => void;
-    onOpenMap: (location: string) => void;
+    onViewFullDescription: (event: CalendarEvent) => void;  // Handler for viewing the full description
+    onAddToCalendar: (event: CalendarEvent) => void;        // Handler for adding event to device calendar
+    onViewDetailUrl: (event: CalendarEvent) => void;        // Handler for opening event detail URL
+    onOpenMap: (location: string) => void;                  // Handler for opening map with location
 }
 
 export const EventCard: React.FC<EventCardProps> = ({
@@ -34,17 +44,18 @@ export const EventCard: React.FC<EventCardProps> = ({
     const { themeColors } = useTheme();
     const styles = useThemedStyles(createEventsStyles);
 
+    // Process event date for display
     const eventDate = new Date(event.start.dateTime || event.start.date || '');
     const monthIndex = eventDate.getMonth();
 
-    // Format the description using HTML utils
+    // Process event description and location
     const formattedDescription = event.description ? convertHtmlToFormattedText(event.description) : '';
     const locationDetails = event.location ? parseLocationString(event.location) : null;
 
     return (
         <View key={event.id} style={styles.eventCard}>
             <View style={styles.eventContent}>
-                {/* Simplified Date Icon */}
+                {/* Date Icon - Shows day number and month name */}
                 <View style={styles.dateIconContainer}>
                     <Text style={styles.dayNumber}>{eventDate.getDate()}</Text>
                     <Text style={styles.monthName}>
@@ -52,12 +63,14 @@ export const EventCard: React.FC<EventCardProps> = ({
                     </Text>
                 </View>
 
+                {/* Event Title */}
                 <View style={styles.eventHeader}>
                     <Text style={styles.eventTitle} numberOfLines={2}>
                         {event.summary}
                     </Text>
                 </View>
 
+                {/* Event Location - Only displayed if available */}
                 {locationDetails && (
                     <TouchableOpacity
                         style={styles.eventLocation}
@@ -75,6 +88,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                     </TouchableOpacity>
                 )}
 
+                {/* Event Description Preview - Limited to 2 lines */}
                 {formattedDescription && (
                     <Text
                         style={styles.eventDescription}
@@ -85,7 +99,9 @@ export const EventCard: React.FC<EventCardProps> = ({
                     </Text>
                 )}
 
+                {/* Action Buttons */}
                 <View style={styles.eventActions}>
+                    {/* Add to Calendar Button */}
                     <TouchableOpacity
                         style={[styles.actionButton, styles.secondaryActionButton]}
                         onPress={() => onAddToCalendar(event)}
@@ -93,6 +109,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                         <Ionicons name="calendar-outline" size={16} color={themeColors.primary} />
                     </TouchableOpacity>
 
+                    {/* External Details Link Button - Only displayed if available */}
                     {event.detailsUrl && (
                         <TouchableOpacity
                             style={[styles.actionButton, styles.secondaryActionButton]}
@@ -102,6 +119,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                         </TouchableOpacity>
                     )}
 
+                    {/* Map Location Button - Only displayed if location available */}
                     {locationDetails && (
                         <TouchableOpacity
                             style={[styles.actionButton, styles.secondaryActionButton]}

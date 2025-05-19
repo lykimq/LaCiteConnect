@@ -1,55 +1,68 @@
-// Type definitions for Events components
+/**
+ * Type definitions for Events components
+ * This file defines all the types and interfaces used throughout the events feature
+ */
 
-// View modes
+// View modes for displaying events - either calendar or list
 export type ViewMode = 'calendar' | 'list';
 
-// Add new types for sorting and filtering
-export type SortOrder = 'asc' | 'desc';
-export type EventCategory = 'all' | 'upcoming' | 'past' | 'thisWeek' | 'thisMonth';
-export type SortBy = 'date' | 'title';
+// Types for sorting and filtering options
+export type SortOrder = 'asc' | 'desc'; // Ascending or descending sort order
+export type EventCategory = 'all' | 'upcoming' | 'past' | 'thisWeek' | 'thisMonth'; // Categories for filtering events
+export type SortBy = 'date' | 'title'; // Fields to sort events by
 
+/**
+ * Filter options for events
+ * Used to control how events are filtered and sorted in the UI
+ */
 export interface FilterOptions {
-    category: EventCategory;
-    sortBy: SortBy;
-    sortOrder: SortOrder;
-    searchQuery: string;
+    category: EventCategory;  // Time period category
+    sortBy: SortBy;           // Field to sort by
+    sortOrder: SortOrder;     // Sort direction
+    searchQuery: string;      // Text to search for in events
 }
 
-// Event interface
+/**
+ * Main event interface that defines the structure of a calendar event
+ * Compatible with Google Calendar API response format
+ */
 export interface CalendarEvent {
-    id: string;
-    summary: string;
-    description?: string;
-    formattedDescription?: string;
+    id: string;                 // Unique identifier for the event
+    summary: string;            // Event title
+    description?: string;       // Full event description (may contain HTML)
+    formattedDescription?: string; // Processed description without HTML
     start: {
-        dateTime?: string;
-        date?: string;
+        dateTime?: string;      // Start time for timed events
+        date?: string;          // Start date for all-day events
     };
     end: {
-        dateTime?: string;
-        date?: string;
+        dateTime?: string;      // End time for timed events
+        date?: string;          // End date for all-day events
     };
-    location?: string;
-    formattedLocation?: {
+    location?: string;          // Location string (may contain address and map URL)
+    formattedLocation?: {       // Processed location information
         address: string;
         mapUrl?: string;
     };
-    recurrence?: boolean;
-    attachments?: Array<{ title: string, url: string }>;
-    detailsUrl?: string;
+    recurrence?: boolean;       // Whether this is a recurring event
+    attachments?: Array<{ title: string, url: string }>; // File attachments
+    detailsUrl?: string;        // URL to view event details externally
 }
 
-// Events content interface from JSON
+/**
+ * Interface for the localized content used in the Events components
+ * Contains all text strings that are displayed to the user
+ */
 export interface EventsContent {
     header: {
-        title: string;
-        subtitle: string;
+        title: string;          // Main header title
+        subtitle: string;       // Subtitle for the events screen
     };
-    tabs: Array<{
+    tabs: Array<{               // Tab navigation options
         id: string;
         label: string;
     }>;
-    ui: {
+    ui: {                       // All UI text strings
         loadingText: string;
         errorText: string;
         calendarErrorText: string;
@@ -83,7 +96,7 @@ export interface EventsContent {
         filterModalTitle: string;
         searchPlaceholder: string;
         filterSectionTitle: string;
-        filterOptions: {
+        filterOptions: {         // Text for filter options
             allEvents: string;
             upcoming: string;
             thisWeek: string;
@@ -92,7 +105,7 @@ export interface EventsContent {
         };
         sortSectionTitle: string;
         sortByLabel: string;
-        sortOptions: {
+        sortOptions: {           // Text for sort options
             date: string;
             title: string;
             location: string;
@@ -103,22 +116,26 @@ export interface EventsContent {
         applyFiltersText: string;
         quickViewText: string;
         monthViewText: string;
-        quickPeriodOptions: {
+        quickPeriodOptions: {     // Text for quick period filter options
             allEvents: string;
             today: string;
             tomorrow: string;
             nextSevenDays: string;
             nextThirtyDays: string;
         };
-        viewModes: {
+        viewModes: {              // Text for view mode options
             calendar: string;
             list: string;
         };
     };
-    months: string[];
+    months: string[];             // Localized month names
 }
 
-// Add this function to identify Google Drive attachments
+/**
+ * Utility function to identify Google Drive attachments based on URL
+ * @param url The URL to check
+ * @returns Boolean indicating if the URL is a Google Drive attachment
+ */
 export const isDriveAttachment = (url: string): boolean => {
     return url.includes('drive.google.com');
 };
