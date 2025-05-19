@@ -1,8 +1,10 @@
 import { StyleSheet } from 'react-native';
-import { createThemedStyles } from './Theme';
+import { createThemedStyles } from '../Theme';
 
 /**
  * Styles specific to the FilterComponents (QuickFilters and FilterModal)
+ * This file contains styles for the filtering interface elements that allow users
+ * to filter and sort events by various criteria such as date, category, and search terms
  */
 export const createFilterComponentsStyles = (colors: any) => {
     // Get base themed styles

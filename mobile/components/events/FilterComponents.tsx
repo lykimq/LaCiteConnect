@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Modal, TextInput, ScrollView } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
-import { createEventsStyles } from '../../styles/EventsContent.styles';
+import { createEventsStyles } from '../../styles/events/EventsContent.styles';
 import { EventsContent, FilterOptions, EventCategory } from './types';
 
 interface QuickFiltersProps {

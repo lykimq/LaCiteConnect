@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
-import { createEventsStyles } from '../../styles/EventsContent.styles';
+import { createEventsStyles } from '../../styles/events/EventsContent.styles';
 import { CalendarEvent } from './types';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { convertHtmlToFormattedText, parseLocationString } from '../../utils/htmlUtils';

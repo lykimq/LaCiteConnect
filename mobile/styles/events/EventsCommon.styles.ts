@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { createThemedStyles } from './Theme';
+import { createThemedStyles } from '../Theme';
 
 /**
  * Common styles shared across event components

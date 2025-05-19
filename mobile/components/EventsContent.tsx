@@ -5,7 +5,7 @@ import { calendarService } from '../services/calendarService';
 import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
-import { createEventsStyles } from '../styles/EventsContent.styles';
+import { createEventsStyles } from '../styles/events/EventsContent.styles';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 
