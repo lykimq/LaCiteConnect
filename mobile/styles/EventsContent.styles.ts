@@ -277,162 +277,6 @@ export const createEventsStyles = (colors: any) => {
             borderColor: colors.primary + '30',
         },
 
-        // Event details
-        eventDetailCard: {
-            ...baseTheme.card,
-            padding: 0,
-            marginBottom: 20,
-        },
-        eventDetailImage: {
-            width: '100%',
-            height: 200,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-        },
-        eventDetailContent: {
-            padding: 20,
-        },
-        eventDetailTitle: {
-            fontSize: 22,
-            fontWeight: 'bold',
-            color: colors.text,
-            marginBottom: 15,
-        },
-        eventDetailInfoSection: {
-            marginBottom: 20,
-        },
-        eventDetailSection: {
-            marginBottom: 20,
-        },
-        eventDetailSectionTitle: {
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: colors.text,
-            marginBottom: 10,
-        },
-        eventDetailText: {
-            fontSize: 16,
-            color: colors.text,
-            opacity: 0.8,
-            lineHeight: 24,
-        },
-
-        // Tags
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginTop: 10,
-            marginBottom: 15,
-        },
-        tagItem: {
-            backgroundColor: colors.primary + '15',
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 20,
-            marginRight: 8,
-            marginBottom: 8,
-        },
-        tagText: {
-            fontSize: 12,
-            color: colors.primary,
-            fontWeight: '500',
-        },
-
-        // Action buttons
-        actionButtonsContainer: {
-            marginTop: 20,
-            marginBottom: 10,
-        },
-        primaryActionButton: {
-            ...baseTheme.buttonPrimary,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingVertical: 14,
-            borderRadius: 12,
-            marginBottom: 10,
-        },
-        detailSecondaryActionButton: {
-            backgroundColor: 'transparent',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingVertical: 14,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: colors.primary,
-        },
-        actionButtonIcon: {
-            marginRight: 8,
-        },
-        primaryActionButtonText: {
-            color: '#FFFFFF',
-            fontSize: 16,
-            fontWeight: '600',
-        },
-        secondaryActionButtonText: {
-            color: colors.primary,
-            fontSize: 16,
-            fontWeight: '600',
-        },
-
-        // Location map
-        mapContainer: {
-            height: 200,
-            borderRadius: 12,
-            overflow: 'hidden',
-            marginVertical: 15,
-            borderWidth: 1,
-            borderColor: colors.border,
-        },
-        map: {
-            flex: 1,
-        },
-
-        // Attendees section
-        attendeesContainer: {
-            marginVertical: 15,
-        },
-        attendeesList: {
-            flexDirection: 'row',
-        },
-        attendeeAvatar: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            borderWidth: 2,
-            borderColor: '#FFFFFF',
-            marginLeft: -10,
-        },
-        firstAttendeeAvatar: {
-            marginLeft: 0,
-        },
-        attendeeCount: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: colors.primary + '20',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginLeft: -10,
-        },
-        attendeeCountText: {
-            fontSize: 12,
-            fontWeight: 'bold',
-            color: colors.primary,
-        },
-        attendeeNames: {
-            marginTop: 10,
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-        },
-        attendeeName: {
-            fontSize: 14,
-            color: colors.text,
-            marginRight: 5,
-            marginBottom: 5,
-        },
-
         // Filter modal
         modalOverlay: {
             flex: 1,
@@ -635,7 +479,7 @@ export const createEventsStyles = (colors: any) => {
             backgroundColor: colors.background,
         },
 
-        // Quick period selector (simplified from period selector)
+        // Quick period selector
         quickPeriodContainer: {
             marginBottom: 16,
             backgroundColor: colors.card,
@@ -799,26 +643,19 @@ export const createEventsStyles = (colors: any) => {
             textAlign: 'center',
         },
 
-        // Month selector
-        monthSelector: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-        },
-
         // Updated modal styles for centered position
         centeredModalOverlay: {
             flex: 1,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            justifyContent: 'center', // Center vertically
-            alignItems: 'center', // Center horizontally
+            justifyContent: 'center',
+            alignItems: 'center',
         },
         centeredModalContent: {
             backgroundColor: colors.card,
             borderRadius: 20,
             padding: 20,
             width: '90%',
-            maxHeight: '80%', // Slightly smaller to ensure it stays centered
+            maxHeight: '80%',
             shadowColor: "#000",
             shadowOffset: {
                 width: 0,
