@@ -125,31 +125,3 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        height: 200,
-        marginVertical: 16,
-    },
-    slide: {
-        width: SCREEN_WIDTH,
-        height: 200,
-    },
-    image: {
-        width: '100%',
-        height: '100%',
-    },
-    paginationContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'absolute',
-        bottom: 16,
-        width: '100%',
-    },
-    paginationDot: {
-        height: 8,
-        borderRadius: 4,
-        marginHorizontal: 4,
-    },
-});
