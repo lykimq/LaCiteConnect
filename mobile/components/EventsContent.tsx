@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { calendarService } from '../services/calendarService';
 import { contentService } from '../services/contentService';
 import { useTheme } from '../contexts/ThemeContext';
@@ -10,10 +9,9 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
 
 // Import types from our modular structure
-import { CalendarEvent, EventsContent as EventsContentType, FilterOptions, ViewMode } from './events/types';
+import { CalendarEvent, EventsContent as EventsContentType, FilterOptions } from './events/types';
 
 // Import components from our modular structure
-import { CalendarView } from './events/CalendarView';
 import { ListView } from './events/ListView';
 import { QuickFilters, FilterModal } from './events/FilterComponents';
 import { EventDetailsModal } from './events/EventDetailsModal';
@@ -35,7 +33,6 @@ export const EventsContent: React.FC = () => {
     const [contentError, setContentError] = useState<string | null>(null);
 
     // View state
-    const [viewMode, setViewMode] = useState<ViewMode>('calendar');
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [selectedQuickPeriod, setSelectedQuickPeriod] = useState<'all' | 'today' | 'tomorrow' | 'week' | 'month'>('all');
 
@@ -44,7 +41,6 @@ export const EventsContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [calendarError, setCalendarError] = useState<string | null>(null);
 
     // Modal state
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -344,35 +340,6 @@ export const EventsContent: React.FC = () => {
         );
     };
 
-    // Render view content based on mode
-    const renderView = () => {
-        switch (viewMode) {
-            case 'calendar':
-                return (
-                    <CalendarView
-                        calendarUrl={calendarService.getCalendarEmbedUrl()}
-                        calendarError={calendarError}
-                        content={content}
-                    />
-                );
-            case 'list':
-                return (
-                    <ListView
-                        events={listViewFilteredEvents}
-                        content={content}
-                        selectedQuickPeriod={selectedQuickPeriod}
-                        setSelectedQuickPeriod={setSelectedQuickPeriod}
-                        onViewFullDescription={handleViewFullDescription}
-                        onAddToCalendar={handleAddToCalendar}
-                        onViewDetailUrl={handleViewDetailUrl}
-                        onOpenMap={handleOpenMap}
-                    />
-                );
-            default:
-                return null;
-        }
-    };
-
     // Render loading state
     if (contentLoading || loading) {
         return (
@@ -437,49 +404,24 @@ export const EventsContent: React.FC = () => {
                     </View>
                 </View>
 
-                {/* Quick Actions */}
-                <View style={styles.quickActionsContainer}>
-                    <View style={styles.quickActionsRow}>
-                        <TouchableOpacity
-                            style={styles.quickActionButton}
-                            onPress={() => setViewMode('calendar')}
-                        >
-                            <Ionicons
-                                name="calendar"
-                                size={24}
-                                color={themeColors.primary}
-                                style={styles.quickActionIcon}
-                            />
-                            <Text style={styles.quickActionText}>
-                                {content?.ui.viewModes?.calendar || 'Calendar View'}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.quickActionButton}
-                            onPress={() => setViewMode('list')}
-                        >
-                            <Ionicons
-                                name="document-text"
-                                size={24}
-                                color={themeColors.primary}
-                                style={styles.quickActionIcon}
-                            />
-                            <Text style={styles.quickActionText}>
-                                {content?.ui.viewModes?.list || 'List View'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
                 {/* Quick Filters */}
                 <QuickFilters
                     onShowFilterModal={() => setShowFilterModal(true)}
                     content={content}
                 />
 
-                {/* View Content */}
+                {/* List View Content */}
                 <View style={styles.viewContent}>
-                    {renderView()}
+                    <ListView
+                        events={listViewFilteredEvents}
+                        content={content}
+                        selectedQuickPeriod={selectedQuickPeriod}
+                        setSelectedQuickPeriod={setSelectedQuickPeriod}
+                        onViewFullDescription={handleViewFullDescription}
+                        onAddToCalendar={handleAddToCalendar}
+                        onViewDetailUrl={handleViewDetailUrl}
+                        onOpenMap={handleOpenMap}
+                    />
                 </View>
             </ScrollView>
 

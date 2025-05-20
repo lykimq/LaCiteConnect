@@ -47,55 +47,6 @@ export const createEventCommonStyles = (colors: any) => {
             paddingHorizontal: 20, // Horizontal padding on both sides
         },
 
-        // Month navigation bar for calendar view
-        monthNavigation: {
-            flexDirection: 'row', // Arranges children horizontally
-            alignItems: 'center', // Centers items vertically
-            justifyContent: 'space-between', // Distributes space between items
-            marginBottom: 16, // Space below the navigation
-            backgroundColor: colors.card, // Uses theme card color
-            borderRadius: 15, // Rounded corners
-            padding: 10, // Internal padding
-            ...baseTheme.shadowMedium, // Applies shadow effect from theme
-        },
-        monthYearButton: {
-            flexDirection: 'row', // Arranges children horizontally
-            alignItems: 'center', // Centers items vertically
-            backgroundColor: colors.background, // Uses theme background color
-            borderRadius: 10, // Rounded corners
-            paddingVertical: 8, // Vertical padding
-            paddingHorizontal: 12, // Horizontal padding
-        },
-        monthYearText: {
-            fontSize: 16, // Medium-large text size
-            fontWeight: '600', // Semi-bold text
-            color: colors.text, // Uses theme text color
-            marginRight: 8, // Space to the right
-        },
-
-        // View toggle between calendar and list views
-        viewToggle: {
-            flexDirection: 'row', // Arranges children horizontally
-            backgroundColor: colors.card, // Uses theme card color
-            borderRadius: 10, // Rounded corners
-            padding: 4, // Internal padding
-        },
-        toggleButton: {
-            paddingVertical: 6, // Vertical padding
-            paddingHorizontal: 12, // Horizontal padding
-            borderRadius: 8, // Rounded corners
-        },
-        activeToggleButton: {
-            backgroundColor: colors.primary, // Uses primary theme color for active state
-        },
-        toggleButtonText: {
-            fontSize: 14, // Medium text size
-            color: colors.text, // Uses theme text color
-        },
-        activeToggleButtonText: {
-            color: '#FFFFFF', // White text for active toggle button
-        },
-
         // Loading, error, and empty states
         loadingContainer: {
             flex: 1, // Takes up available space

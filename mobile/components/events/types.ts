@@ -3,9 +3,6 @@
  * This file defines all the types and interfaces used throughout the events feature
  */
 
-// View modes for displaying events - either calendar or list
-export type ViewMode = 'calendar' | 'list';
-
 // Types for sorting and filtering options
 export type SortOrder = 'asc' | 'desc'; // Ascending or descending sort order
 export type EventCategory = 'all' | 'upcoming' | 'past' | 'thisWeek' | 'thisMonth'; // Categories for filtering events
@@ -54,77 +51,48 @@ export interface CalendarEvent {
  * Contains all text strings that are displayed to the user
  */
 export interface EventsContent {
-    header: {
-        title: string;          // Main header title
-        subtitle: string;       // Subtitle for the events screen
+    header?: {
+        title: string;
+        subtitle: string;
     };
     tabs: Array<{               // Tab navigation options
         id: string;
         label: string;
     }>;
-    ui: {                       // All UI text strings
+    ui: {
         loadingText: string;
         errorText: string;
-        calendarErrorText: string;
-        noEventsText: string;
+        tryAgainText: string;
+        allDayText: string;
+        dateNotSpecifiedText: string;
+        viewDetailsText: string;
         addToCalendarText: string;
+        openMapText: string;
+        filterOptions: {
+            allEvents: string;
+            upcoming: string;
+            past: string;
+            thisWeek: string;
+            thisMonth: string;
+            searchPlaceholder: string;
+            sortBy: string;
+            sortOrder: string;
+        };
+        noEventsText: string;
         viewOnMapText: string;
         viewFullDescriptionText: string;
         viewAttachmentText: string;
         openInBrowserText: string;
-        dateNotSpecifiedText: string;
-        allDayText: string;
         viewAllEventsText: string;
         locationText: string;
         directionsText: string;
         readMoreText: string;
         viewLocationText: string;
         viewFilesText: string;
-        viewDetailsText: string;
         closeText: string;
         eventAddedText: string;
         refreshEventsText: string;
-        tryAgainText: string;
-        openCalendarText: string;
-        calendarViewText: string;
-        listViewText: string;
-        filterText: string;
-        todayText: string;
-        upcomingText: string;
-        pastText: string;
-        allText: string;
-        filterModalTitle: string;
-        searchPlaceholder: string;
-        filterSectionTitle: string;
-        filterOptions: {         // Text for filter options
-            allEvents: string;
-            upcoming: string;
-            thisWeek: string;
-            thisMonth: string;
-            pastEvents: string;
-        };
-        sortSectionTitle: string;
-        sortByLabel: string;
-        sortOptions: {           // Text for sort options
-            date: string;
-            title: string;
-            location: string;
-            oldestFirst: string;
-            newestFirst: string;
-        };
-        sortOrderLabel: string;
-        applyFiltersText: string;
-        quickViewText: string;
-        monthViewText: string;
-        quickPeriodOptions: {     // Text for quick period filter options
-            allEvents: string;
-            today: string;
-            tomorrow: string;
-            nextSevenDays: string;
-            nextThirtyDays: string;
-        };
         viewModes: {              // Text for view mode options
-            calendar: string;
             list: string;
         };
     };
