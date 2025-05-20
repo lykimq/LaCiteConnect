@@ -15,6 +15,7 @@ import { CalendarEvent, EventsContent as EventsContentType, FilterOptions } from
 import { ListView } from './events/ListView';
 import { QuickFilters, FilterModal } from './events/FilterComponents';
 import { EventDetailsModal } from './events/EventDetailsModal';
+import { EventSlideshow } from './events/EventSlideshow';
 
 // Import utilities from our modular structure
 import { formatEventDate } from './events/eventUtils';
@@ -53,6 +54,14 @@ export const EventsContent: React.FC = () => {
         sortOrder: 'asc',
         searchQuery: ''
     });
+
+    // Add slideshow images
+    const slideshowImages = [
+        require('../assets/team/fred-vanessa.png'),
+        require('../assets/team/nathanael-camille.png'),
+        require('../assets/team/louis-rebecca.png'),
+        require('../assets/team/marius-simona.png'),
+    ];
 
     // Enhanced filtering and sorting logic
     const filteredAndSortedEvents = useMemo(() => {
@@ -403,6 +412,12 @@ export const EventsContent: React.FC = () => {
                         </Text>
                     </View>
                 </View>
+
+                {/* Event Slideshow */}
+                <EventSlideshow
+                    images={slideshowImages}
+                    autoPlayInterval={5000}
+                />
 
                 {/* Quick Filters */}
                 <QuickFilters
