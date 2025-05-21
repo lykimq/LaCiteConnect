@@ -51,8 +51,9 @@ export const createEventSlideshowStyles = (themeColors: CustomThemeColors) => St
      * - Transparent background allows for theme compatibility
      */
     image: {
-        width: '100%', // Fill available width
-        height: '100%', // Fill available height
+        flex: 1, // Use flex to fill available space while respecting aspect ratio
+        width: '90%', // Slightly less than full width to prevent edge touching
+        height: '90%', // Slightly less than full height to prevent edge touching
         resizeMode: 'contain', // Maintain aspect ratio while fitting in container
         padding: 10, // Space around the image
         backgroundColor: 'transparent', // Allow background to show through
