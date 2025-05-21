@@ -16,7 +16,7 @@ import {
 } from '../services/themeService';
 
 // Define custom theme colors type combining the base theme colors with additional primary/secondary
-type CustomThemeColors = {
+export type CustomThemeColors = {
     [K in keyof typeof themes[ThemeType]['colors']]: string
 } & {
     primary: string;
@@ -24,7 +24,7 @@ type CustomThemeColors = {
 };
 
 // Define the theme context type
-interface ThemeContextType {
+export interface ThemeContextType {
     theme: ThemeType;
     colorTheme: ColorThemeType;
     category: ThemeCategoryType;
