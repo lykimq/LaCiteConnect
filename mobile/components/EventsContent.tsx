@@ -7,6 +7,7 @@ import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createEventsStyles } from '../styles/events/EventsContent.styles';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
+import { testStorageAccess } from '../config/firebase';
 
 // Import types from our modular structure
 import { CalendarEvent, EventsContent as EventsContentType, FilterOptions } from './events/types';
@@ -62,6 +63,21 @@ export const EventsContent: React.FC = () => {
         require('../assets/team/louis-rebecca.png'),
         require('../assets/team/marius-simona.png'),
     ];
+
+    // Test Firebase storage
+    useEffect(() => {
+        testStorageAccess()
+            .then(success => {
+                if (success) {
+                    console.log('Firebase storage access successful');
+                } else {
+                    console.error('Firebase storage access failed');
+                }
+            })
+            .catch(err => {
+                console.error('Firebase storage access error:', err);
+            });
+    }, []);
 
     // Enhanced filtering and sorting logic
     const filteredAndSortedEvents = useMemo(() => {

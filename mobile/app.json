@@ -83,7 +83,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "la-cite-connect"
+        "projectId": "21d26c9d-ba93-4011-8595-17fc0a9a6e33"
       }
     },
     "localization": {
@@ -93,6 +93,7 @@
         "fr"
       ],
       "fallbackLanguage": "en"
-    }
+    },
+    "owner": "lykimq_uyen"
   }
 }
