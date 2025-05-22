@@ -30,6 +30,11 @@ export const createEventSlideshowStyles = (themeColors: CustomThemeColors) => St
         marginVertical: 16, // Spacing above and below the slideshow
     },
 
+    slideshowContainer: {
+        flex: 1,
+        position: 'relative',
+    },
+
     /**
      * Individual slide container styles
      * - Full screen width ensures proper slide sizing
@@ -38,7 +43,7 @@ export const createEventSlideshowStyles = (themeColors: CustomThemeColors) => St
      */
     slide: {
         width: SCREEN_WIDTH, // Full screen width for each slide
-        height: 200, // Matches container height
+        height: '100%', // Matches container height
         justifyContent: 'center', // Center content vertically
         alignItems: 'center', // Center content horizontally
     },
@@ -68,11 +73,13 @@ export const createEventSlideshowStyles = (themeColors: CustomThemeColors) => St
      */
     paginationContainer: {
         flexDirection: 'row', // Arrange dots horizontally
-        justifyContent: 'center', // Center dots horizontally
-        alignItems: 'center', // Center dots vertically
         position: 'absolute', // Position over the slideshow
         bottom: 16, // Distance from bottom of slideshow
-        width: '100%', // Span full width
+        left: 0,
+        right: 0,
+        justifyContent: 'center', // Center dots horizontally
+        alignItems: 'center', // Center dots vertically
+        zIndex: 1,
     },
 
     /**
@@ -83,8 +90,10 @@ export const createEventSlideshowStyles = (themeColors: CustomThemeColors) => St
      * - Width is animated in the component for active state
      */
     paginationDot: {
-        height: 8, // Fixed height for dots
+        width: 8, // Width of the dot
+        height: 8, // Height of the dot
         borderRadius: 4, // Half of height for circular shape
         marginHorizontal: 4, // Space between dots
+        backgroundColor: '#FFFFFF', // Color of the dot (white)
     },
 });

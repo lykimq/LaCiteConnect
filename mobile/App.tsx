@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, ActivityIndicator, Platform } from 'react-native';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { StyleSheet, View, ActivityIndicator, Platform, StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './navigation/AppNavigator';
 import { initializeApp, preloadContent } from './services/appInitService';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -16,16 +17,19 @@ const AppContent = () => {
       flex: 1,
       backgroundColor: themeColors.background,
     },
+    statusBarBackground: {
+      height: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+      backgroundColor: themeColors.background,
+    },
   });
 
   // Apply proper status bar style based on theme
-  // Use light-content for dark mode and dark-content for light mode
-  // This ensures the status bar (battery, clock) is visible in both themes
   const statusBarStyle = theme === 'dark' ? 'light' : 'dark';
 
   return (
     <View style={styles.container}>
-      <StatusBar style={statusBarStyle} backgroundColor="transparent" translucent={true} />
+      <ExpoStatusBar style={statusBarStyle} translucent />
+      <View style={styles.statusBarBackground} />
       <AppNavigator />
     </View>
   );
@@ -39,15 +43,11 @@ export default function App() {
       try {
         // Initialize app services
         await initializeApp();
-
         // Optionally preload content
-        // This can be moved to a more appropriate place if needed
         await preloadContent();
-
         setIsInitialized(true);
       } catch (error) {
         console.error('Failed to initialize app:', error);
-        // Still set initialized to true to show the app even if there was an error
         setIsInitialized(true);
       }
     };
@@ -64,12 +64,15 @@ export default function App() {
     );
   }
 
+  // Return the app content wrapped in the theme provider and language provider
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AppContent />
-      </LanguageProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AppContent />
+        </LanguageProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

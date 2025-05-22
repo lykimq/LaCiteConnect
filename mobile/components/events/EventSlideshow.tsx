@@ -24,11 +24,11 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
  * Props interface for the EventSlideshow component
- * @property {any[]} images - Array of image sources (can be require() images)
+ * @property {string[]} images - Array of image URLs
  * @property {number} [autoPlayInterval] - Time interval in ms between slides (default: 5000ms)
  */
 interface EventSlideshowProps {
-    images: any[]; // Changed to any[] to accept require() images
+    images: string[];
     autoPlayInterval?: number;
 }
 
@@ -51,22 +51,18 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
 
     // Auto-play functionality
     useEffect(() => {
-        const interval = setInterval(() => {
-            if (currentIndex < images.length - 1) {
-                flatListRef.current?.scrollToIndex({
-                    index: currentIndex + 1,
-                    animated: true,
-                });
-            } else {
-                // Reset to first image when reaching the end
-                flatListRef.current?.scrollToIndex({
-                    index: 0,
-                    animated: true,
-                });
-            }
+        if (images.length <= 1) return;
+
+        const timer = setInterval(() => {
+            const nextIndex = (currentIndex + 1) % images.length;
+            setCurrentIndex(nextIndex);
+            flatListRef.current?.scrollToIndex({
+                index: nextIndex,
+                animated: true,
+            });
         }, autoPlayInterval);
 
-        return () => clearInterval(interval);
+        return () => clearInterval(timer);
     }, [currentIndex, images.length, autoPlayInterval]);
 
     /**
@@ -74,10 +70,10 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
      * @param {Object} param0 - Item data from FlatList
      * @returns {JSX.Element} Slide view with image
      */
-    const renderItem = ({ item }: { item: any }) => (
-        <View style={styles.slide}>
+    const renderItem = ({ item }: { item: string }) => (
+        <View style={[styles.slide, { width: SCREEN_WIDTH }]}>
             <Image
-                source={item}
+                source={{ uri: item }}
                 style={styles.image}
                 resizeMode="cover"
             />
@@ -87,7 +83,7 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
     // Handle scroll events for pagination animation
     const handleScroll = Animated.event(
         [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-        { useNativeDriver: false }
+        { useNativeDriver: true }
     );
 
     // Update current index when visible items change
@@ -102,60 +98,78 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
         itemVisiblePercentThreshold: 50,
     }).current;
 
+    if (!images.length) return null;
+
+    /**
+     * Renders pagination dots for the slideshow
+     * @returns {JSX.Element} View containing pagination dots
+     */
+    const renderPaginationDots = () => (
+        <View style={styles.paginationContainer}>
+            {images.map((_, index) => {
+                const inputRange = [
+                    (index - 1) * SCREEN_WIDTH,
+                    index * SCREEN_WIDTH,
+                    (index + 1) * SCREEN_WIDTH,
+                ];
+
+                // Scale for the pagination dots
+                const scale = scrollX.interpolate({
+                    inputRange,
+                    outputRange: [1, 1.5, 1],
+                    extrapolate: 'clamp',
+                });
+
+                // Opacity for the pagination dots
+                const opacity = scrollX.interpolate({
+                    inputRange,
+                    outputRange: [0.3, 1, 0.3],
+                    extrapolate: 'clamp',
+                });
+
+                // Render the pagination dot
+                return (
+                    <Animated.View
+                        key={index}
+                        style={[
+                            styles.paginationDot,
+                            {
+                                opacity,
+                                transform: [{ scale }],
+                                backgroundColor:
+                                    currentIndex === index
+                                        ? themeColors.primary
+                                        : themeColors.secondary,
+                            },
+                        ]}
+                    />
+                );
+            })}
+        </View>
+    );
+
     return (
         <View style={styles.container}>
-            {/* Main slideshow FlatList */}
-            <Animated.FlatList
-                ref={flatListRef}
-                data={images}
-                renderItem={renderItem}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={handleScroll}
-                onViewableItemsChanged={handleViewableItemsChanged}
-                viewabilityConfig={viewabilityConfig}
-                keyExtractor={(_, index) => index.toString()}
-            />
-
-            {/* Pagination dots container */}
-            <View style={styles.paginationContainer}>
-                {images.map((_, index) => {
-                    // Calculate animation ranges for pagination dots
-                    const inputRange = [
-                        (index - 1) * SCREEN_WIDTH,
-                        index * SCREEN_WIDTH,
-                        (index + 1) * SCREEN_WIDTH,
-                    ];
-
-                    // Animate dot width based on scroll position
-                    const dotWidth = scrollX.interpolate({
-                        inputRange,
-                        outputRange: [8, 16, 8],
-                        extrapolate: 'clamp',
-                    });
-
-                    // Animate dot opacity based on scroll position
-                    const opacity = scrollX.interpolate({
-                        inputRange,
-                        outputRange: [0.3, 1, 0.3],
-                        extrapolate: 'clamp',
-                    });
-
-                    return (
-                        <Animated.View
-                            key={index}
-                            style={[
-                                styles.paginationDot,
-                                {
-                                    width: dotWidth,
-                                    opacity,
-                                    backgroundColor: themeColors.primary,
-                                },
-                            ]}
-                        />
-                    );
-                })}
+            <View style={styles.slideshowContainer}>
+                {/* Slideshow container */}
+                <Animated.FlatList
+                    ref={flatListRef}
+                    data={images}
+                    renderItem={renderItem}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    onScroll={handleScroll}
+                    onViewableItemsChanged={handleViewableItemsChanged}
+                    viewabilityConfig={viewabilityConfig}
+                    keyExtractor={(_, index) => index.toString()}
+                    getItemLayout={(_, index) => ({
+                        length: SCREEN_WIDTH,
+                        offset: SCREEN_WIDTH * index,
+                        index,
+                    })}
+                />
+                {renderPaginationDots()}
             </View>
         </View>
     );

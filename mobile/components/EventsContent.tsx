@@ -2,12 +2,12 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { calendarService } from '../services/calendarService';
 import { contentService } from '../services/contentService';
+import { storageService } from '../services/storageService';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { createEventsStyles } from '../styles/events/EventsContent.styles';
 import { useLanguage } from '../contexts/LanguageContext';
 import { openUrlWithCorrectDomain } from '../utils/urlUtils';
-import { testStorageAccess } from '../config/firebase';
 
 // Import types from our modular structure
 import { CalendarEvent, EventsContent as EventsContentType, FilterOptions } from './events/types';
@@ -34,6 +34,10 @@ export const EventsContent: React.FC = () => {
     const [contentLoading, setContentLoading] = useState<boolean>(true);
     const [contentError, setContentError] = useState<string | null>(null);
 
+    // Slideshow state
+    const [slideshowImages, setSlideshowImages] = useState<string[]>([]);
+    const [slideshowError, setSlideshowError] = useState<string | null>(null);
+
     // View state
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [selectedQuickPeriod, setSelectedQuickPeriod] = useState<'all' | 'today' | 'tomorrow' | 'week' | 'month'>('all');
@@ -55,29 +59,6 @@ export const EventsContent: React.FC = () => {
         sortOrder: 'asc',
         searchQuery: ''
     });
-
-    // Add slideshow images
-    const slideshowImages = [
-        require('../assets/team/fred-vanessa.png'),
-        require('../assets/team/nathanael-camille.png'),
-        require('../assets/team/louis-rebecca.png'),
-        require('../assets/team/marius-simona.png'),
-    ];
-
-    // Test Firebase storage
-    useEffect(() => {
-        testStorageAccess()
-            .then(success => {
-                if (success) {
-                    console.log('Firebase storage access successful');
-                } else {
-                    console.error('Firebase storage access failed');
-                }
-            })
-            .catch(err => {
-                console.error('Firebase storage access error:', err);
-            });
-    }, []);
 
     // Enhanced filtering and sorting logic
     const filteredAndSortedEvents = useMemo(() => {
@@ -365,6 +346,23 @@ export const EventsContent: React.FC = () => {
         );
     };
 
+    // Load slideshow images from Firebase Storage
+    const loadSlideshowImages = async () => {
+        try {
+            const images = await storageService.getEventsSlideshowImages();
+            setSlideshowImages(images);
+            setSlideshowError(null);
+        } catch (error) {
+            console.error('[EventsContent] Error loading slideshow images:', error);
+            setSlideshowError('Failed to load slideshow images');
+        }
+    };
+
+    // Effect to load slideshow images
+    useEffect(() => {
+        loadSlideshowImages();
+    }, []);
+
     // Render loading state
     if (contentLoading || loading) {
         return (
@@ -378,17 +376,19 @@ export const EventsContent: React.FC = () => {
     }
 
     // Render error state
-    if (contentError || error) {
+    if (contentError || error || slideshowError) {
         return (
             <View style={[styles.container, styles.loadingContainer]}>
                 <Text style={styles.errorText}>
-                    {contentError || error || 'An error occurred'}
+                    {contentError || error || slideshowError || 'An error occurred'}
                 </Text>
                 <TouchableOpacity
                     style={styles.button}
                     onPress={() => {
                         if (contentError) {
                             loadContent();
+                        } else if (slideshowError) {
+                            loadSlideshowImages();
                         } else {
                             fetchEvents();
                         }
