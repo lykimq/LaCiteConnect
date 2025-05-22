@@ -210,6 +210,7 @@ export const EventsContent: React.FC = () => {
             });
     }, []); // Empty dependency array for initial load only
 
+
     const loadContent = async () => {
         try {
             console.log('[EventsContent] Loading content...');
