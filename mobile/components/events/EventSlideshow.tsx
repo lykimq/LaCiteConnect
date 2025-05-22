@@ -163,6 +163,7 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
         </View>
     );
 
+    // Render the slideshow component
     return (
         <View style={styles.container}>
             <View style={styles.slideshowContainer}>
