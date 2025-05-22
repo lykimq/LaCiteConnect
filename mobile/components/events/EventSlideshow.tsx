@@ -18,6 +18,7 @@ import {
 import { useTheme } from '../../contexts/ThemeContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { createEventSlideshowStyles } from '../../styles/events/EventSlideshow.styles';
+import { PhotoDetailsModal } from './PhotoDetailsModal';
 
 // Get screen width for pagination calculations
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -49,6 +50,10 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
     const scrollX = useRef(new Animated.Value(0)).current;
     const flatListRef = useRef<FlatList>(null);
 
+    // Photo modal state
+    const [showPhotoModal, setShowPhotoModal] = useState(false);
+    const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+
     // Auto-play functionality
     useEffect(() => {
         if (images.length <= 1) return;
@@ -65,19 +70,29 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
         return () => clearInterval(timer);
     }, [currentIndex, images.length, autoPlayInterval]);
 
+    // Handle photo tap
+    const handlePhotoTap = (index: number) => {
+        setSelectedPhotoIndex(index);
+        setShowPhotoModal(true);
+    };
+
     /**
      * Renders individual slide items
      * @param {Object} param0 - Item data from FlatList
      * @returns {JSX.Element} Slide view with image
      */
-    const renderItem = ({ item }: { item: string }) => (
-        <View style={[styles.slide, { width: SCREEN_WIDTH }]}>
+    const renderItem = ({ item, index }: { item: string; index: number }) => (
+        <TouchableOpacity
+            style={[styles.slide, { width: SCREEN_WIDTH }]}
+            onPress={() => handlePhotoTap(index)}
+            activeOpacity={0.9}
+        >
             <Image
                 source={{ uri: item }}
                 style={styles.image}
                 resizeMode="cover"
             />
-        </View>
+        </TouchableOpacity>
     );
 
     // Handle scroll events for pagination animation
@@ -171,6 +186,14 @@ export const EventSlideshow: React.FC<EventSlideshowProps> = ({
                 />
                 {renderPaginationDots()}
             </View>
+
+            {/* Photo Details Modal */}
+            <PhotoDetailsModal
+                visible={showPhotoModal}
+                onClose={() => setShowPhotoModal(false)}
+                images={images}
+                initialIndex={selectedPhotoIndex}
+            />
         </View>
     );
 };
