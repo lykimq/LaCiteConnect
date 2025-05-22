@@ -235,9 +235,51 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                     break;
 
                 case 'whatsapp':
-                    // Share via WhatsApp
-                    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(imageUrl)}`;
-                    await Linking.openURL(whatsappUrl);
+                    try {
+                        const cacheDir = `${FileSystem.cacheDirectory}events-slideshow/`;
+
+                        // Ensure directory exists
+                        const dirInfo = await FileSystem.getInfoAsync(cacheDir);
+                        if (!dirInfo.exists) {
+                            await FileSystem.makeDirectoryAsync(cacheDir, { intermediates: true });
+                        }
+
+                        // Helper to get filename
+                        const getFilenameFromUrl = (url: string) => {
+                            const urlWithoutParams = url.split('?')[0];
+                            return urlWithoutParams.substring(urlWithoutParams.lastIndexOf('/') + 1);
+                        };
+
+                        const filename = getFilenameFromUrl(imageUrl);
+                        const localUri = cacheDir + filename;
+
+                        // Delete existing file if present
+                        const fileInfo = await FileSystem.getInfoAsync(localUri);
+                        if (fileInfo.exists) {
+                            await FileSystem.deleteAsync(localUri);
+                        }
+
+                        // Download the file
+                        await FileSystem.downloadAsync(imageUrl, localUri);
+
+                        // Use expo-sharing (works well for WhatsApp on both platforms)
+                        await Sharing.shareAsync(localUri, {
+                            mimeType: 'image/jpeg',
+                            dialogTitle: 'Share via WhatsApp',
+                        });
+
+                        // Clean up
+                        try {
+                            await FileSystem.deleteAsync(localUri);
+                        } catch (cleanupError) {
+                            console.warn('Failed to cleanup temporary file:', cleanupError);
+                        }
+                    } catch (error) {
+                        console.error('WhatsApp sharing error:', error);
+                        // Fallback to text-only sharing via WhatsApp
+                        const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(imageUrl)}`;
+                        await Linking.openURL(whatsappUrl);
+                    }
                     break;
 
                 case 'email':
