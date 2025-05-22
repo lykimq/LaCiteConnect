@@ -5,12 +5,14 @@ import { createThemedStyles } from '../Theme';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 /**
- * Creates themed styles for the PhotoDetailsModal component
- * These styles control the appearance of the modal that displays full-size photos
- * when a user taps on a photo in the slideshow
- *
- * @param colors - Theme colors object containing the app's color scheme
- * @returns StyleSheet object with all the styles for the PhotoDetailsModal
+ * PhotoDetailsModal Styles
+ * Creates a themed stylesheet for the photo details modal component.
+ * Handles styling for:
+ * - Modal overlay and background
+ * - Image display and controls
+ * - Navigation buttons
+ * - Sharing buttons
+ * - Platform-specific adjustments
  */
 export const createPhotoDetailsModalStyles = (colors: any) => {
     // Get base themed styles for consistent theming across the app
@@ -30,9 +32,9 @@ export const createPhotoDetailsModalStyles = (colors: any) => {
         },
 
         /**
-         * Close button container positions and styles the close button
-         * It's positioned absolutely in the top-right corner with a semi-transparent background
-         * The button has platform-specific positioning for iOS and Android
+         * Close Button Container
+         * Positions the close button in the top-right corner
+         * Includes platform-specific positioning for iOS and Android
          */
         closeButtonContainer: {
             position: 'absolute', // Position over other content
@@ -132,6 +134,46 @@ export const createPhotoDetailsModalStyles = (colors: any) => {
         activePaginationDot: {
             backgroundColor: '#FFFFFF', // White for better visibility
             transform: [{ scale: 1.2 }], // Slightly larger than inactive dots
+        },
+
+        /**
+         * Action Buttons Container
+         * Wrapper for the sharing buttons at the bottom
+         * Semi-transparent background with platform-specific positioning
+         */
+        actionButtonsContainer: {
+            position: 'absolute', // Position over other content
+            bottom: Platform.OS === 'ios' ? 100 : 80, // Platform-specific positioning
+            left: 0, // Start from left edge
+            right: 0, // End at right edge
+            paddingVertical: 15, // Vertical padding
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+            alignItems: 'center', // Center the ScrollView horizontally
+        },
+
+        /**
+         * Action Buttons ScrollView Content
+         * Horizontal layout for sharing buttons
+         * Centered content with proper spacing
+         */
+        actionButtonsScroll: {
+            paddingHorizontal: 20, // Horizontal padding
+            flexDirection: 'row', // Horizontal layout
+            alignItems: 'center', // Center content
+        },
+
+        /**
+         * Individual Action Button
+         * Circular buttons for sharing options
+         * Consistent size and spacing
+         */
+        actionButton: {
+            width: 44, // Consistent size
+            height: 44, // Consistent size
+            borderRadius: 22, // Circular shape
+            justifyContent: 'center', // Center content
+            alignItems: 'center', // Center content
+            marginHorizontal: 6, // Reduced margin for tighter grouping
         },
     });
 };
