@@ -48,25 +48,41 @@ export const sharePhoto = async (platform: SharingPlatform, imageUrl: string): P
 /**
  * Downloads and saves a photo to the device's photo library
  * @param imageUrl - The URL of the image to download
+ * @returns Promise<string | undefined> - Returns the local URI if successful, undefined otherwise
  */
-export const downloadPhoto = async (imageUrl: string): Promise<void> => {
+export const downloadPhoto = async (imageUrl: string): Promise<string | undefined> => {
     try {
         // Request permissions for saving to photo library
         const { status } = await MediaLibrary.requestPermissionsAsync();
         if (status !== 'granted') {
             Alert.alert('Permission Required', 'Please grant permission to save photos');
-            return;
+            return undefined;
         }
 
-        // Download and save the image
-        const filename = imageUrl.split('/').pop();
+        // Use the existing getFilenameFromUrl utility
+        const filename = getFilenameFromUrl(imageUrl) || 'downloaded-image.jpg';
         const localUri = `${FileSystem.cacheDirectory}${filename}`;
+
+        // Download the image
         const { uri } = await FileSystem.downloadAsync(imageUrl, localUri);
+
+        // Save to media library
         await MediaLibrary.saveToLibraryAsync(uri);
 
         Alert.alert('Success', 'Image saved to your photos');
+
+        // Clean up the cached file
+        try {
+            await FileSystem.deleteAsync(uri);
+        } catch (cleanupError) {
+            console.warn('Failed to cleanup temporary file:', cleanupError);
+        }
+
+        return uri;
     } catch (error) {
+        console.error('Download Error:', error instanceof Error ? error.message : String(error));
         Alert.alert('Error', 'Failed to download the image');
+        return undefined;
     }
 };
 
