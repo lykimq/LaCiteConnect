@@ -5,26 +5,18 @@ import {
     Image,
     TouchableOpacity,
     Animated,
-    PanResponder,
     GestureResponderEvent,
     Dimensions,
-    Share,
-    Platform,
-    Alert,
     ScrollView,
-    Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { createPhotoDetailsModalStyles } from '../../styles/events/PhotoDetailsModal.styles';
-import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
-import * as Sharing from 'expo-sharing';
 import { sharePhoto, downloadPhoto } from '../../utils/photoSharing';
+import { createImagePanResponder } from '../../utils/panGestureHandler';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SWIPE_THRESHOLD = 50; // Minimum distance to trigger swipe
 
 /**
  * PhotoDetailsModal Component
@@ -63,116 +55,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
     const translateX = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(0)).current;
 
-    // Gesture tracking state
-    const [isSwipingHorizontally, setIsSwipingHorizontally] = useState(false);
-    const [startX, setStartX] = useState(0);
-    const [currentScale, setCurrentScale] = useState(1);
-
-    scale.addListener(({ value }) => setCurrentScale(value));
-
-    // Pan responder for handling zoom, pan, and swipe gestures
-    const panResponder = PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: (_, gestureState) => {
-            // Allow pan responder to capture the gesture if:
-            // 1. We're already handling a gesture, or
-            // 2. There's significant movement
-            return Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2;
-        },
-        onPanResponderGrant: (_, gestureState) => {
-            setStartX(gestureState.x0);
-            setIsSwipingHorizontally(false);
-        },
-        onPanResponderMove: (_, gestureState) => {
-            // Determine if this is a horizontal swipe
-            if (!isSwipingHorizontally && Math.abs(gestureState.dx) > 10) {
-                const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-                setIsSwipingHorizontally(isHorizontal);
-            }
-
-            // Handle pinch zoom
-            if (gestureState.numberActiveTouches === 2) {
-                // Calculate the distance between the two touch points
-                const distance = Math.sqrt(
-                    Math.pow(gestureState.dx, 2) + Math.pow(gestureState.dy, 2)
-                );
-
-                // Calculate the new scale based on the distance between the touch points
-                const newScale = Math.max(1, Math.min(3, 1 + distance / 200));
-                scale.setValue(newScale);
-
-                // Update the scale value
-                setCurrentScale(newScale);
-            } else if (currentScale > 1) {
-                // Handle pan when zoomed in
-                translateX.setValue(gestureState.dx);
-                translateY.setValue(gestureState.dy);
-            } else if (isSwipingHorizontally) {
-                // Handle horizontal swipe
-                translateX.setValue(gestureState.dx);
-            }
-        },
-        // When the gesture is released, reset the scale to 1
-        onPanResponderRelease: (_, gestureState) => {
-            if (currentScale > 1) {
-                // Reset pan position when zoomed
-                Animated.parallel([
-                    Animated.spring(scale, {
-                        toValue: 1,
-                        useNativeDriver: true,
-                    }),
-                    // Reset the pan position
-                    Animated.spring(translateX, {
-                        toValue: 0,
-                        useNativeDriver: true,
-                    }),
-                    // Reset the pan position
-                    Animated.spring(translateY, {
-                        toValue: 0,
-                        useNativeDriver: true,
-                    }),
-                ]).start();
-            } else if (isSwipingHorizontally) {
-                // Handle swipe navigation
-                const swipeDistance = gestureState.dx;
-
-                if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
-                    if (swipeDistance > 0 && currentIndex > 0) {
-                        // Swipe right - go to previous
-                        handlePrevious();
-                        // Immediately reset position without animation
-                        translateX.setValue(0);
-                    } else if (swipeDistance < 0 && currentIndex < images.length - 1) {
-                        // Swipe left - go to next
-                        handleNext();
-                        // Immediately reset position without animation
-                        translateX.setValue(0);
-                    } else {
-                        // If we can't navigate (at the end), reset position immediately
-                        translateX.setValue(0);
-                    }
-                } else {
-                    // If swipe didn't meet threshold, reset position immediately
-                    translateX.setValue(0);
-                }
-            }
-        },
-        // Reset position immediately if gesture is terminated
-        onPanResponderTerminate: () => {
-            // Reset position immediately if gesture is terminated
-            translateX.setValue(0);
-        },
-    });
-
-    // Clean up the scale listener when component unmounts
-    useEffect(() => {
-        const scaleListener = scale.addListener(() => { });
-        return () => {
-            scale.removeListener(scaleListener);
-        };
-    }, []);
-
-    // Handle previous image
+    // Handle navigation
     const handlePrevious = () => {
         if (currentIndex > 0) {
             setCurrentIndex(currentIndex - 1);
@@ -184,6 +67,25 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
             setCurrentIndex(currentIndex + 1);
         }
     };
+
+    // Create pan responder
+    const panResponder = createImagePanResponder({
+        scale,
+        translateX,
+        translateY,
+        onSwipeLeft: currentIndex < images.length - 1 ? handleNext : undefined,
+        onSwipeRight: currentIndex > 0 ? handlePrevious : undefined,
+        canSwipeLeft: currentIndex < images.length - 1,
+        canSwipeRight: currentIndex > 0,
+    });
+
+    // Clean up the scale listener when component unmounts
+    useEffect(() => {
+        const scaleListener = scale.addListener(() => { });
+        return () => {
+            scale.removeListener(scaleListener);
+        };
+    }, []);
 
     // Handle background press
     const handleBackgroundPress = (event: GestureResponderEvent) => {
@@ -216,7 +118,6 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
     // Render the modal
     if (!visible || images.length === 0) return null;
 
-    // Render the modal
     return (
         <Modal
             visible={visible}
@@ -247,7 +148,6 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                     </TouchableOpacity>
                 )}
 
-                {/* Navigation buttons */}
                 {currentIndex < images.length - 1 && (
                     <TouchableOpacity
                         style={[styles.navigationButton, styles.rightButton]}
@@ -298,7 +198,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.actionButtonsScroll}
                         contentInset={{ left: 20, right: 20 }}
-                        contentOffset={{ x: -20, y: 0 }} // Compensate for left inset
+                        contentOffset={{ x: -20, y: 0 }}
                     >
                         {/* Facebook Share Button */}
                         <TouchableOpacity
