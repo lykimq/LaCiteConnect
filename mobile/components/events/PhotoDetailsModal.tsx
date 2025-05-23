@@ -21,6 +21,7 @@ import { createPhotoDetailsModalStyles } from '../../styles/events/PhotoDetailsM
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
+import { sharePhoto, downloadPhoto } from '../../utils/photoSharing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 50; // Minimum distance to trigger swipe
@@ -193,146 +194,20 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
     };
 
     /**
-     * Platform-specific sharing implementation
-     * Handles sharing to different social media platforms using deep linking
-     * Falls back to web sharing if apps are not installed
-     * @param platform - The target platform to share to
+     * Handle sharing to different platforms
      */
-    const handleShare = async (platform: string) => {
+    const handleShare = async (platform: 'facebook' | 'instagram' | 'pinterest' | 'whatsapp' | 'email' | 'twitter') => {
         const imageUrl = images[currentIndex];
-
-        try {
-            switch (platform) {
-                case 'facebook':
-                    // Open Facebook share dialog
-                    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(imageUrl)}`;
-                    await Linking.openURL(fbUrl);
-                    break;
-
-                case 'instagram':
-                    // Instagram sharing requires saving to camera roll first
-                    const { status } = await MediaLibrary.requestPermissionsAsync();
-                    if (status === 'granted') {
-                        const filename = imageUrl.split('/').pop();
-                        const localUri = `${FileSystem.cacheDirectory}${filename}`;
-                        await FileSystem.downloadAsync(imageUrl, localUri);
-                        await MediaLibrary.saveToLibraryAsync(localUri);
-                        // Open Instagram with the saved image
-                        await Linking.openURL('instagram://library?AssetPath=' + localUri);
-                    } else {
-                        Alert.alert('Permission Required', 'Please grant permission to access photos');
-                    }
-                    break;
-
-                case 'pinterest':
-                    // Try native Pinterest app first, fall back to web
-                    const pinUrl = `pinterest://pin/create/link/?url=${encodeURIComponent(imageUrl)}`;
-                    try {
-                        await Linking.openURL(pinUrl);
-                    } catch {
-                        await Linking.openURL(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(imageUrl)}`);
-                    }
-                    break;
-
-                case 'whatsapp':
-                    try {
-                        const cacheDir = `${FileSystem.cacheDirectory}events-slideshow/`;
-
-                        // Ensure directory exists
-                        const dirInfo = await FileSystem.getInfoAsync(cacheDir);
-                        if (!dirInfo.exists) {
-                            await FileSystem.makeDirectoryAsync(cacheDir, { intermediates: true });
-                        }
-
-                        // Helper to get filename
-                        const getFilenameFromUrl = (url: string) => {
-                            const urlWithoutParams = url.split('?')[0];
-                            return urlWithoutParams.substring(urlWithoutParams.lastIndexOf('/') + 1);
-                        };
-
-                        const filename = getFilenameFromUrl(imageUrl);
-                        const localUri = cacheDir + filename;
-
-                        // Delete existing file if present
-                        const fileInfo = await FileSystem.getInfoAsync(localUri);
-                        if (fileInfo.exists) {
-                            await FileSystem.deleteAsync(localUri);
-                        }
-
-                        // Download the file
-                        await FileSystem.downloadAsync(imageUrl, localUri);
-
-                        // Use expo-sharing (works well for WhatsApp on both platforms)
-                        await Sharing.shareAsync(localUri, {
-                            mimeType: 'image/jpeg',
-                            dialogTitle: 'Share via WhatsApp',
-                        });
-
-                        // Clean up
-                        try {
-                            await FileSystem.deleteAsync(localUri);
-                        } catch (cleanupError) {
-                            console.warn('Failed to cleanup temporary file:', cleanupError);
-                        }
-                    } catch (error) {
-                        console.error('WhatsApp sharing error:', error);
-                        // Fallback to text-only sharing via WhatsApp
-                        const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(imageUrl)}`;
-                        await Linking.openURL(whatsappUrl);
-                    }
-                    break;
-
-                case 'email':
-                    // Open email client with pre-filled content
-                    const emailUrl = `mailto:?subject=Check out this image&body=${encodeURIComponent(imageUrl)}`;
-                    await Linking.openURL(emailUrl);
-                    break;
-
-                case 'twitter':
-                    // Open Twitter share intent
-                    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(imageUrl)}`;
-                    await Linking.openURL(twitterUrl);
-                    break;
-
-                default:
-                    // Fallback to system share sheet
-                    await Share.share({
-                        url: imageUrl,
-                        title: 'Share Image',
-                        message: 'Check out this image!',
-                    });
-            }
-        } catch (error) {
-            Alert.alert('Error', `Failed to share to ${platform}`);
-        }
+        await sharePhoto(platform, imageUrl);
     };
 
     /**
-     * Image download handler
-     * Saves the current image to the device's photo library
-     * Handles permissions and shows appropriate feedback
+     * Handle image download
      */
     const handleDownload = async () => {
         try {
             setDownloadingImage(true);
-
-            // Request permissions for saving to photo library
-            const { status } = await MediaLibrary.requestPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permission Required', 'Please grant permission to save photos');
-                return;
-            }
-
-            // Download and save the image
-            const imageUrl = images[currentIndex];
-            const filename = imageUrl.split('/').pop();
-            const localUri = `${FileSystem.cacheDirectory}${filename}`;
-            const { uri } = await FileSystem.downloadAsync(imageUrl, localUri);
-            await MediaLibrary.saveToLibraryAsync(uri);
-
-            Alert.alert('Success', 'Image saved to your photos');
-        } catch (error) {
-            Alert.alert('Error', 'Failed to download the image');
+            await downloadPhoto(images[currentIndex]);
         } finally {
             setDownloadingImage(false);
         }
