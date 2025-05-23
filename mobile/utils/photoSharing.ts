@@ -157,7 +157,22 @@ const handleDefaultShare = async (imageUrl: string): Promise<void> => {
     });
 };
 
-// Helper function to get filename from URL
+/**
+ * URL Processing Mathematics:
+ * 1. String splitting: url.split('?')[0]
+ *    - Splits URL at '?' character
+ *    - Takes first part [0] to remove query parameters
+ *
+ * 2. Substring extraction: str.substring(lastIndexOf('/') + 1)
+ *    - lastIndexOf('/') finds position p of last '/'
+ *    - p + 1 gives start position after '/'
+ *    - substring(p + 1) extracts everything after last '/'
+ *
+ * Example:
+ * Input:  "https://example.com/photos/image.jpg?size=large"
+ * Step 1: "https://example.com/photos/image.jpg"
+ * Step 2: "image.jpg"
+ */
 const getFilenameFromUrl = (url: string): string => {
     const urlWithoutParams = url.split('?')[0];
     return urlWithoutParams.substring(urlWithoutParams.lastIndexOf('/') + 1);
