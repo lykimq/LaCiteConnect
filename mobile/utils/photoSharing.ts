@@ -1,57 +1,49 @@
-import { Alert, Linking, Share } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
-import * as Sharing from 'expo-sharing';
+import Share, { Social } from 'react-native-share';
+import { Alert } from 'react-native';
 
-type SharingPlatform = 'facebook' | 'instagram' | 'pinterest' | 'whatsapp' | 'email' | 'twitter';
+export { Social };  // Re-export Social type
 
 /**
- * Handles sharing photos to different social media platforms
- * @param platform - The target platform to share to
- * @param imageUrl - The URL of the image to share
+ * Extracts a clean filename from a URL and ensures it's not too long
  */
-export const sharePhoto = async (platform: SharingPlatform, imageUrl: string): Promise<void> => {
+const getFilenameFromUrl = (url: string): string => {
     try {
-        switch (platform) {
-            case 'facebook':
-                await handleFacebookShare(imageUrl);
-                break;
+        // Extract filename from URL
+        const rawFilename = url.split('/').pop() || 'image.jpg';
 
-            case 'instagram':
-                await handleInstagramShare(imageUrl);
-                break;
+        // Remove query parameters and tokens
+        const filenameWithoutQuery = rawFilename.split('?')[0];
 
-            case 'pinterest':
-                await handlePinterestShare(imageUrl);
-                break;
+        // Clean up the filename - remove special characters and limit length
+        const cleanFilename = filenameWithoutQuery
+            .replace(/[^a-zA-Z0-9._-]/g, '')  // Remove special characters
+            .replace(/_+/g, '_')               // Replace multiple underscores with single
+            .substring(0, 50);                 // Limit length to 50 characters
 
-            case 'whatsapp':
-                await handleWhatsAppShare(imageUrl);
-                break;
-
-            case 'email':
-                await handleEmailShare(imageUrl);
-                break;
-
-            case 'twitter':
-                await handleTwitterShare(imageUrl);
-                break;
-
-            default:
-                await handleDefaultShare(imageUrl);
+        // Ensure it has a proper extension
+        if (!cleanFilename.match(/\.(jpg|jpeg|png|gif)$/i)) {
+            return `${cleanFilename}.jpg`;
         }
+
+        console.log('Generated filename:', cleanFilename);
+        return cleanFilename;
     } catch (error) {
-        Alert.alert('Error', `Failed to share to ${platform}`);
+        console.warn('Error generating filename:', error);
+        return 'image.jpg';
     }
 };
 
 /**
  * Downloads and saves a photo to the device's photo library
- * @param imageUrl - The URL of the image to download
- * @returns Promise<string | undefined> - Returns the local URI if successful, undefined otherwise
  */
 export const downloadPhoto = async (imageUrl: string): Promise<string | undefined> => {
+    let tempUri: string | undefined;
+
     try {
+        console.log('Starting photo download:', imageUrl);
+
         // Request permissions for saving to photo library
         const { status } = await MediaLibrary.requestPermissionsAsync();
         if (status !== 'granted') {
@@ -59,137 +51,228 @@ export const downloadPhoto = async (imageUrl: string): Promise<string | undefine
             return undefined;
         }
 
-        // Use the existing getFilenameFromUrl utility
-        const filename = getFilenameFromUrl(imageUrl) || 'downloaded-image.jpg';
-        const localUri = `${FileSystem.cacheDirectory}${filename}`;
+        // Generate a safe filename
+        const filename = getFilenameFromUrl(imageUrl);
+        tempUri = `${FileSystem.cacheDirectory}${filename}`;
+        console.log('Downloading to:', tempUri);
 
-        // Download the image
-        const { uri } = await FileSystem.downloadAsync(imageUrl, localUri);
-
-        // Save to media library
-        await MediaLibrary.saveToLibraryAsync(uri);
-
-        Alert.alert('Success', 'Image saved to your photos');
-
-        // Clean up the cached file
-        try {
-            await FileSystem.deleteAsync(uri);
-        } catch (cleanupError) {
-            console.warn('Failed to cleanup temporary file:', cleanupError);
+        // Ensure the cache directory exists
+        const dirInfo = await FileSystem.getInfoAsync(FileSystem.cacheDirectory!);
+        if (!dirInfo.exists) {
+            await FileSystem.makeDirectoryAsync(FileSystem.cacheDirectory!, { intermediates: true });
         }
 
-        return uri;
+        // Download the image
+        const downloadResult = await FileSystem.downloadAsync(imageUrl, tempUri);
+        console.log('Download complete');
+
+        // Verify the downloaded file
+        const fileInfo = await FileSystem.getInfoAsync(downloadResult.uri);
+        if (!fileInfo.exists || (fileInfo as any).size === 0) {
+            throw new Error('Downloaded file is invalid or empty');
+        }
+
+        console.log('Saving to library...');
+        // Save to media library with error handling
+        try {
+            const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
+            console.log('Successfully created asset:', asset);
+
+            // Create an album and add the asset to it (optional)
+            try {
+                const album = await MediaLibrary.getAlbumAsync('LaCiteConnect');
+                if (album === null) {
+                    await MediaLibrary.createAlbumAsync('LaCiteConnect', asset, false);
+                } else {
+                    await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+                }
+            } catch (albumError) {
+                console.warn('Failed to add to album:', albumError);
+                // Don't throw here as the image is still saved
+            }
+
+            Alert.alert('Success', 'Image saved to your photos');
+            return downloadResult.uri;
+        } catch (saveError) {
+            console.error('Failed to save to library:', saveError);
+            throw new Error('Failed to save image to library');
+        }
+
     } catch (error) {
         console.error('Download Error:', error instanceof Error ? error.message : String(error));
+        console.error('Full error:', error);
         Alert.alert('Error', 'Failed to download the image');
+        return undefined;
+    } finally {
+        // Clean up temp file
+        if (tempUri) {
+            try {
+                await FileSystem.deleteAsync(tempUri, { idempotent: true });
+                console.log('Cleaned up temporary file');
+            } catch (cleanupError) {
+                console.warn('Failed to cleanup temporary file:', cleanupError);
+            }
+        }
+    }
+};
+
+/**
+ * Downloads and converts an image to Base64
+ */
+export const downloadImageAsBase64 = async (imageUrl: string): Promise<string | undefined> => {
+    try {
+        console.log('Downloading image as Base64:', imageUrl);
+
+        // Download to temporary file first
+        const filename = getFilenameFromUrl(imageUrl);
+        const tempUri = `${FileSystem.cacheDirectory}${filename}`;
+
+        console.log('Downloading to temp location:', tempUri);
+        const { uri } = await FileSystem.downloadAsync(imageUrl, tempUri);
+
+        // Convert to Base64
+        console.log('Converting to Base64...');
+        const base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
+        });
+
+        // Clean up temp file
+        try {
+            await FileSystem.deleteAsync(uri, { idempotent: true });
+        } catch (cleanupError) {
+            console.warn('Failed to cleanup temp file:', cleanupError);
+        }
+
+        console.log('Successfully converted to Base64');
+        return base64;
+    } catch (error) {
+        console.error('Base64 conversion error:', error instanceof Error ? error.message : error);
+        console.error('Full error:', error);
+        Alert.alert('Error', 'Failed to process the image');
         return undefined;
     }
 };
 
-// Private helper functions for each platform
-const handleFacebookShare = async (imageUrl: string): Promise<void> => {
-    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(imageUrl)}`;
-    await Linking.openURL(fbUrl);
-};
-
-const handleInstagramShare = async (imageUrl: string): Promise<void> => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status === 'granted') {
-        const filename = imageUrl.split('/').pop();
-        const localUri = `${FileSystem.cacheDirectory}${filename}`;
-        await FileSystem.downloadAsync(imageUrl, localUri);
-        await MediaLibrary.saveToLibraryAsync(localUri);
-        await Linking.openURL('instagram://library?AssetPath=' + localUri);
-    } else {
-        Alert.alert('Permission Required', 'Please grant permission to access photos');
-    }
-};
-
-const handlePinterestShare = async (imageUrl: string): Promise<void> => {
-    const pinUrl = `pinterest://pin/create/link/?url=${encodeURIComponent(imageUrl)}`;
+/**
+ * Saves a Base64 image to the device's photo library
+ */
+export const saveBase64ToLibrary = async (base64Image: string): Promise<boolean> => {
     try {
-        await Linking.openURL(pinUrl);
-    } catch {
-        await Linking.openURL(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(imageUrl)}`);
-    }
-};
+        console.log('Requesting media library permissions...');
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        console.log('Permission status:', status);
 
-const handleWhatsAppShare = async (imageUrl: string): Promise<void> => {
-    try {
-        const cacheDir = `${FileSystem.cacheDirectory}events-slideshow/`;
-
-        // Ensure directory exists
-        const dirInfo = await FileSystem.getInfoAsync(cacheDir);
-        if (!dirInfo.exists) {
-            await FileSystem.makeDirectoryAsync(cacheDir, { intermediates: true });
+        if (status !== 'granted') {
+            Alert.alert('Permission Required', 'Please allow photo access');
+            return false;
         }
 
-        const filename = getFilenameFromUrl(imageUrl);
-        const localUri = cacheDir + filename;
+        // Create temporary file from Base64
+        const tempUri = `${FileSystem.cacheDirectory}temp_image.jpg`;
+        console.log('Creating temporary file:', tempUri);
 
-        // Delete existing file if present
-        const fileInfo = await FileSystem.getInfoAsync(localUri);
-        if (fileInfo.exists) {
-            await FileSystem.deleteAsync(localUri);
-        }
-
-        // Download the file
-        await FileSystem.downloadAsync(imageUrl, localUri);
-
-        // Use expo-sharing
-        await Sharing.shareAsync(localUri, {
-            mimeType: 'image/jpeg',
-            dialogTitle: 'Share via WhatsApp',
+        await FileSystem.writeAsStringAsync(tempUri, base64Image, {
+            encoding: FileSystem.EncodingType.Base64,
         });
 
-        // Clean up
+        console.log('Saving to library...');
+        const asset = await MediaLibrary.saveToLibraryAsync(tempUri);
+        console.log('File saved to library. Asset:', asset);
+
+        // Clean up temp file
         try {
-            await FileSystem.deleteAsync(localUri);
+            await FileSystem.deleteAsync(tempUri, { idempotent: true });
         } catch (cleanupError) {
-            console.warn('Failed to cleanup temporary file:', cleanupError);
+            console.warn('Failed to cleanup temp file:', cleanupError);
         }
+
+        Alert.alert('Saved', 'Image saved to your gallery');
+        return true;
     } catch (error) {
-        // Fallback to text-only sharing via WhatsApp
-        const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(imageUrl)}`;
-        await Linking.openURL(whatsappUrl);
+        console.error('Save error:', error instanceof Error ? error.message : error);
+        console.error('Full error:', error);
+        Alert.alert('Error', 'Failed to save image');
+        return false;
     }
-};
-
-const handleEmailShare = async (imageUrl: string): Promise<void> => {
-    const emailUrl = `mailto:?subject=Check out this image&body=${encodeURIComponent(imageUrl)}`;
-    await Linking.openURL(emailUrl);
-};
-
-const handleTwitterShare = async (imageUrl: string): Promise<void> => {
-    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(imageUrl)}`;
-    await Linking.openURL(twitterUrl);
-};
-
-const handleDefaultShare = async (imageUrl: string): Promise<void> => {
-    await Share.share({
-        url: imageUrl,
-        title: 'Share Image',
-        message: 'Check out this image!',
-    });
 };
 
 /**
- * URL Processing Mathematics:
- * 1. String splitting: url.split('?')[0]
- *    - Splits URL at '?' character
- *    - Takes first part [0] to remove query parameters
- *
- * 2. Substring extraction: str.substring(lastIndexOf('/') + 1)
- *    - lastIndexOf('/') finds position p of last '/'
- *    - p + 1 gives start position after '/'
- *    - substring(p + 1) extracts everything after last '/'
- *
- * Example:
- * Input:  "https://example.com/photos/image.jpg?size=large"
- * Step 1: "https://example.com/photos/image.jpg"
- * Step 2: "image.jpg"
+ * Shares a Base64 image via WhatsApp
  */
-const getFilenameFromUrl = (url: string): string => {
-    const urlWithoutParams = url.split('?')[0];
-    return urlWithoutParams.substring(urlWithoutParams.lastIndexOf('/') + 1);
+export const shareBase64ToWhatsApp = async (base64Image: string): Promise<void> => {
+    try {
+        console.log('Preparing to share via WhatsApp');
+
+        await Share.shareSingle({
+            message: 'Check out this image!',
+            url: `data:image/jpeg;base64,${base64Image}`,
+            type: 'image/jpeg',
+            social: Social.Whatsapp,
+        });
+
+        console.log('Share request completed');
+    } catch (error) {
+        console.error('WhatsApp share error:', error instanceof Error ? error.message : error);
+        console.error('Full error:', error);
+        Alert.alert('Error', 'Could not share to WhatsApp');
+    }
+};
+
+/**
+ * Combined action: Download → Save to gallery → Share to WhatsApp using Base64
+ */
+export const handleDownloadSaveAndShare = async (imageUrl: string): Promise<void> => {
+    console.log('Starting combined download, save, and share process...');
+    console.log('Image URL:', imageUrl);
+
+    const base64Image = await downloadImageAsBase64(imageUrl);
+    if (!base64Image) {
+        console.error('Failed to download and convert image');
+        return;
+    }
+
+    console.log('Successfully converted to Base64');
+    const saved = await saveBase64ToLibrary(base64Image);
+
+    if (saved) {
+        console.log('Successfully saved to library, proceeding to share');
+        await shareBase64ToWhatsApp(base64Image);
+    } else {
+        console.error('Failed to save to library');
+    }
+};
+
+/**
+ * Generic share function that supports multiple platforms using Base64
+ */
+export const sharePhoto = async (platform: Social | 'generic', imageUrl: string): Promise<void> => {
+    try {
+        console.log('Starting share process...');
+        console.log('Platform:', platform);
+        console.log('Image URL:', imageUrl);
+
+        const base64Image = await downloadImageAsBase64(imageUrl);
+        if (!base64Image) {
+            console.error('Failed to download and convert image');
+            return;
+        }
+
+        if (platform === Social.Whatsapp) {
+            await shareBase64ToWhatsApp(base64Image);
+            return;
+        }
+
+        // For other platforms, use generic share
+        console.log('Sharing via generic share');
+        await Share.open({
+            url: `data:image/jpeg;base64,${base64Image}`,
+            type: 'image/jpeg',
+            title: 'Share Image',
+        });
+
+    } catch (error) {
+        console.error('Share error:', error instanceof Error ? error.message : error);
+        console.error('Full error:', error);
+        Alert.alert('Error', `Failed to share to ${platform}`);
+    }
 };

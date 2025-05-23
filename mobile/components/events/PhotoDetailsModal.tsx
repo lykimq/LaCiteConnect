@@ -15,6 +15,7 @@ import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { createPhotoDetailsModalStyles } from '../../styles/events/PhotoDetailsModal.styles';
 import { sharePhoto, downloadPhoto } from '../../utils/photoSharing';
 import { createImagePanResponder } from '../../utils/panGestureHandler';
+import { Social } from '../../utils/photoSharing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -98,9 +99,9 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
     /**
      * Handle sharing to different platforms
      */
-    const handleShare = async (platform: 'facebook' | 'instagram' | 'pinterest' | 'whatsapp' | 'email' | 'twitter') => {
+    const handleShare = async (platform: 'whatsapp' | 'generic') => {
         const imageUrl = images[currentIndex];
-        await sharePhoto(platform, imageUrl);
+        await sharePhoto(platform === 'whatsapp' ? Social.Whatsapp : 'generic', imageUrl);
     };
 
     /**
@@ -203,7 +204,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         {/* Facebook Share Button */}
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#3b5998' }]}
-                            onPress={() => handleShare('facebook')}
+                            onPress={() => handleShare('generic')}
                         >
                             <Ionicons name="logo-facebook" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
@@ -211,7 +212,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         {/* Instagram Share Button */}
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#C13584' }]}
-                            onPress={() => handleShare('instagram')}
+                            onPress={() => handleShare('generic')}
                         >
                             <Ionicons name="logo-instagram" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
@@ -219,7 +220,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         {/* Pinterest Share Button */}
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#E60023' }]}
-                            onPress={() => handleShare('pinterest')}
+                            onPress={() => handleShare('generic')}
                         >
                             <Ionicons name="logo-pinterest" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
@@ -235,7 +236,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         {/* Twitter Share Button */}
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#1DA1F2' }]}
-                            onPress={() => handleShare('twitter')}
+                            onPress={() => handleShare('generic')}
                         >
                             <Ionicons name="logo-twitter" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
@@ -243,7 +244,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         {/* Email Share Button */}
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#DB4437' }]}
-                            onPress={() => handleShare('email')}
+                            onPress={() => handleShare('generic')}
                         >
                             <Ionicons name="mail" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
