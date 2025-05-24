@@ -1,7 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import Share, { Social } from 'react-native-share';
-import { Alert } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 
 export { Social };  // Re-export Social type
 
@@ -219,6 +219,34 @@ export const shareBase64ToWhatsApp = async (base64Image: string): Promise<void> 
 };
 
 /**
+ * 🔄 Pinterest Sharing via Public URL (Firebase)
+ */
+export const shareToPinterest = async (imageUrl: string): Promise<void> => {
+    try {
+        if (!imageUrl.startsWith('http')) {
+            Alert.alert(
+                'Pinterest Sharing',
+                'Only public URLs (like Firebase image links) can be shared to Pinterest.'
+            );
+            return;
+        }
+
+        const encodedImageUrl = encodeURIComponent(imageUrl);
+        const description = encodeURIComponent('Check out this image!');
+        const pinterestWebUrl = `https://www.pinterest.com/pin-builder/?media=${encodedImageUrl}&description=${description}`;
+
+        const canOpen = await Linking.canOpenURL(pinterestWebUrl);
+        if (canOpen) {
+            await Linking.openURL(pinterestWebUrl);
+        } else {
+            Alert.alert('Pinterest Sharing', 'Unable to open Pinterest');
+        }
+    } catch (error) {
+        Alert.alert('Error', 'Could not share to Pinterest');
+    }
+};
+
+/**
  * Combined action: Download → Save to gallery → Share to WhatsApp using Base64
  */
 export const handleDownloadSaveAndShare = async (imageUrl: string): Promise<void> => {
@@ -243,35 +271,47 @@ export const handleDownloadSaveAndShare = async (imageUrl: string): Promise<void
 };
 
 /**
- * Generic share function that supports multiple platforms using Base64
+ * Generic share function that supports multiple platforms
  */
-export const sharePhoto = async (platform: Social | 'generic', imageUrl: string): Promise<void> => {
+export const sharePhoto = async (platform: Social | 'generic' | 'pinterest', imageUrl: string): Promise<void> => {
     try {
-        console.log('Starting share process...');
+        console.log('=== Share Photo Debug ===');
         console.log('Platform:', platform);
         console.log('Image URL:', imageUrl);
 
-        const base64Image = await downloadImageAsBase64(imageUrl);
-        if (!base64Image) {
-            console.error('Failed to download and convert image');
+        if (!imageUrl) {
+            throw new Error('No image URL provided');
+        }
+
+        if (platform === 'pinterest') {
+            console.log('Initiating Pinterest sharing...');
+            await shareToPinterest(imageUrl);
             return;
         }
 
         if (platform === Social.Whatsapp) {
+            console.log('Initiating WhatsApp sharing...');
+            const base64Image = await downloadImageAsBase64(imageUrl);
+            if (!base64Image) {
+                throw new Error('Failed to convert image to Base64');
+            }
             await shareBase64ToWhatsApp(base64Image);
             return;
         }
 
         // For other platforms, use generic share
-        console.log('Sharing via generic share');
+        console.log('Using generic share...');
         await Share.open({
-            url: `data:image/jpeg;base64,${base64Image}`,
+            url: imageUrl,
             type: 'image/jpeg',
             title: 'Share Image',
         });
 
     } catch (error) {
-        console.error('Share error:', error instanceof Error ? error.message : error);
+        console.error('=== Share Photo Error ===');
+        console.error('Platform:', platform);
+        console.error('Error type:', error instanceof Error ? 'Error object' : typeof error);
+        console.error('Error message:', error instanceof Error ? error.message : String(error));
         console.error('Full error:', error);
         Alert.alert('Error', `Failed to share to ${platform}`);
     }

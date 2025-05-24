@@ -99,9 +99,15 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
     /**
      * Handle sharing to different platforms
      */
-    const handleShare = async (platform: 'whatsapp' | 'generic') => {
+    const handleShare = async (platform: 'whatsapp' | 'generic' | 'pinterest') => {
         const imageUrl = images[currentIndex];
-        await sharePhoto(platform === 'whatsapp' ? Social.Whatsapp : 'generic', imageUrl);
+        if (platform === 'whatsapp') {
+            await sharePhoto(Social.Whatsapp, imageUrl);
+        } else if (platform === 'pinterest') {
+            await sharePhoto('pinterest', imageUrl);
+        } else {
+            await sharePhoto('generic', imageUrl);
+        }
     };
 
     /**
@@ -220,7 +226,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         {/* Pinterest Share Button */}
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#E60023' }]}
-                            onPress={() => handleShare('generic')}
+                            onPress={() => handleShare('pinterest')}
                         >
                             <Ionicons name="logo-pinterest" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
