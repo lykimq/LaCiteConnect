@@ -100,12 +100,14 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
     /**
      * Handle sharing to different platforms
      */
-    const handleShare = async (platform: 'whatsapp' | 'generic' | 'pinterest') => {
+    const handleShare = async (platform: 'whatsapp' | 'generic' | 'pinterest' | 'facebook') => {
         const imageUrl = images[currentIndex];
         if (platform === 'whatsapp') {
-            await sharePhoto(Social.Whatsapp, imageUrl);
+            await sharePhoto('whatsapp', imageUrl);
         } else if (platform === 'pinterest') {
             await sharePhoto('pinterest', imageUrl);
+        } else if (platform === 'facebook') {
+            await sharePhoto('facebook', imageUrl);
         } else {
             await sharePhoto('generic', imageUrl);
         }
@@ -211,7 +213,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         {/* Facebook Share Button */}
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#3b5998' }]}
-                            onPress={() => handleShare('generic')}
+                            onPress={() => handleShare('facebook')}
                         >
                             <Ionicons name="logo-facebook" size={24} color="#FFFFFF" />
                         </TouchableOpacity>

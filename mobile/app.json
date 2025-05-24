@@ -79,7 +79,8 @@
           "packageName": "com.laciteconnect.app",
           "experimentalLauncherActivity": true
         }
-      ]
+      ],
+      "expo-media-library"
     ],
     "extra": {
       "eas": {
