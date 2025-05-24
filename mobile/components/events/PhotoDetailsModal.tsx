@@ -13,7 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { createPhotoDetailsModalStyles } from '../../styles/events/PhotoDetailsModal.styles';
-import { sharePhoto, downloadPhoto } from '../../utils/photoSharing';
+import { sharePhoto } from '../../utils/photoSharing';
+import { downloadPhoto } from '../../utils/downloadSharing';
 import { createImagePanResponder } from '../../utils/panGestureHandler';
 import { Social } from '../../utils/photoSharing';
 
