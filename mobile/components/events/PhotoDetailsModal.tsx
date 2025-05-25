@@ -100,7 +100,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
     /**
      * Handle sharing to different platforms
      */
-    const handleShare = async (platform: 'whatsapp' | 'generic' | 'pinterest' | 'facebook') => {
+    const handleShare = async (platform: 'whatsapp' | 'generic' | 'pinterest' | 'facebook' | 'instagram') => {
         const imageUrl = images[currentIndex];
         if (platform === 'whatsapp') {
             await sharePhoto(Social.Whatsapp, imageUrl);
@@ -108,6 +108,8 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
             await sharePhoto('pinterest', imageUrl);
         } else if (platform === 'facebook') {
             await sharePhoto('facebook', imageUrl);
+        } else if (platform === 'instagram') {
+            await sharePhoto('instagram', imageUrl);
         } else {
             await sharePhoto('generic', imageUrl);
         }
@@ -221,7 +223,7 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                         {/* Instagram Share Button */}
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#C13584' }]}
-                            onPress={() => handleShare('generic')}
+                            onPress={() => handleShare('instagram')}
                         >
                             <Ionicons name="logo-instagram" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
@@ -240,14 +242,6 @@ export const PhotoDetailsModal: React.FC<PhotoDetailsModalProps> = ({
                             onPress={() => handleShare('whatsapp')}
                         >
                             <Ionicons name="logo-whatsapp" size={24} color="#FFFFFF" />
-                        </TouchableOpacity>
-
-                        {/* Twitter Share Button */}
-                        <TouchableOpacity
-                            style={[styles.actionButton, { backgroundColor: '#1DA1F2' }]}
-                            onPress={() => handleShare('generic')}
-                        >
-                            <Ionicons name="logo-twitter" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
 
                         {/* Email Share Button */}

@@ -22,11 +22,15 @@
         "CFBundleAllowMixedLocalizations": true,
         "LSApplicationQueriesSchemes": [
           "http",
-          "https"
+          "https",
+          "instagram",
+          "instagram-stories"
         ],
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos for sharing",
+        "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos"
       },
       "locales": {
         "en": "./database/locales/ios/en.json",
@@ -40,6 +44,10 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.laciteconnect.app",
+      "permissions": [
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",

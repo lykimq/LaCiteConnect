@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { downloadImageAsBase64, shareBase64ToWhatsApp, saveBase64ToLibrary } from './whatsappSharing';
 import { shareToPinterest } from './pinterestSharing';
 import { shareToFacebook } from './facebookSharing';
+import { shareToInstagram } from './instagramSharing';
 export { Social };  // Re-export Social type
 
 /**
@@ -32,7 +33,7 @@ export const handleDownloadSaveAndShare = async (imageUrl: string): Promise<void
 /**
  * Generic share function that supports multiple platforms
  */
-export const sharePhoto = async (platform: Social | 'generic' | 'pinterest' | 'facebook', imageUrl: string): Promise<void> => {
+export const sharePhoto = async (platform: Social | 'generic' | 'pinterest' | 'facebook' | 'instagram', imageUrl: string): Promise<void> => {
     try {
         console.log('=== Share Photo Debug ===');
         console.log('Platform:', platform);
@@ -51,6 +52,12 @@ export const sharePhoto = async (platform: Social | 'generic' | 'pinterest' | 'f
         if (platform === 'facebook') {
             console.log('Initiating Facebook sharing...');
             await shareToFacebook(imageUrl);
+            return;
+        }
+
+        if (platform === 'instagram') {
+            console.log('Initiating Instagram sharing...');
+            await shareToInstagram(imageUrl);
             return;
         }
 
