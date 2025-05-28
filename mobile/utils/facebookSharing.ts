@@ -105,66 +105,24 @@ const showFacebookNotInstalledAlert = () => {
 };
 
 /**
- * Shares content to Facebook Feed
+ * Type of Facebook share
  */
-export const shareToFacebookFeed = async (
-    imageUrl: string,
-    message?: string
-): Promise<void> => {
-    let tempUri: string | undefined;
-
-    try {
-        const isInstalled = await checkFacebookInstalled();
-        if (!isInstalled) {
-            showFacebookNotInstalledAlert();
-            return;
-        }
-
-        console.log('Downloading image for Facebook share...');
-        tempUri = await downloadPhotoTemp(imageUrl);
-        if (!tempUri) {
-            Alert.alert('Error', 'Failed to download image');
-            return;
-        }
-
-        console.log('Image downloaded, proceeding with Facebook share...');
-        const result = await Share.shareSingle({
-            social: Social.Facebook,
-            url: tempUri as string,
-            type: 'image/*',
-            message: message,
-            appId: FB_IG_APP_ID,
-        });
-
-        console.log('Share result:', result);
-
-    } catch (error) {
-        console.error('Facebook feed share failed:', error);
-        Alert.alert('Share Failed', 'Could not share to Facebook feed. Please try again.');
-    } finally {
-        // Clean up temp file after a short delay to ensure sharing is complete
-        if (tempUri) {
-            const fileToDelete = tempUri; // Capture the value in closure
-            setTimeout(async () => {
-                try {
-                    await FileSystem.deleteAsync(fileToDelete, { idempotent: true });
-                    console.log('Cleaned up temporary file:', fileToDelete);
-                } catch (error) {
-                    console.warn('Failed to cleanup temporary file:', error);
-                }
-            }, 3000);
-        }
-    }
-};
+export type FacebookShareType = 'feed' | 'story' | 'reel' | 'group';
 
 /**
- * Shares an image to Facebook Story
+ * Unified Facebook sharing function that handles all types of sharing
  */
-export const shareToFacebookStory = async (
-    viewRef: any,
-    backgroundImage?: string
+export const shareToFacebook = async (
+    options: {
+        type: FacebookShareType;
+        imageUrl?: string;
+        viewRef?: any;
+        message?: string;
+        groupId?: string;
+        backgroundImage?: string;
+    }
 ): Promise<void> => {
-    let stickerUri: string | undefined;
+    let tempUri: string | undefined;
     let bgTempUri: string | undefined;
 
     try {
@@ -174,57 +132,132 @@ export const shareToFacebookStory = async (
             return;
         }
 
-        console.log('Capturing view for Facebook story...');
-        stickerUri = await captureRef(viewRef, {
-            format: 'png',
-            quality: 1,
-        });
+        // Handle different sharing types
+        switch (options.type) {
+            case 'feed':
+                if (!options.imageUrl) {
+                    throw new Error('Image URL is required for feed sharing');
+                }
+                console.log('Downloading image for Facebook feed...');
+                tempUri = await downloadPhotoTemp(options.imageUrl);
+                if (!tempUri) {
+                    Alert.alert('Error', 'Failed to download image');
+                    return;
+                }
 
-        if (backgroundImage) {
-            console.log('Downloading background image...');
-            bgTempUri = await downloadPhotoTemp(backgroundImage);
+                console.log('Proceeding with Facebook feed share...');
+                // For feed, we use the generic share which opens Facebook's share dialog
+                await Share.open({
+                    url: tempUri as string,
+                    type: 'image/*',
+                    title: 'Share to Facebook',
+                    message: options.message || '',
+                    failOnCancel: false,
+                });
+                break;
+
+            case 'reel':
+                if (!options.imageUrl) {
+                    throw new Error('Image URL is required for reel sharing');
+                }
+                console.log('Downloading image for Facebook reel...');
+                tempUri = await downloadPhotoTemp(options.imageUrl);
+                if (!tempUri) {
+                    Alert.alert('Error', 'Failed to download image');
+                    return;
+                }
+
+                console.log('Proceeding with Facebook reel share...');
+                await Share.shareSingle({
+                    social: Social.Facebook,
+                    url: tempUri as string,
+                    type: 'image/*',
+                    message: options.message,
+                    appId: FB_IG_APP_ID,
+                });
+                break;
+
+            case 'story':
+                if (!options.viewRef) {
+                    throw new Error('ViewRef is required for story sharing');
+                }
+                console.log('Capturing view for Facebook story...');
+                tempUri = await captureRef(options.viewRef, {
+                    format: 'png',
+                    quality: 1,
+                });
+
+                if (options.backgroundImage) {
+                    console.log('Downloading background image...');
+                    bgTempUri = await downloadPhotoTemp(options.backgroundImage);
+                }
+
+                if (!tempUri) {
+                    throw new Error('Failed to capture view');
+                }
+
+                console.log('Proceeding with Facebook story share...');
+                await Share.shareSingle({
+                    social: Social.FacebookStories,
+                    stickerImage: tempUri as string,
+                    appId: FB_IG_APP_ID,
+                    ...(bgTempUri ? {
+                        backgroundImage: bgTempUri,
+                        backgroundTopColor: '#FFFFFF',
+                        backgroundBottomColor: '#FFFFFF',
+                    } : {
+                        backgroundImage: tempUri as string,
+                        backgroundTopColor: '#FFFFFF',
+                        backgroundBottomColor: '#FFFFFF',
+                    })
+                });
+                break;
+
+            case 'group':
+                if (!options.imageUrl || !options.groupId) {
+                    throw new Error('Image URL and Group ID are required for group sharing');
+                }
+                console.log('Downloading image for Facebook group share...');
+                tempUri = await downloadPhotoTemp(options.imageUrl);
+                if (!tempUri) {
+                    Alert.alert('Error', 'Failed to download image');
+                    return;
+                }
+
+                console.log('Proceeding with Facebook group share...');
+                await Share.shareSingle({
+                    social: Social.Facebook,
+                    url: tempUri as string,
+                    type: 'image/*',
+                    message: `${options.message || ''}\n#LaCiteConnect`,
+                    appId: FB_IG_APP_ID,
+                });
+                break;
+
+            default:
+                throw new Error('Invalid Facebook sharing type');
         }
-
-        if (!stickerUri) {
-            throw new Error('Failed to capture view');
-        }
-
-        console.log('Proceeding with Facebook story share...');
-        const result = await Share.shareSingle({
-            social: Social.FacebookStories,
-            stickerImage: stickerUri as string,
-            appId: FB_IG_APP_ID,
-            ...(bgTempUri ? {
-                backgroundImage: bgTempUri,
-                backgroundTopColor: '#FFFFFF',
-                backgroundBottomColor: '#FFFFFF',
-            } : {
-                backgroundImage: stickerUri as string,
-                backgroundTopColor: '#FFFFFF',
-                backgroundBottomColor: '#FFFFFF',
-            })
-        });
-
-        console.log('Share result:', result);
 
     } catch (error) {
-        console.error('Facebook story share failed:', error);
-        Alert.alert('Share Failed', 'Could not share to Facebook story. Please try again.');
+        console.error('Facebook share failed:', error);
+        Alert.alert('Share Failed', `Could not share to Facebook ${options.type}. Please try again.`);
     } finally {
         // Clean up temp files after a short delay
         setTimeout(async () => {
-            if (stickerUri) {
+            if (tempUri) {
+                const fileToDelete = tempUri;
                 try {
-                    await FileSystem.deleteAsync(stickerUri, { idempotent: true });
-                    console.log('Cleaned up sticker file:', stickerUri);
+                    await FileSystem.deleteAsync(fileToDelete, { idempotent: true });
+                    console.log('Cleaned up temporary file:', fileToDelete);
                 } catch (error) {
-                    console.warn('Failed to cleanup sticker file:', error);
+                    console.warn('Failed to cleanup temporary file:', error);
                 }
             }
             if (bgTempUri) {
+                const fileToDelete = bgTempUri;
                 try {
-                    await FileSystem.deleteAsync(bgTempUri, { idempotent: true });
-                    console.log('Cleaned up background file:', bgTempUri);
+                    await FileSystem.deleteAsync(fileToDelete, { idempotent: true });
+                    console.log('Cleaned up background file:', fileToDelete);
                 } catch (error) {
                     console.warn('Failed to cleanup background file:', error);
                 }
@@ -233,102 +266,15 @@ export const shareToFacebookStory = async (
     }
 };
 
-/**
- * Shares content to a Facebook Group
- */
-export const shareToFacebookGroup = async (
-    imageUrl: string,
-    groupId: string,
-    message?: string
-): Promise<void> => {
-    let tempUri: string | undefined;
-
-    try {
-        const isInstalled = await checkFacebookInstalled();
-        if (!isInstalled) {
-            showFacebookNotInstalledAlert();
-            return;
-        }
-
-        console.log('Downloading image for Facebook group share...');
-        tempUri = await downloadPhotoTemp(imageUrl);
-        if (!tempUri) {
-            Alert.alert('Error', 'Failed to download image');
-            return;
-        }
-
-        console.log('Image downloaded, proceeding with Facebook group share...');
-        const result = await Share.shareSingle({
-            social: Social.Facebook,
-            url: tempUri,
-            type: 'image/*',
-            message: `${message || ''}\n#LaCiteConnect`,
-            appId: FB_IG_APP_ID,
-        });
-
-        console.log('Share result:', result);
-
-    } catch (error) {
-        console.error('Facebook group share failed:', error);
-        Alert.alert('Share Failed', 'Could not share to Facebook group. Please try again.');
-    } finally {
-        // Clean up temp file after a short delay
-        if (tempUri) {
-            const fileToDelete = tempUri; // Capture the value in closure
-            setTimeout(async () => {
-                try {
-                    await FileSystem.deleteAsync(fileToDelete, { idempotent: true });
-                    console.log('Cleaned up temporary file:', fileToDelete);
-                } catch (error) {
-                    console.warn('Failed to cleanup temporary file:', error);
-                }
-            }, 3000);
-        }
-    }
+// Export individual functions for backward compatibility
+export const shareToFacebookFeed = async (imageUrl: string, message?: string): Promise<void> => {
+    return shareToFacebook({ type: 'feed', imageUrl, message });
 };
 
-/**
- * Unified Facebook sharing function that handles feed, story, and group sharing
- * @param options Configuration object for Facebook sharing
- */
-export type FacebookShareOptions = {
-    type: 'feed' | 'story' | 'group';
-    imageUrl?: string;
-    message?: string;
-    groupId?: string;
-    viewRef?: any;
-    backgroundImage?: string;
+export const shareToFacebookStory = async (viewRef: any, backgroundImage?: string): Promise<void> => {
+    return shareToFacebook({ type: 'story', viewRef, backgroundImage });
 };
 
-export const shareToFacebook = async (options: FacebookShareOptions): Promise<void> => {
-    try {
-        switch (options.type) {
-            case 'feed':
-                if (!options.imageUrl) {
-                    throw new Error('Image URL is required for feed sharing');
-                }
-                await shareToFacebookFeed(options.imageUrl, options.message);
-                break;
-
-            case 'story':
-                if (!options.viewRef) {
-                    throw new Error('ViewRef is required for story sharing');
-                }
-                await shareToFacebookStory(options.viewRef, options.backgroundImage);
-                break;
-
-            case 'group':
-                if (!options.imageUrl || !options.groupId) {
-                    throw new Error('Image URL and Group ID are required for group sharing');
-                }
-                await shareToFacebookGroup(options.imageUrl, options.groupId, options.message);
-                break;
-
-            default:
-                throw new Error('Invalid Facebook sharing type');
-        }
-    } catch (error) {
-        console.error('Facebook sharing failed:', error);
-        Alert.alert('Share Failed', `Could not share to Facebook ${options.type}. Please try again.`);
-    }
+export const shareToFacebookGroup = async (imageUrl: string, groupId: string, message?: string): Promise<void> => {
+    return shareToFacebook({ type: 'group', imageUrl, groupId, message });
 };
