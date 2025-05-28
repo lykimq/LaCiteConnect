@@ -87,7 +87,8 @@
           "packageName": "com.laciteconnect.app",
           "experimentalLauncherActivity": true
         }
-      ]
+      ],
+      "expo-mail-composer"
     ],
     "extra": {
       "eas": {

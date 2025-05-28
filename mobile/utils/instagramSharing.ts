@@ -1,7 +1,8 @@
 import { Alert, Platform, Linking } from 'react-native';
-import Share, { Social, ShareSingleOptions } from 'react-native-share';
+import Share, { Social } from 'react-native-share';
 import { captureRef } from 'react-native-view-shot';
 import { downloadPhoto } from './downloadSharing';
+import { FB_IG_APP_ID } from '@env';
 
 let hasInstagramInstalled = false;
 
@@ -75,7 +76,7 @@ export const shareToInstagramStory = async (
             backgroundTopColor: '#FFFFFF',
             backgroundBottomColor: '#FFFFFF',
             backgroundImage: bgUri,
-            appId: '0', // Replace with your Facebook App ID
+            appId: FB_IG_APP_ID,
         });
 
     } catch (error) {
@@ -106,6 +107,7 @@ export const shareToInstagramFeed = async (imageUrl: string): Promise<void> => {
             social: Social.Instagram,
             url: localUri,
             type: 'image/*',
+            appId: FB_IG_APP_ID
         });
 
     } catch (error) {

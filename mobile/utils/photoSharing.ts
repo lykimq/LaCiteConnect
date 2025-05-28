@@ -2,8 +2,10 @@ import Share, { Social } from 'react-native-share';
 import { Alert } from 'react-native';
 import { downloadImageAsBase64, shareBase64ToWhatsApp, saveBase64ToLibrary } from './whatsappSharing';
 import { shareToPinterest } from './pinterestSharing';
-import { shareToFacebook } from './facebookSharing';
-import { shareToInstagram } from './instagramSharing';
+import { shareToFacebook, type FacebookShareOptions } from './facebookSharing';
+import { shareToInstagramStory } from './instagramSharing';
+
+
 export { Social };  // Re-export Social type
 
 /**
@@ -33,7 +35,17 @@ export const handleDownloadSaveAndShare = async (imageUrl: string): Promise<void
 /**
  * Generic share function that supports multiple platforms
  */
-export const sharePhoto = async (platform: Social | 'generic' | 'pinterest' | 'facebook' | 'instagram', imageUrl: string): Promise<void> => {
+export const sharePhoto = async (
+    platform: Social | 'generic' | 'pinterest' | 'facebook' | 'instagram',
+    imageUrl: string,
+    options?: {
+        message?: string;
+        groupId?: string;
+        viewRef?: any;
+        backgroundImage?: string;
+        facebookShareType?: 'feed' | 'story' | 'group';
+    }
+): Promise<void> => {
     try {
         console.log('=== Share Photo Debug ===');
         console.log('Platform:', platform);
@@ -51,13 +63,21 @@ export const sharePhoto = async (platform: Social | 'generic' | 'pinterest' | 'f
 
         if (platform === 'facebook') {
             console.log('Initiating Facebook sharing...');
-            await shareToFacebook(imageUrl);
+            const fbOptions: FacebookShareOptions = {
+                type: options?.facebookShareType || 'feed',
+                imageUrl,
+                message: options?.message,
+                groupId: options?.groupId,
+                viewRef: options?.viewRef,
+                backgroundImage: options?.backgroundImage
+            };
+            await shareToFacebook(fbOptions);
             return;
         }
 
         if (platform === 'instagram') {
             console.log('Initiating Instagram sharing...');
-            await shareToInstagram(imageUrl);
+            await shareToInstagramStory(options?.viewRef || null, options?.backgroundImage);
             return;
         }
 
